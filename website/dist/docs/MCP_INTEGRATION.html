@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Integrazione MCP · Cheker</title><meta name="description" content="Integrazione MCP di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html" aria-current="page">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MCP_INTEGRATION.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="lettura-protetta-dei-file-tramite-mcp">Lettura protetta dei file tramite MCP</h1>
+<p>Il server <code>integrity_guard.mcp_server</code> offre due strumenti reali: <code>scan_file</code> e <code>read_file</code>. Richiede Linux o WSL e l'applicazione MCP Integrity Guard già avviata. Usa il servizio locale per conservare i report nella stessa dashboard; non apre una seconda istanza del database di approvazione.</p>
+<p>Il trasporto è MCP <strong>stdio</strong>, versione <strong>2025-11-25</strong>: messaggi JSON-RPC UTF-8, uno per riga; stdout contiene esclusivamente messaggi del protocollo. La chiusura di stdin termina il server. <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports">Specifica ufficiale del trasporto</a>.</p>
+<h2 id="configurazione-del-client">Configurazione del client</h2>
+<p>Avviare prima l'applicazione:</p>
+<pre><code class="language-bash">bash /mnt/d/Cheker/app/start.sh
+</code></pre>
+<p>Nel client MCP configurare un server stdio. Sostituire <code>/home/utente/documenti-agente</code> con una directory esistente, scelta esplicitamente:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;integrity-guard-files&quot;: {
+      &quot;command&quot;: &quot;/mnt/d/Cheker/app/runtime-linux/bin/python&quot;,
+      &quot;args&quot;: [
+        &quot;-I&quot;, &quot;-m&quot;, &quot;integrity_guard.mcp_server&quot;,
+        &quot;--data-dir&quot;, &quot;/mnt/d/Cheker/app/data-linux&quot;,
+        &quot;--api-url&quot;, &quot;http://127.0.0.1:8765&quot;,
+        &quot;--root&quot;, &quot;/home/utente/documenti-agente&quot;
+      ]
+    }
+  }
+}
+</code></pre>
+<p>Per lo sviluppo, il comando Python corrispondente è <code>/mnt/d/Cheker/dev/.venv/bin/python</code>. Il flag Python <code>-I</code> esclude la directory corrente e <code>PYTHONPATH</code> dalla ricerca dei moduli: un progetto non può sostituire il pacchetto installato attraverso il proprio nome. Il parametro <code>--root</code> può essere ripetuto, fino a 32 directory. Non esistono radici implicite; il client non può ampliarle attraverso messaggi MCP. Non inserire il token nella configurazione: il processo lo legge da <code>--data-dir/api-token</code>.</p>
+<p>Il client invia <code>initialize</code>, riceve la versione supportata e completa la fase con <code>notifications/initialized</code>. Solo dopo questa notifica sono disponibili <code>tools/list</code> e <code>tools/call</code>; <code>ping</code> è ammesso anche prima. Le altre funzionalità MCP, comprese risorse, prompt, task e avvio di server esterni, non sono esposte. <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle">Specifica ufficiale del ciclo di vita</a>.</p>
+<h2 id="strumenti">Strumenti</h2>
+<p>Entrambi accettano esclusivamente un oggetto con il campo obbligatorio <code>path</code>, una stringa contenente un percorso Linux assoluto:</p>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 2,
+  &quot;method&quot;: &quot;tools/call&quot;,
+  &quot;params&quot;: {
+    &quot;name&quot;: &quot;read_file&quot;,
+    &quot;arguments&quot;: {
+      &quot;path&quot;: &quot;/home/utente/documenti-agente/nota.txt&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Strumento</th>
+<th>Comportamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scan_file</code></td>
+<td>Invia al servizio locale una copia immutabile dei byte, fino a 10 MiB. Restituisce identificativo del report, SHA-256, esito, severità e conteggio dei rilievi. Non restituisce il contenuto del file.</td>
+</tr>
+<tr>
+<td><code>read_file</code></td>
+<td>Consegna il testo soltanto quando il report degli stessi byte è <code>VALID</code>, <code>ALLOWED</code> e completo. Il limite è 256 KiB; prima della consegna controlla nuovamente identità e contenuto del file.</td>
+</tr>
+</tbody>
+</table>
+<p>La lettura supporta UTF-8 nei formati <code>.txt</code>, <code>.md</code>, <code>.json</code>, <code>.json5</code>, <code>.yaml</code>, <code>.yml</code>, <code>.toml</code>, <code>.csv</code>, <code>.html</code>, <code>.htm</code>, <code>.xml</code>, <code>.py</code>, <code>.js</code>, <code>.ts</code>, <code>.sh</code>, <code>.ps1</code>. Un formato presente nell'elenco può comunque essere respinto se l'analisi non si conclude correttamente. PDF, DOCX, <code>.env</code> e <code>.log</code> sono utilizzabili solo con <code>scan_file</code>; nessuna conversione o estrazione viene consegnata al modello da questo server.</p>
+<p>I risultati contengono <code>structuredContent</code> e la corrispondente rappresentazione JSON in un blocco di testo. Un documento sospetto, corrotto o non analizzabile produce <code>isError: true</code>. I risultati negati non includono testo sorgente, evidenze, titoli o posizioni dei rilievi: il payload sospetto non può rientrare nel modello attraverso il messaggio di errore. Il report completo resta nella dashboard. <a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools">Specifica ufficiale degli strumenti e degli errori</a>.</p>
+<h2 id="confine-di-sicurezza">Confine di sicurezza</h2>
+<ul>
+<li>L'accesso ai file Linux usa descrittori di directory e <code>O_NOFOLLOW</code>. Link simbolici, attraversamenti fuori radice, dispositivi, pipe e radici sostituite sono respinti.</li>
+<li>La directory dati dell'applicazione e i nomi dei suoi file riservati sono esclusi. Anche gli hardlink verso questi file, copie contenenti il token API attuale e materiale con intestazione PEM di chiave privata sono bloccati.</li>
+<li>Prima dell'autenticazione, il server verifica una prova HMAC v2 su un nonce nuovo, legata all'indirizzo e alla porta effettivi del servizio. Una prova inoltrata da un'altra porta locale viene rifiutata. Il token e il file vengono inviati soltanto sulla <strong>stessa connessione TCP</strong> già verificata. Sono ammessi indirizzi HTTP loopback letterali; proxy ambientali, redirect e host remoti non vengono utilizzati. Questa verifica riguarda servizi nello stesso namespace di rete: non sostituisce TLS e non protegge da un amministratore che controlla inoltri o namespace di rete.</li>
+<li>Ogni lettura usa una nuova scansione. Un precedente report, un nome invariato o un file modificato dopo l'analisi non autorizzano la consegna.</li>
+<li>Nessun file sorgente viene eseguito, modificato, spostato o “sanificato”. I soli effetti persistenti sono i report e gli eventi di audit nell'applicazione.</li>
+<li>Le chiamate sono seriali, limitate a 60 al minuto. I messaggi in ingresso sono limitati a 64 KiB, le risposte API a 2 MiB e il timeout API è di 20 secondi. Dopo 10.000 richieste il client deve riconnettersi. La cancellazione di una chiamata già in corso richiede la chiusura del processo; le operazioni di rete restano limitate dal timeout.</li>
+</ul>
+<p>Questa integrazione protegge i contenuti consegnati attraverso questi due strumenti. Non intercetta letture eseguite da altri strumenti, non certifica tutti i possibili prompt injection e non attesta il contenuto degli eseguibili configurati nei server MCP. <code>VALID</code> significa che i controlli implementati non hanno rilevato problemi e hanno concluso l'analisi. Segreti arbitrari contenuti in normali documenti autorizzati non possono essere riconosciuti universalmente: selezionare le radici con la stessa attenzione riservata all'accesso diretto dell'agente.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

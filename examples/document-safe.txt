@@ -1,0 +1,3 @@
+Verbale della riunione del progetto.
+Il gruppo ha concordato di aggiornare la documentazione e verificare le dipendenze.
+La prossima revisione includerà gli esiti dei test automatici.

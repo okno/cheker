@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prestazioni · Cheker</title><meta name="description" content="Prestazioni di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html" aria-current="page">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="PERFORMANCE.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="audit-e-sqlite-misure-prima-dellottimizzazione">Audit e SQLite: misure prima dell'ottimizzazione</h1>
+<p>Misure del 14 settembre 2026, Python 3.13.5, Linux WSL2 x86_64
+<code>6.6.87.2-microsoft-standard-WSL2</code>. L'audit completo eseguito prima di ogni
+registrazione produce un rallentamento concreto: a 5.000 eventi una append
+richiede circa 2 secondi. Il costo cumulativo cresce quadraticamente con il
+numero di append, perché ciascuna ricontrolla tutta la cronologia precedente.</p>
+<h2 id="metodo-e-riproduzione">Metodo e riproduzione</h2>
+<p>Ogni scenario usa un processo separato e un nuovo database temporaneo, eliminato
+alla fine. Il limite è 90 secondi per scenario, 75 secondi CPU e 1 GiB di memoria.
+Il caso più lungo ha richiesto 54 secondi. Nessun database dell'applicazione è
+stato aperto o modificato.</p>
+<p>Le fixture contengono 0, 100, 1.000 oppure 5.000 eventi con hash, firme Ed25519 e
+checkpoint validi, più lo stesso numero di report sintetici nei cinque verdetti.
+La preparazione inserisce le righe in una transazione e firma il checkpoint
+finale; il verificatore reale controlla poi l'intera catena. Questo evita di
+spendere il costo quadratico nella sola preparazione. Ogni scenario esegue anche
+tre upload TXT reali attraverso l'API, con Landlock e seccomp attivi.</p>
+<p>Sono riportate mediane di tre misure, dopo un riscaldamento del percorso HTTP.
+Il server ha zero componenti MCP; la prova isola la crescita dell'audit e del
+registro dei file. Il computer era condiviso con altri lavori: i risultati
+misurano questa configurazione e non costituiscono una garanzia di latenza.</p>
+<pre><code class="language-bash">.venv/bin/python -u qa/benchmark_audit.py
+.venv/bin/python -u qa/benchmark_audit.py \
+  --sizes 0,5000 --parent /mnt/d/Cheker/dev/.test-data/performance \
+  --contention --output .test-data/performance/drvfs.json
+</code></pre>
+<p>Lo script locale è in <code>qa/benchmark_audit.py</code>; i campioni,
+le verifiche dei contatori e gli hash dei sorgenti sono salvati in <code>baseline.json</code>
+e <code>drvfs.json</code> nella directory <code>.test-data/performance</code>. Gli hash di <code>core.py</code>, <code>reports.py</code>,
+<code>api.py</code> e <code>scan_worker.py</code> sono rimasti identici fra tutti gli scenari misurati.</p>
+<h2 id="risultati-su-filesystem-linux-ext4">Risultati su filesystem Linux ext4</h2>
+<p>Tutti i tempi sono in millisecondi. L'upload include scanner, persistenza e audit.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Eventi e report iniziali</th>
+<th style="text-align: right;">Verifica audit</th>
+<th style="text-align: right;">Append audit</th>
+<th style="text-align: right;">GET status</th>
+<th style="text-align: right;">Upload TXT</th>
+<th style="text-align: right;">Statistiche file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0,30</td>
+<td style="text-align: right;">1,20</td>
+<td style="text-align: right;">2,77</td>
+<td style="text-align: right;">393,81</td>
+<td style="text-align: right;">0,03</td>
+</tr>
+<tr>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">42,07</td>
+<td style="text-align: right;">37,65</td>
+<td style="text-align: right;">39,57</td>
+<td style="text-align: right;">578,42</td>
+<td style="text-align: right;">0,21</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">330,09</td>
+<td style="text-align: right;">341,18</td>
+<td style="text-align: right;">345,29</td>
+<td style="text-align: right;">762,74</td>
+<td style="text-align: right;">1,13</td>
+</tr>
+<tr>
+<td style="text-align: right;">5.000</td>
+<td style="text-align: right;">1.861,62</td>
+<td style="text-align: right;">2.134,94</td>
+<td style="text-align: right;">2.027,73</td>
+<td style="text-align: right;">2.984,14</td>
+<td style="text-align: right;">17,36</td>
+</tr>
+</tbody>
+</table>
+<p>A 5.000 eventi i tre campioni di verifica sono 1.777–2.301 ms; le append sono
+1.823–2.955 ms. Il campo <code>duration_ms</code> dei report mostra una mediana di 517 ms
+per gli upload dello stesso scenario: attualmente esclude la successiva
+persistenza e la verifica dell'audit e quindi non descrive tutta l'attesa HTTP.</p>
+<p>Il picco RSS del processo API passa da 61,11 MiB nel caso vuoto a 65,52 MiB nel
+caso da 5.000 report. Database e WAL occupano circa 13,12 MiB a 5.000 righe per
+registro, senza contare i file delle chiavi e i piccoli file SHM. Il consumo
+misurato non indica una crescita della memoria proporzionale a tutte le firme
+deserializzate; il verificatore legge le righe in sequenza.</p>
+<h2 id="risultati-su-d-tramite-wsl9p">Risultati su D: tramite WSL/9p</h2>
+<p>Nel caso vuoto: verifica 5,87 ms, append 21,45 ms e status 6,82 ms. A 5.000 eventi:
+verifica 2.100,66 ms, append 2.196,41 ms, status 2.263,54 ms e upload 2.764,42 ms.
+Le statistiche dei file richiedono 261,08 ms e la pagina da 25 report 267,22 ms.
+Le fixture condividono lo stesso timestamp: la paginazione include quindi il
+costo dell'ordinamento dei valori a pari data e non rappresenta una cronologia
+con timestamp tutti distinti.</p>
+<p>Una coppia concorrente di richieste status richiede rispettivamente 2.057 e
+4.131 ms. Una append concorrente a uno status richiede 1.795 ms, mentre lo
+status termina dopo 3.934 ms. Sono singole prove di contesa, non percentili:
+confermano l'accodamento sul blocco del <code>GuardStore</code>. L'interfaccia richiede lo
+status ogni 15 secondi quando visibile, quindi la verifica completa durante
+il polling aggiunge lavoro e contesa anche senza nuove operazioni dell'utente.</p>
+<p>La lettura della policy, in assenza di eventi <code>POLICY_CHANGED</code>, percorre a sua
+volta la cronologia: 51,64 ms su ext4 e 230,18 ms su 9p a 5.000 eventi.</p>
+<h2 id="esattezza-e-intervento-proposto">Esattezza e intervento proposto</h2>
+<p>Tutte le verifiche della catena e dei checkpoint sono riuscite. Totali globali,
+cinque verdetti, numero dei contenuti unici e filtri sono esatti a ogni volume.
+I tre upload aggiungono tre file validi e un unico nuovo hash; il conteggio degli
+eventi cresce esattamente del numero di operazioni eseguite. Non sono state
+modificate le query né introdotte statistiche simulate nell'applicazione.</p>
+<p>La priorità è riutilizzare un prefisso già verificato per append interne e
+status, invalidandolo in modo rigoroso su modifiche della connessione,
+<code>PRAGMA data_version</code> e contenuto del checkpoint firmato. Una cache basata solo
+su mtime o sul numero di eventi non sarebbe sufficiente. La verifica esplicita
+dell'audit deve poter ricontrollare tutta la catena. Prima di adottare questa
+ottimizzazione occorrono regressioni per manomissioni tramite la stessa
+connessione, una connessione esterna, modifica del checkpoint, troncatura,
+riavvio e rollback. Il protocollo deve mantenere il comportamento di blocco
+in caso di integrità non verificabile.</p>
+<p>Un secondo intervento, subordinato alla correttezza della cache, può evitare
+la ricerca ripetuta dell'ultimo cambio di policy. Le misure non giustificano
+ridurre la frequenza o l'accuratezza dei contatori. Nessuna ottimizzazione
+dell'applicazione è stata applicata durante questo audit delle prestazioni.</p>
+<h2 id="ottimizzazione-verificata-e-congelata-per-il-rilascio">Ottimizzazione verificata e congelata per il rilascio</h2>
+<p>È stata successivamente introdotta una cache del prefisso già verificato.
+<code>verify_audit()</code> rimane una verifica completa; soltanto <code>fast=True</code>, usato dallo
+status e dai controlli interni, può riutilizzare una prova invariata.</p>
+<p>Ogni riuso confronta <code>total_changes</code>, <code>data_version</code>, identità e metadati di
+database/WAL, bytes effettivi del checkpoint limitati a 4 KiB e chiave caricata.
+Controlla anche lo schema reale: tabella audit ordinaria con colonne attese,
+assenza di viste temporanee e trigger. Questa verifica non si affida al solo
+<code>schema_version</code>, che può essere ripristinato manualmente. L'append acquisisce
+prima il blocco di scrittura SQLite e promuove il prefisso soltanto dopo commit
+e checkpoint riusciti. Errori e rollback cancellano la cache. I batch modificati
+rimangono conservativi: vengono verificati integralmente al prossimo utilizzo;
+soltanto i refresh senza cambiamenti conservano la prova precedente.</p>
+<p>Le 34 regressioni dedicate sono riuscite, comprese modifiche tramite la stessa
+connessione e connessioni esterne, mtime ripristinato, checkpoint corrotto e
+successivamente ripristinato, rollback, modifiche durante la verifica o durante
+il checkpoint, sostituzione del file database, cambio chiave, trigger e viste
+con versioni dello schema ripristinate. Le verifiche di snapshot, firme delle
+approvazioni, policy e ciclo di vita del gate sono rimaste attive.</p>
+<p>La ripetizione dello stesso benchmark a 0 e 5.000 eventi ha prodotto questi
+risultati. Tempi in millisecondi, mediana di tre campioni:</p>
+<table>
+<thead>
+<tr>
+<th>Filesystem, 5.000 eventi</th>
+<th>Operazione</th>
+<th style="text-align: right;">Prima</th>
+<th style="text-align: right;">Dopo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ext4</td>
+<td>Append audit</td>
+<td style="text-align: right;">2.134,94</td>
+<td style="text-align: right;">2,15</td>
+</tr>
+<tr>
+<td>ext4</td>
+<td>GET status</td>
+<td style="text-align: right;">2.027,73</td>
+<td style="text-align: right;">46,35</td>
+</tr>
+<tr>
+<td>ext4</td>
+<td>Upload TXT reale</td>
+<td style="text-align: right;">2.984,14</td>
+<td style="text-align: right;">440,89</td>
+</tr>
+<tr>
+<td>WSL/9p</td>
+<td>Append audit</td>
+<td style="text-align: right;">2.196,41</td>
+<td style="text-align: right;">54,46</td>
+</tr>
+<tr>
+<td>WSL/9p</td>
+<td>GET status</td>
+<td style="text-align: right;">2.263,54</td>
+<td style="text-align: right;">357,56</td>
+</tr>
+<tr>
+<td>WSL/9p</td>
+<td>Upload TXT reale</td>
+<td style="text-align: right;">2.764,42</td>
+<td style="text-align: right;">929,31</td>
+</tr>
+</tbody>
+</table>
+<p>La verifica rapida a 5.000 eventi richiede 0,21 ms su ext4 e 10,50 ms su 9p.
+Quella esplicita continua a verificare tutta la catena: 2.133,60 ms e 2.800,32 ms
+rispettivamente. Le variazioni delle operazioni non ottimizzate riflettono anche
+il carico condiviso del computer durante le prove.</p>
+<p>Su 9p una append a database vuoto richiede ora 49,44 ms, rispetto ai 21,45 ms
+iniziali: i controlli aggiuntivi dei file hanno un costo fisso, particolarmente
+visibile sul filesystem condiviso. A 5.000 eventi lo stesso costo rimane 54,46 ms.
+La ricerca della policy continua a essere lineare e richiede 35,26 ms su ext4
+e 313,30 ms su 9p; non è stata modificata per questo rilascio.</p>
+<p>La contesa status/status scende a 50/87 ms su ext4 e 311/687 ms su 9p. Nella
+coppia status/append su 9p le operazioni terminano dopo 453/59 ms. Il picco RSS
+è 65,95 MiB su ext4 e 66,11 MiB su 9p. Contatori, verdetti e tutte le 5.007 firme
+finali sono corretti; gli upload sono stati eseguiti con sandbox attiva.</p>
+<p>I nuovi risultati sono in <code>.test-data/performance/optimized_ext4.json</code> e
+<code>optimized_drvfs.json</code>. Il caso più lungo dura 31,49 secondi. Il sorgente
+<code>core.py</code> misurato ha SHA-256
+<code>2719e6651542e3773e3f386cd83f7ad13a28351c6a3bb17f72f6f9d8dca8bec7</code>.</p>
+<pre><code class="language-bash">.venv/bin/python -u qa/benchmark_audit.py \
+  --sizes 0,5000 --contention \
+  --output .test-data/performance/optimized_ext4.json
+.venv/bin/python -u qa/benchmark_audit.py \
+  --sizes 0,5000 --parent /mnt/d/Cheker/dev/.test-data/performance \
+  --contention --output .test-data/performance/optimized_drvfs.json
+.venv/bin/python -m pytest backend/tests/test_core.py \
+  backend/tests/test_core_limits.py backend/tests/test_audit_cache.py
+</code></pre>
+<h2 id="costo-della-verifica-degli-snapshot-nellinventario">Costo della verifica degli snapshot nell'inventario</h2>
+<p>Una verifica successiva confronta la lettura dell'inventario della baseline
+<code>b728fbb</code> con la proiezione che controlla gli snapshot prima di mostrarli.
+La fixture comprende 101 componenti, 2.101 eventi firmati e 290.029 byte di
+contenuto e record, su <code>/tmp</code> Linux con il Python 3.13.5 di sviluppo.
+Dopo il riscaldamento sono state misurate 15 letture per variante:</p>
+<table>
+<thead>
+<tr>
+<th>Lettura inventario</th>
+<th style="text-align: right;">Mediana</th>
+<th style="text-align: right;">Massimo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td style="text-align: right;">39,25 ms</td>
+<td style="text-align: right;">51,98 ms</td>
+</tr>
+<tr>
+<td>Proiezione verificata</td>
+<td style="text-align: right;">168,80 ms</td>
+<td style="text-align: right;">301,94 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Il costo aggiuntivo deriva dalla verifica canonica e dal collegamento alla
+cronologia firmata. Le regressioni controllano che la raccolta degli eventi
+venga eseguita una volta per elenco e due volte per una discovery invariata,
+sia con due sia con 101 componenti. Il monitor raccoglie l'inventario una sola
+volta per ciclo. La complessità cresce con eventi e byte degli snapshot, senza
+ripetere una scansione completa della cronologia per ogni componente.</p>
+<p>Il benchmark è stato eseguito mentre erano attive anche le regressioni: i tempi
+descrivono quel carico condiviso, non un limite di latenza. I singoli campioni
+non sono stati conservati; mediana, massimo e condizioni effettivamente osservati
+sono in <code>.test-data/snapshot-projection-evidence-20260914/benchmark-observed.json</code>
+e <code>report.json</code>. Il core misurato ha SHA-256
+<code>cf50c080732dfb725c45a030051ee8a4d3e2da9dc0cea5b0546cb43180ffe395</code>.
+Non sono state ripetute con questa modifica le misure dell'API a 5.000 eventi
+riportate sopra.</p>
+<p>Riproduttore <code>qa/benchmark_snapshot_projection.py</code>, conservato dopo la misura
+senza rieseguirlo: verifica gli hash della baseline e del core corrente e usa
+soltanto database sintetici temporanei. Richiede il commit baseline nel repository.</p>
+<pre><code class="language-bash">.venv/bin/python qa/benchmark_snapshot_projection.py
+</code></pre></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

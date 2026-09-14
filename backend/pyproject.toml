@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-integrity-guard"
+version = "1.0.0"
+description = "Local content-addressed MCP approvals and document security scanning"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "pydantic>=2.10,<3",
+  "watchdog>=6,<7", "cryptography>=50.0.1,<51", "PyYAML>=6.0.2,<7",
+  "json5==0.15.0", "pypdf>=6,<7", "defusedxml>=0.7.1,<1",
+  "python-multipart>=0.0.20,<1"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "httpx>=0.28,<1"]
+
+[project.scripts]
+mcp-guard = "integrity_guard.cli:main"
+
+[tool.setuptools.package-data]
+integrity_guard = ["rules.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Manuale utente · Cheker</title><meta name="description" content="Manuale utente di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html" aria-current="page">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MANUALE_UTENTE.md" download>Scarica Markdown</a><a href="MANUALE_UTENTE.pdf" download>Scarica PDF</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="manuale-utente-mcp-integrity-guard">Manuale utente — MCP Integrity Guard</h1>
+<p>Questo manuale descrive l'applicazione Linux e i controlli disponibili nella console italiana. MCP Integrity Guard registra le configurazioni MCP, lega le approvazioni al loro contenuto e analizza documenti prima dell'uso da parte di un agente. Le analisi e i report rimangono sul dispositivo che esegue l'applicazione.</p>
+<p>Il rilevamento delle istruzioni sospette è euristico: può richiedere una revisione di un documento innocuo oppure non riconoscere una manipolazione. <strong>Valido ai controlli</strong> significa che l'analisi si è conclusa senza evidenze rilevate dai controlli implementati. Non è una certificazione di sicurezza, né un verdetto antivirus.</p>
+<p>Per rendere effettivo il blocco prima dell'uso, l'agente o il programma chiamante deve utilizzare il gate, <code>guarded-read</code> oppure il lettore MCP protetto. La sola apertura della console e il monitoraggio delle cartelle non impediscono ad altri programmi di leggere file o avviare server.</p>
+<h3 id="i-formati-prioritari-subito">I formati prioritari, subito</h3>
+<table>
+<thead>
+<tr>
+<th>Formato</th>
+<th>Supporto attuale</th>
+<th>Limite da conoscere</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PDF</strong> (<code>.pdf</code>)</td>
+<td>Sì, per contenuto ispezionabile</td>
+<td>Immagini che richiedono OCR, cifratura e contenuti non ispezionabili impediscono un'analisi completa</td>
+</tr>
+<tr>
+<td><strong>DOC</strong> (<code>.doc</code>)</td>
+<td><strong>No: non supportato, bloccato</strong></td>
+<td>Il formato Word binario precedente non è DOCX</td>
+</tr>
+<tr>
+<td><strong>DOCX</strong> (<code>.docx</code>)</td>
+<td>Sì, entro i limiti dell'estrattore</td>
+<td>Immagini che richiedono OCR e oggetti incorporati non ispezionabili possono causare il blocco</td>
+</tr>
+<tr>
+<td><strong>XLS</strong> (<code>.xls</code>)</td>
+<td><strong>No: non supportato, bloccato</strong></td>
+<td>Il formato Excel binario non è analizzato</td>
+</tr>
+<tr>
+<td><strong>XLSX</strong> (<code>.xlsx</code>)</td>
+<td><strong>No: non supportato, bloccato</strong></td>
+<td>Il registro per estrattori futuri non include ancora un estrattore XLSX</td>
+</tr>
+<tr>
+<td><strong>TXT</strong> (<code>.txt</code>)</td>
+<td>Sì</td>
+<td>Restano i controlli di codifica, contenuto e dimensione</td>
+</tr>
+<tr>
+<td><strong>Markdown</strong> (<code>.md</code>)</td>
+<td>Sì</td>
+<td>Testo e frontmatter iniziale sono coperti secondo i limiti descritti sotto</td>
+</tr>
+</tbody>
+</table>
+<p>L'estensione seleziona il formato da analizzare, ma non dimostra che i byte siano validi: cambiare il nome di un file non lo converte. <strong>OCR non è implementato</strong>: anche un PDF con testo leggibile può contenere immagini che impediscono di coprire tutto il documento. Per un formato non supportato, ottenere una conversione attraverso uno strumento fidato e analizzarla come documento distinto; il suo risultato non certifica il file originale né gli elementi persi nella conversione.</p>
+<h2 id="indice">Indice</h2>
+<ol>
+<li><a href="#1-installare-e-avviare">Installare e avviare</a></li>
+<li><a href="#2-accedere-e-orientarsi-nella-console">Accedere e orientarsi nella console</a></li>
+<li><a href="#3-scoprire-esaminare-e-approvare-componenti-mcp">Scoprire, esaminare e approvare componenti MCP</a></li>
+<li><a href="#4-analizzare-documenti-e-consultare-il-registro">Analizzare documenti e consultare il registro</a></li>
+<li><a href="#5-monitorare-cartelle">Monitorare cartelle</a></li>
+<li><a href="#6-creare-una-copia-testuale-da-html">Creare una copia testuale da HTML</a></li>
+<li><a href="#7-configurare-policy-e-monitor-delle-sorgenti">Configurare policy e monitor delle sorgenti</a></li>
+<li><a href="#8-verificare-ed-esportare-laudit">Verificare ed esportare l'audit</a></li>
+<li><a href="#9-usare-la-cli-e-collegare-un-agente">Usare la CLI e collegare un agente</a></li>
+<li><a href="#10-risolvere-problemi-conservare-i-dati-e-chiedere-supporto">Risolvere problemi, conservare i dati e chiedere supporto</a></li>
+<li><a href="#11-domande-frequenti">Domande frequenti</a></li>
+</ol>
+<h2 id="1-installare-e-avviare">1. Installare e avviare</h2>
+<h3 id="requisiti">Requisiti</h3>
+<p>Servono Linux a 64 bit, architettura x86_64 o aarch64, Python 3.11 o successivo con supporto <code>venv</code>, Landlock ABI almeno 3 e la libreria <code>libseccomp.so.2</code>. Landlock ABI 3 richiede un kernel Linux 6.2 o successivo con la funzionalità abilitata: il solo numero di versione del kernel non basta. I risultati effettivamente verificati sulle piattaforme sono riportati in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<p>L'installazione delle dipendenze richiede una connessione di rete. L'esecuzione ordinaria non richiede rete esterna o Node.js. Lo scanner usa processi isolati: se il confinamento necessario non è disponibile, l'analisi viene negata. La diagnostica di installazione deve terminare con <code>status: READY</code>, <code>scan_complete: true</code> e <code>sandbox_active: true</code>.</p>
+<h3 id="installazione-da-distribuzione-linux">Installazione da distribuzione Linux</h3>
+<ol>
+<li>Procurarsi l'archivio Linux della versione desiderata attraverso il canale di distribuzione del progetto e verificarne la provenienza.</li>
+<li>Estrarlo in una cartella dedicata dell'utente. L'archivio comprende applicazione, UI, script, esempi e documentazione; non contiene token, chiavi, dati personali o un ambiente Python già installato.</li>
+<li>Aprire un terminale nella cartella estratta che contiene <code>install-linux.sh</code> ed eseguire:</li>
+</ol>
+<p><code>bash
+   bash install-linux.sh</code></p>
+<ol>
+<li>Attendere il completamento. L'installer verifica i checksum, crea <code>runtime-linux</code>, installa le dipendenze e l'applicazione, prepara <code>data-linux</code> ed esegue la diagnostica. Un checksum verifica la corrispondenza dei file al manifesto; non sostituisce la verifica dell'identità del distributore.</li>
+<li>Dalla stessa cartella avviare:</li>
+</ol>
+<p><code>bash
+   bash start.sh</code></p>
+<p>Se l'installazione si interrompe, leggere il messaggio finale e risolvere la causa prima dell'avvio. Per prerequisiti di sistema, aggiornamenti e installazioni gestite vedere il <a href="MANUALE_TECNICO.html">manuale tecnico</a>. Non occorre eseguire l'applicazione come amministratore.</p>
+<h3 id="installazione-nella-cartella-dcheker">Installazione nella cartella D:\Cheker</h3>
+<p>Nell'installazione predisposta su WSL, <code>D:\Cheker</code> corrisponde a <code>/mnt/d/Cheker</code>. Applicazione e sviluppo sono separati:</p>
+<table>
+<thead>
+<tr>
+<th>Percorso</th>
+<th>Utilizzo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/mnt/d/Cheker/Avvia-Cheker.sh</code></td>
+<td>Avvio dell'applicazione Linux predisposta</td>
+</tr>
+<tr>
+<td><code>/mnt/d/Cheker/app</code></td>
+<td>Applicazione installata, UI e runtime Linux</td>
+</tr>
+<tr>
+<td><code>/mnt/d/Cheker/app/data-linux</code></td>
+<td>Dati persistenti dell'istanza predefinita</td>
+</tr>
+<tr>
+<td><code>/mnt/d/Cheker/dev</code></td>
+<td>Sorgenti, test e documentazione di sviluppo</td>
+</tr>
+</tbody>
+</table>
+<p>Per l'uso normale:</p>
+<pre><code class="language-bash">cd /mnt/d/Cheker
+bash Avvia-Cheker.sh
+</code></pre>
+<p>L'ambiente di sviluppo ha un proprio avvio, <code>dev/start-dev.sh</code>; non serve per utilizzare l'app installata. Su altri host Linux i percorsi dipendono dalla cartella scelta durante l'estrazione. Negli esempi successivi <code>start.sh</code> e <code>guard.sh</code> si eseguono dalla cartella dell'applicazione installata.</p>
+<h3 id="avvio-arresto-e-cartella-dati">Avvio, arresto e cartella dati</h3>
+<p>La console web è disponibile su <code>http://127.0.0.1:8765</code>, nel dispositivo o ambiente Linux in cui gira il servizio. Lo script tenta di aprire il browser dopo aver verificato l'identità del servizio locale. Lasciare aperto il terminale; <strong>Ctrl+C</strong> arresta il servizio. Chiudere una scheda del browser o scegliere <strong>Disconnetti</strong> non arresta il backend.</p>
+<p>Per avviare senza aprire automaticamente il browser:</p>
+<pre><code class="language-bash">GUARD_NO_BROWSER=1 bash start.sh
+</code></pre>
+<p>Per scegliere una porta diversa:</p>
+<pre><code class="language-bash">bash start.sh --port 8767
+</code></pre>
+<p>In questo caso usare <code>http://127.0.0.1:8767</code> e configurare la stessa porta nei client e nella CLI. Non esporre la console amministrativa su una rete pubblica: questa distribuzione è progettata per l'accesso locale.</p>
+<p>Per impostazione predefinita i dati sono in <code>data-linux</code>, sotto la cartella dell'app. La variabile <code>MCP_GUARD_DATA</code> permette una destinazione alternativa: applicazione e CLI devono usare la stessa cartella. Un percorso dati diverso può mostrare un inventario vuoto perché rappresenta un'altra istanza. La configurazione di questa variabile e l'avvio automatico con systemd sono descritti nel <a href="MANUALE_TECNICO.html">manuale tecnico</a>; il servizio systemd non viene installato automaticamente.</p>
+<h2 id="2-accedere-e-orientarsi-nella-console">2. Accedere e orientarsi nella console</h2>
+<p>Al primo avvio vengono creati i dati locali e il token amministrativo. L'accesso automatico passa temporaneamente il token nel frammento dell'URL; la pagina lo rimuove subito dall'indirizzo e lo conserva per la sessione della scheda.</p>
+<p>Se compare il modulo di accesso, aprire il file locale <code>data-linux/api-token</code> con un editor locale fidato, copiarne il contenuto nel campo <strong>Token di accesso</strong> e premere <strong>Apri la console</strong>. Nella disposizione WSL predefinita il file è <code>/mnt/d/Cheker/app/data-linux/api-token</code>. Se si è configurata una cartella dati alternativa, cercarlo lì. Evitare di mostrarlo nel terminale, includerlo in screenshot, incollarlo in chat o inserirlo in comandi salvati nella cronologia. <strong>Disconnetti</strong> rimuove l'accesso memorizzato dalla scheda.</p>
+<p>Il token abilita le operazioni amministrative locali. Non esistono account individuali o ruoli distinti nella console; il nome inserito durante un'approvazione è una dichiarazione registrata, non un'autenticazione personale separata.</p>
+<p>Il menu principale contiene:</p>
+<table>
+<thead>
+<tr>
+<th>Pagina</th>
+<th>Cosa permette di fare</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Panoramica</strong></td>
+<td>Vedere conteggi dei componenti, approvazioni, elementi da esaminare, attività recente e riepilogo delle scansioni</td>
+</tr>
+<tr>
+<td><strong>Componenti MCP</strong></td>
+<td>Registrare configurazioni, esaminare differenze, approvare versioni, revocare e mettere in quarantena</td>
+</tr>
+<tr>
+<td><strong>File Scanner</strong></td>
+<td>Analizzare documenti, consultare report, monitorare cartelle e creare copie testuali HTML</td>
+</tr>
+<tr>
+<td><strong>Registro audit</strong></td>
+<td>Consultare eventi recenti, verificare la catena ed esportare gli eventi disponibili</td>
+</tr>
+<tr>
+<td><strong>Policy e controlli</strong></td>
+<td>Modificare azioni e soglie, gestire il monitor delle configurazioni</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Come funziona</strong> apre la guida sintetica. <strong>Aggiorna dati</strong>, nella barra superiore, aggiorna la panoramica dei dati; alcune sezioni hanno anche un proprio comando di aggiornamento. Sugli schermi stretti il menu si apre dal pulsante nella barra superiore.</p>
+<p>La prima installazione mostra un inventario vuoto: non sono inseriti automaticamente componenti o scansioni dimostrativi. I file in <code>examples</code> sono esempi da selezionare esplicitamente; non avviano server MCP.</p>
+<h2 id="3-scoprire-esaminare-e-approvare-componenti-mcp">3. Scoprire, esaminare e approvare componenti MCP</h2>
+<h3 id="registrare-una-configurazione">Registrare una configurazione</h3>
+<ol>
+<li>Aprire <strong>Componenti MCP</strong> e premere <strong>Scopri componenti</strong>.</li>
+<li>Nel campo <strong>Percorso del file di configurazione</strong> inserire un percorso assoluto Linux, per esempio <code>/srv/mcp/config.json</code>. Su WSL una sorgente in <code>D:\Documenti</code> si indica normalmente sotto <code>/mnt/d/Documenti</code>.</li>
+<li>Premere <strong>Analizza sorgente</strong> e attendere l'esito.</li>
+</ol>
+<p>Sono supportate configurazioni JSON, JSON5, YAML, TOML e <code>.env</code>. La discovery registra la configurazione e le definizioni riconosciute di server, tool, resource e prompt. Non avvia i comandi descritti nel file, non contatta gli endpoint e non interroga automaticamente server remoti. Le definizioni dinamiche devono essere esportate e registrate attraverso l'integrazione scelta.</p>
+<p>I limiti principali sono 4 MiB per configurazione, 256 componenti per sorgente e 8 MiB complessivi di contenuto canonico espanso. Una discovery incompleta viene rifiutata nel suo insieme. Se una sorgente già conosciuta cambia e non può più essere analizzata interamente, le approvazioni precedenti non autorizzano quella sorgente modificata.</p>
+<h3 id="leggere-il-dettaglio">Leggere il dettaglio</h3>
+<p>Usare la ricerca per nome, percorso o fingerprint e il filtro di stato. Aprire una riga per vedere il dettaglio del componente:</p>
+<table>
+<thead>
+<tr>
+<th>Scheda</th>
+<th>Lettura consigliata</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Integrità</strong></td>
+<td>Stato, hash RAW, hash canonico, fingerprint semantica, approvazione, evidenze e verifica tramite gate</td>
+</tr>
+<tr>
+<td><strong>Variazioni</strong></td>
+<td>Campi modificati, categoria, severità e valori prima/dopo</td>
+</tr>
+<tr>
+<td><strong>Contenuto</strong></td>
+<td>Definizione registrata, con valori sensibili riconosciuti mascherati</td>
+</tr>
+<tr>
+<td><strong>Versioni</strong></td>
+<td>Cronologia delle versioni registrate</td>
+</tr>
+<tr>
+<td><strong>Firma</strong></td>
+<td>Documento di approvazione ed esportazione tramite <strong>Esporta firma</strong></td>
+</tr>
+</tbody>
+</table>
+<p>L'hash RAW identifica i byte della sorgente. L'hash canonico identifica la definizione normalizzata con il contesto ereditato. La fingerprint semantica serve a distinguere il contenuto dalla sola rappresentazione, ma non dimostra che due testi abbiano un significato equivalente. La mascheratura sullo schermo non elimina quei valori dal calcolo degli hash originali.</p>
+<p>Aprire le evidenze e verificare descrizione, severità, posizione e contenuto rilevante. Esaminare in particolare cambiamenti a comandi, argomenti, endpoint, variabili d'ambiente, schemi, capability e istruzioni. L'approvazione riguarda la configurazione: non certifica i byte degli eseguibili, le immagini container o il comportamento futuro dei servizi remoti.</p>
+<h3 id="approvare-una-versione-precisa">Approvare una versione precisa</h3>
+<ol>
+<li>Dopo la revisione, premere <strong>Approva versione</strong>.</li>
+<li>Verificare versione e hash mostrati nel modulo.</li>
+<li>Compilare <strong>Nome dell'approvatore</strong> e, se utile, <strong>Nota di approvazione (facoltativa)</strong>.</li>
+<li>Selezionare la conferma di aver esaminato contenuto, variazioni ed evidenze.</li>
+<li>Premere <strong>Firma e approva</strong>.</li>
+</ol>
+<p>La sorgente viene riletta prima della firma. Se cambia nel frattempo, l'operazione viene rifiutata: esaminare la versione corrente e ripetere consapevolmente la revisione. Non riutilizzare una conferma riferita a un contenuto precedente.</p>
+<p>Quando cambia il contenuto, lo stato di fiducia o il contesto di policy, il dettaglio aggiornato azzera le conferme e le verifiche precedenti. Un messaggio segnala che occorre esaminare il contesto corrente. Se la copia registrata non supera i controlli d'integrità, l'uso e l'approvazione restano bloccati: conservare le evidenze e seguire la procedura di assistenza.</p>
+<p>La firma è legata a componente, versione, hash e policy. Anche una modifica di soli spazi o formattazione può produrre una nuova versione da approvare. Ripristinare i byte di una vecchia versione non ripristina automaticamente la fiducia precedente.</p>
+<h3 id="rileggere-verificare-revocare-e-mettere-in-quarantena">Rileggere, verificare, revocare e mettere in quarantena</h3>
+<p><strong>Rileggi sorgente</strong> aggiorna il componente a partire dal file attuale. Nella scheda <strong>Integrità</strong>, <strong>Interroga gate</strong> verifica nuovamente se la versione richiesta può essere usata. Il risultato indica <strong>Uso consentito dal gate</strong> oppure <strong>Uso negato dal gate</strong>, con motivazione, versione e hash. Non avvia il componente e non autorizza versioni future.</p>
+<p>Per togliere fiducia a un componente, scegliere <strong>Revoca</strong>, compilare <strong>Motivo</strong> e premere <strong>Conferma revoca</strong>. Per isolarlo logicamente, scegliere <strong>Quarantena</strong>, compilare il motivo e premere <strong>Conferma quarantena</strong>. Entrambe le operazioni negano l'uso tramite gate e sono registrate nell'audit.</p>
+<p>La quarantena è logica: non sposta, cancella o modifica file. Non esiste un pulsante che certifichi o ripari automaticamente il componente. Per consentirne di nuovo l'uso, risolvere la causa nella sorgente, rileggere, esaminare la versione corrente e procedere con una nuova approvazione quando i controlli lo consentono.</p>
+<h2 id="4-analizzare-documenti-e-consultare-il-registro">4. Analizzare documenti e consultare il registro</h2>
+<h3 id="caricamento-o-percorso-locale">Caricamento o percorso locale</h3>
+<p>In <strong>File Scanner</strong>, nel riquadro <strong>Analizza i tuoi documenti</strong>, scegliere:</p>
+<ul>
+<li><strong>Carica file</strong>: trascinare uno o più file oppure premere <strong>Scegli file</strong>. La selezione avvia subito le scansioni, una alla volta.</li>
+<li><strong>Percorso locale</strong>: inserire <strong>Percorso assoluto del documento</strong> e premere <strong>Scansiona file</strong>. Il percorso si riferisce al dispositivo Linux del backend, che deve poter leggere il file.</li>
+</ul>
+<p>Il limite ordinario è 10 MiB per file. L'upload del browser rifiuta prima dell'invio un file che supera questo limite: quel rifiuto non produce un report nel registro. Un errore della richiesta e un report con decisione <strong>Bloccato</strong> sono situazioni diverse: nel secondo caso l'elaborazione ha prodotto un report consultabile.</p>
+<p>Durante una selezione multipla, <strong>Ferma la coda</strong> lascia terminare il file corrente e salta quelli ancora in attesa. Il riepilogo distingue report salvati, errori e file saltati. Restare nella pagina per seguire tutta la selezione. <strong>Esporta report</strong>, nel riepilogo della selezione, esporta i report di quella selezione, non l'intero registro storico.</p>
+<h3 id="formati-e-contenuti-esaminati">Formati e contenuti esaminati</h3>
+<table>
+<thead>
+<tr>
+<th>Famiglia</th>
+<th>Estensioni supportate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Testo e Markdown</td>
+<td><code>.txt</code>, <code>.md</code>, <code>.log</code></td>
+</tr>
+<tr>
+<td>Dati e configurazioni</td>
+<td><code>.json</code>, <code>.json5</code>, <code>.yaml</code>, <code>.yml</code>, <code>.toml</code>, <code>.csv</code>, <code>.env</code></td>
+</tr>
+<tr>
+<td>Markup</td>
+<td><code>.html</code>, <code>.htm</code>, <code>.xml</code></td>
+</tr>
+<tr>
+<td>Codice come testo</td>
+<td><code>.py</code>, <code>.js</code>, <code>.ts</code>, <code>.sh</code>, <code>.ps1</code></td>
+</tr>
+<tr>
+<td>Documenti strutturati</td>
+<td><code>.docx</code>, <code>.pdf</code>, quando il contenuto è ispezionabile</td>
+</tr>
+</tbody>
+</table>
+<p>Il codice e gli script vengono letti come contenuto, mai eseguiti per l'analisi. Lo scanner usa regole statiche, strutture di istruzioni, normalizzazione Unicode e decodifiche limitate. Le lingue previste dalle regole correnti sono inglese, italiano, tedesco, francese e spagnolo; non è un servizio di traduzione né una garanzia di riconoscere ogni espressione in quelle lingue.</p>
+<p>Le evidenze distinguono tre livelli:</p>
+<table>
+<thead>
+<tr>
+<th>Livello nel report</th>
+<th>Significato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VISIBLE_CONTENT</code></td>
+<td>Testo del contenuto principale secondo l'estrattore</td>
+</tr>
+<tr>
+<td><code>HIDDEN_CONTENT</code></td>
+<td>Testo o strutture riconosciute come nascoste, commenti e altri contenuti non principali</td>
+</tr>
+<tr>
+<td><code>METADATA</code></td>
+<td>Proprietà, attributi, campi e metadati estratti dal formato</td>
+</tr>
+</tbody>
+</table>
+<p>HTML e documenti strutturati possono contenere commenti, nodi nascosti, testo alternativo, note, campi e tipografia anomala. L'estrattore cerca questi contenuti dove il formato lo permette e riporta la loro posizione. La separazione non equivale a una riproduzione esatta di ciò che mostrerebbe ogni browser o lettore PDF.</p>
+<p>Il frontmatter iniziale Markdown delimitato da <code>---</code> per YAML o <code>+++</code> per TOML è analizzato anche come metadati grezzi; l'intero sorgente resta coperto come testo visibile. Un blocco chiuso oltre 64 KiB o 4096 righe interrompe l'analisi. Un delimitatore iniziale senza chiusura resta testo Markdown ordinario, entro i limiti generali.</p>
+<p>OCR non è implementato. PDF/DOCX con immagini che richiedono riconoscimento, PDF cifrati, oggetti attivi o incorporati non ispezionabili e formati non supportati possono essere bloccati senza una lettura completa. XLSX, PPTX, EML, MSG, RTF e ODT non sono supportati nella distribuzione corrente; il registro per estrattori futuri non aggiunge automaticamente questi formati. Rinominare un'estensione non converte il documento.</p>
+<p>Un DOCX può contenere appendici in altri formati o riferimenti a contenuti esterni. Se Cheker non può ispezionarli completamente, il file risulta <strong>Non analizzabile / Bloccato</strong>; non significa necessariamente che sia infetto. Il report indica <code>DOCX_UNINSPECTED_PART</code>, <code>DOCX_ALTCHUNK_UNSUPPORTED</code> o <code>DOCX_EXTERNAL_CONTENT</code>. Ottenere dalla sorgente una versione autonoma in un formato analizzabile e sottoporla a una nuova scansione. I normali collegamenti vengono esaminati come metadati, senza aprire le destinazioni.</p>
+<p>I caratteri Unicode invisibili anomali possono produrre <strong>Da verificare</strong> anche in un documento ordinario. Il report mostra la posizione e rappresenta i caratteri con codici leggibili, per esempio <code>\U000e0061</code>. Le tre bandiere regionali RGI complete previste da Unicode sono riconosciute come uso ordinario; altri casi richiedono revisione. Non eliminare automaticamente gli indizi soltanto per ottenere un esito valido: controllare provenienza e significato del contenuto.</p>
+<h3 id="interpretare-lesito">Interpretare l'esito</h3>
+<p>Ogni report separa <strong>esito</strong>, <strong>decisione</strong>, <strong>severità</strong> e punteggio di rischio. Il punteggio da 0 a 100 è un indicatore determinato dalle regole; non rappresenta una probabilità statistica d'infezione.</p>
+<table>
+<thead>
+<tr>
+<th>Esito nella UI</th>
+<th>Codice</th>
+<th>Come comportarsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Valido ai controlli</strong></td>
+<td><code>VALID</code></td>
+<td>Analisi completa senza evidenze rilevate; valutare comunque provenienza e contesto prima dell'uso</td>
+</tr>
+<tr>
+<td><strong>Sospetto / infetto</strong></td>
+<td><code>INFECTED</code></td>
+<td>Esaminare le istruzioni o manipolazioni individuate; non è una diagnosi antivirus</td>
+</tr>
+<tr>
+<td><strong>Corrotto</strong></td>
+<td><code>CORRUPTED</code></td>
+<td>Struttura o formato malformato; ottenere una copia corretta dalla sorgente</td>
+</tr>
+<tr>
+<td><strong>Da verificare</strong></td>
+<td><code>REVIEW_REQUIRED</code></td>
+<td>Sono presenti indizi che richiedono revisione, anche deboli</td>
+</tr>
+<tr>
+<td><strong>Non analizzabile</strong></td>
+<td><code>UNSCANNABLE</code></td>
+<td>Controllo incompleto, formato non supportato, limite raggiunto o contenuto non ispezionabile</td>
+</tr>
+</tbody>
+</table>
+<p>La <strong>decisione</strong> usa <code>ALLOWED</code> (<strong>Consentito</strong>), <code>FLAGGED</code> (<strong>Da verificare</strong>), <code>QUARANTINED</code> (<strong>In quarantena</strong>) o <code>BLOCKED</code> (<strong>Bloccato</strong>), secondo controlli e policy. Per la lettura protetta non basta un singolo badge positivo: sono richiesti contemporaneamente <code>VALID</code>, <code>ALLOWED</code>, analisi completa e corrispondenza agli stessi byte. Una scansione incompleta non diventa valida perché non contiene evidenze.</p>
+<p>Nel <strong>Risultato della scansione</strong> leggere hash SHA-256, formato, numero di caratteri e segmenti, durata, versione delle regole, evidenze e <strong>Limiti della scansione</strong>. Espandere le evidenze per vedere regola, categoria, livello, posizione, eventuale riga e codifica. <strong>Report JSON</strong> scarica quel singolo report, con il suo ID e i dati disponibili; non scarica una copia del documento originale.</p>
+<p>Le decodifiche annidate hanno profondità massima 3 e limiti di espansione. Ogni worker ordinario ha al massimo 512 MiB di memoria, 10 secondi CPU e 12 secondi complessivi; sono disponibili al massimo due worker contemporanei. Un limite raggiunto produce un rifiuto o un'analisi incompleta, non un risultato parziale autorizzato. Le specifiche complete sono nel <a href="MANUALE_TECNICO.html">manuale tecnico</a> e in <a href="LINUX_SANDBOX.html">LINUX_SANDBOX.md</a>.</p>
+<h3 id="registro-ricerca-pagine-e-contatori">Registro, ricerca, pagine e contatori</h3>
+<p><strong>Registro dei file elaborati</strong> conserva ogni scansione salvata. Cercare per nome, percorso o hash, selezionare <strong>Tutti gli esiti</strong> oppure un esito specifico e usare <strong>Precedenti</strong> / <strong>Successivi</strong>. Le pagine contengono fino a <strong>25 scansioni</strong>. Il nome del file o la freccia della riga aprono il report storico. <strong>Aggiorna registro</strong> ricarica i dati; <strong>Azzera filtri</strong> ripristina la vista senza filtri.</p>
+<p>I riquadri <strong>File analizzati</strong>, <strong>Sospetti / infetti</strong>, <strong>Corrotti</strong>, <strong>Validi ai controlli</strong>, <strong>Da verificare</strong> e <strong>Non analizzabili</strong> mostrano i totali dell'intero registro. Fare clic su un riquadro filtra le righe per quell'esito. Ricerca e paginazione non riducono i totali globali; il piè di pagina riporta i risultati della selezione corrente.</p>
+<p><strong>Contenuti unici</strong> conta gli SHA-256 distinti, mentre <strong>File analizzati</strong> conta le elaborazioni salvate. Per esempio, caricare tre volte gli stessi byte produce tre scansioni e un solo contenuto unico. Due file con nomi differenti ma byte uguali condividono il contenuto unico. <strong>Decisioni di blocco</strong> è un conteggio delle decisioni: non è una sesta categoria di esito da sommare alle cinque precedenti.</p>
+<p>Un report descrive lo snapshot del momento indicato. Se il file cambia, il report precedente non autorizza i nuovi byte. Nel registro non è presente un comando per approvare manualmente un documento e aggirare i controlli di consegna.</p>
+<h2 id="5-monitorare-cartelle">5. Monitorare cartelle</h2>
+<p>In <strong>File Scanner</strong>, <strong>Cartelle da analizzare</strong> gestisce il monitor dei documenti. Le cartelle non vengono aggiunte automaticamente.</p>
+<ol>
+<li>Premere <strong>Aggiungi cartella</strong>.</li>
+<li>Inserire <strong>Percorso assoluto della cartella</strong>.</li>
+<li>Se necessario selezionare <strong>Includi le sottocartelle</strong>; senza questa opzione il monitor considera solo la cartella indicata.</li>
+<li>Premere <strong>Registra cartella</strong>.</li>
+<li>Verificare che il monitor sia attivo oppure premere <strong>Avvia monitor cartelle</strong>. <strong>Analizza ora</strong> avvia un passaggio manuale anche con il monitor fermo.</li>
+</ol>
+<p>Registrare una cartella autorizza la lettura dei suoi file per la scansione. Scegliere percorsi che contengano i documenti pertinenti. Il monitor non segue link simbolici e non sposta i file. La directory dati dell'applicazione e i suoi file riservati sono esclusi.</p>
+<p>Ogni cartella dispone dei controlli <strong>Analizza ora</strong>, <strong>Sospendi cartella</strong> / <strong>Abilita cartella</strong>, <strong>Mostra file nel registro</strong> e <strong>Rimuovi dal monitoraggio</strong>. La rimozione riguarda il monitoraggio: i documenti rimangono al loro posto. <strong>Ferma monitor cartelle</strong> arresta il monitor globale senza revocare le radici configurate.</p>
+<p>Aprire <strong>Ultimo esito</strong> per leggere file visti, analizzati, invariati, saltati, errori e non più presenti. <strong>Esporta passaggio</strong> scarica il riepilogo di quel passaggio. <strong>Copertura parziale</strong>, <strong>Non riuscito</strong>, <strong>Occupato</strong> o <strong>Interrotto</strong> non attestano che tutti i file della cartella siano stati analizzati.</p>
+<p>Il monitor usa eventi del filesystem e riconciliazioni periodiche. Evita nuove scansioni della stessa versione quando il contesto dei controlli è invariato; modifiche a contenuto, regole, policy, parser o runtime possono richiedere nuove analisi. Questo spiega perché un passaggio può mostrare molti file <strong>Invariati</strong> senza altrettanti report nuovi.</p>
+<p>Sono ammesse fino a 64 radici; un passaggio ha limiti, fra cui 2000 voci, 128 MiB e 60 secondi. Un albero grande può richiedere ulteriori passaggi. Controllare lo stato effettivo e gli errori, senza dedurre copertura completa dalla sola presenza della cartella nell'elenco. Le radici di questo monitor non configurano automaticamente le radici del lettore MCP protetto.</p>
+<h2 id="6-creare-una-copia-testuale-da-html">6. Creare una copia testuale da HTML</h2>
+<p>La funzione <strong>Crea copia testuale</strong>, nella pagina <strong>File Scanner</strong>, usa il profilo <code>html-text-v1</code>. È una trasformazione esplicita da HTML a testo UTF-8. L'originale rimane intatto e la copia può perdere markup, metadati, immagini, collegamenti e altre informazioni. Non è una riscrittura semantica generale di contenuti pericolosi.</p>
+<ol>
+<li>Scegliere <strong>File HTML</strong> e selezionare un <code>.html</code> o <code>.htm</code>, oppure scegliere <strong>Percorso Linux</strong> e inserire il percorso assoluto.</li>
+<li>Se si dispone dell'hash atteso, aprire <strong>Verifica un hash atteso (opzionale)</strong> e inserire lo SHA-256 di 64 caratteri esadecimali. La richiesta sarà rifiutata se i byte non corrispondono.</li>
+<li>Premere <strong>Crea copia testuale</strong>. In questo riquadro la sola selezione del file <strong>non</strong> avvia la trasformazione.</li>
+<li>Attendere nella pagina l'esito della richiesta. Esaminare separatamente <strong>Trasformazione</strong> e <strong>Consegna</strong>, la motivazione e i collegamenti <strong>Apri report originale</strong> / <strong>Apri report copia</strong>.</li>
+<li>Se la consegna è consentita, premere <strong>Scarica copia testuale</strong>. Il browser verifica dimensione e SHA-256 e salva gli esatti byte restituiti.</li>
+</ol>
+<p><strong>Copia creata</strong> (<code>SANITIZED</code>) indica solo il completamento della trasformazione. La consegna può comunque essere <strong>Negata</strong>. Per consegnare la copia, il servizio deve completare i controlli richiesti, analizzare gli esatti byte prodotti e registrare l'operazione con una policy coerente. Se mancano queste condizioni, non compare un download autorizzato.</p>
+<p>Il profilo accetta HTML bilanciato del sottoinsieme documentato, fino a 10 MiB in ingresso; l'uscita è limitata a <strong>256 KiB UTF-8</strong>, incluso il newline finale. Accetta UTF-8 oppure UTF-16 con BOM. Commenti, metadati, script, template, attributi e sottostrutture nascoste riconosciute vengono omessi. Non esegue JavaScript, non recupera risorse esterne e non applica il rendering di un browser. CSS e tag non supportati, strutture incomplete e superamento dei limiti provocano un rifiuto. I dettagli del sottoinsieme sono in <a href="SANITIZZAZIONE.html">SANITIZZAZIONE.md</a>.</p>
+<p>Il <strong>Registro delle trasformazioni</strong> contiene metadati, hash, motivazioni, conteggi degli elementi omessi e riferimenti ai report. <strong>Dettagli</strong> apre una singola operazione; <strong>Precedenti</strong> / <strong>Successivi</strong> mostrano pagine di <strong>10 operazioni</strong>. Lo storico non conserva il corpo della copia: dopo una nuova richiesta, la chiusura o il ricaricamento della pagina non è possibile riscaricarla dallo storico. Se serve ancora, occorre ripetere esplicitamente la trasformazione e i controlli.</p>
+<p>Se vengono completate entrambe le scansioni, l'originale HTML e la copia aggiungono <strong>due elaborazioni</strong> al registro ordinario, anche quando la consegna finale è negata. La trasformazione non aggiunge una terza scansione né un sesto esito. Se si registra soltanto l'analisi dell'originale, rimane un report. Un hash atteso non corrispondente rifiuta la richiesta prima delle scansioni.</p>
+<h2 id="7-configurare-policy-e-monitor-delle-sorgenti">7. Configurare policy e monitor delle sorgenti</h2>
+<p>Aprire <strong>Policy e controlli</strong>. La pagina mostra la versione attiva della policy.</p>
+<p>In <strong>Decisioni sulle modifiche</strong> scegliere un'azione per <strong>Modifica del solo formato</strong>, <strong>Modifica semantica</strong>, <strong>Modifica rilevante per la sicurezza</strong> e <strong>Contenuto non approvato</strong>. Le opzioni disponibili sono <strong>Consenti</strong>, <strong>Avvisa</strong>, <strong>Richiedi approvazione</strong>, <strong>Quarantena</strong> e <strong>Blocca</strong>.</p>
+<p>Queste azioni classificano la risposta alla modifica. Selezionare <strong>Consenti</strong> non crea un'approvazione firmata per un contenuto che non ne ha una valida; il gate continua a verificare contenuto, versione, policy e audit.</p>
+<p>In <strong>Soglie del File Scanner</strong>, impostare <strong>Segnalazione</strong>, <strong>Quarantena</strong> e <strong>Blocco</strong> come interi che rispettano:</p>
+<pre><code class="language-text">1 ≤ Segnalazione &lt; Quarantena &lt; Blocco ≤ 100
+</code></pre>
+<p><strong>Salva policy</strong> registra la nuova versione. <strong>Annulla modifiche</strong> abbandona le modifiche non salvate nel modulo. Le policy sono versionate e firmate; le approvazioni devono essere valide per la policy corrente. Dopo una modifica controllare nuovamente i componenti da approvare e gli esiti del gate. Una schermata obsoleta può ricevere un conflitto: aggiornare e rivedere i valori correnti prima di salvare.</p>
+<p>Le soglie non rendono completa una scansione interrotta e non autorizzano la consegna di file con evidenze deboli. Non sono presenti un editor delle regole o un comando per installare estrattori arbitrari dalla UI; modifiche a regole e formati appartengono al processo tecnico di aggiornamento.</p>
+<p>Il riquadro <strong>Monitor delle sorgenti</strong> controlla le configurazioni MCP registrate. Il suo interruttore si applica immediatamente ed è separato da <strong>Salva policy</strong>. Verificare <strong>Monitor attivo</strong> / <strong>Monitor inattivo</strong>, sorgenti osservate ed eventuali errori. Questo monitor è distinto da <strong>Cartelle da analizzare</strong>, che riguarda i documenti. Disattivare un monitor non trasforma una vecchia approvazione in un'autorizzazione permanente: il gate rilegge la sorgente quando viene interrogato.</p>
+<h2 id="8-verificare-ed-esportare-laudit">8. Verificare ed esportare l'audit</h2>
+<p><strong>Registro audit</strong> mostra gli eventi registrati, con tipo, componente, data e numero di sequenza. Espandere un evento per leggere dettagli, hash e collegamento all'evento precedente. <strong>Verifica integrità</strong> controlla la catena; <strong>Aggiorna audit</strong> ricarica la vista.</p>
+<p>La conferma <strong>La catena audit è integra</strong> indica che la verifica prevista dal prodotto è riuscita rispetto allo stato disponibile. Se compare <strong>Anomalia nella catena audit</strong>, interrompere l'uso dei componenti interessati e conservare lo stato per la diagnosi. Non cancellare eventi, checkpoint o chiavi per far scomparire l'errore.</p>
+<p>I limiti della consultazione sono distinti:</p>
+<table>
+<thead>
+<tr>
+<th>Operazione</th>
+<th>Copertura effettiva</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pannello <strong>Registro audit</strong></td>
+<td>Fino agli ultimi <strong>200 eventi</strong>; ricerca e filtro operano sugli eventi caricati, senza paginazione dello storico completo</td>
+</tr>
+<tr>
+<td><strong>Esporta audit</strong></td>
+<td>JSON con risultato della verifica e fino agli ultimi <strong>100.000 eventi</strong></td>
+</tr>
+<tr>
+<td>Verifica della catena</td>
+<td>Controllo dell'intera catena disponibile, distinto dal numero di eventi visualizzati o esportati</td>
+</tr>
+</tbody>
+</table>
+<p>L'esportazione non include necessariamente l'intera cronologia quando supera 100.000 eventi. Il file contiene i più recenti entro il limite, anche se la verifica riporta un numero maggiore di eventi controllati. Non è un backup dei database e non permette di ricostruire da solo tutte le approvazioni e le chiavi.</p>
+<p>Gli eventi sono firmati e collegati tramite hash, con un checkpoint firmato. La protezione del dispositivo, della chiave privata e dei backup resta necessaria. Per conservare riferimenti fidati esterni e gestire ripristini o rollback seguire il <a href="MANUALE_TECNICO.html">manuale tecnico</a>.</p>
+<h2 id="9-usare-la-cli-e-collegare-un-agente">9. Usare la CLI e collegare un agente</h2>
+<p>Dalla cartella dell'app installata, la CLI espone questi comandi:</p>
+<pre><code class="language-bash">bash guard.sh --help
+bash guard.sh discover /srv/mcp/config.json
+bash guard.sh list
+bash guard.sh scan /srv/documenti/nota.txt
+bash guard.sh verify-audit
+</code></pre>
+<p>Sostituire i percorsi di esempio con file esistenti. <code>discover</code> registra o aggiorna la configurazione; <code>scan</code> registra un nuovo report. Quando l'app è aperta, la CLI usa il servizio locale; quando non c'è un listener, può aprire lo stesso archivio con accesso esclusivo. Non avviare istanze indipendenti sullo stesso archivio. Per una porta diversa, l'opzione globale deve precedere il comando:</p>
+<pre><code class="language-bash">bash guard.sh --api-url http://127.0.0.1:8767 list
+</code></pre>
+<p>Per interrogare il gate, sostituire ID, hash e versione con quelli della definizione che il client intende realmente usare:</p>
+<pre><code class="language-bash">bash guard.sh gate ID_COMPONENTE --hash HASH_CANONICO --version NUMERO_VERSIONE
+</code></pre>
+<p>Questi tre valori sono segnaposto, non dati da copiare letteralmente. Un risultato positivo riguarda la versione verificata; il client deve usare quella definizione e negare l'operazione in caso di errore, risposta incompleta o cambiamento del contenuto.</p>
+<p>Per leggere gli stessi byte che hanno superato l'analisi:</p>
+<pre><code class="language-bash">bash guard.sh guarded-read /srv/documenti/nota.txt
+</code></pre>
+<p><code>guarded-read</code> emette il contenuto su stdout solo con analisi completa, esito <code>VALID</code>, decisione <code>ALLOWED</code> e hash corrispondente. In caso di rifiuto stdout è vuoto e stderr riporta un riepilogo senza testo sorgente. Per PDF/DOCX, un eventuale output consentito è il file binario originale, non testo estratto: non inviarlo direttamente a un terminale testuale. Il chiamante deve controllare il codice di uscita e usare esattamente i byte ricevuti.</p>
+<table>
+<thead>
+<tr>
+<th>Codice di uscita</th>
+<th>Significato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Operazione riuscita o uso consentito, secondo il comando</td>
+</tr>
+<tr>
+<td><code>3</code></td>
+<td>Uso negato oppure audit non valido</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>Errore operativo</td>
+</tr>
+</tbody>
+</table>
+<p>Il lettore MCP protetto offre <code>scan_file</code> e <code>read_file</code> su trasporto stdio. Richiede l'app avviata e radici esplicite impostate nel client; non eredita le cartelle selezionate nella UI. <code>read_file</code> consegna solo testo UTF-8 entro 256 KiB negli specifici formati ammessi. PDF, DOCX, <code>.env</code> e <code>.log</code> sono disponibili con <code>scan_file</code>, ma non con <code>read_file</code>. Seguire <a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a> per la configurazione completa, senza inserire il token nei file del client.</p>
+<h2 id="10-risolvere-problemi-conservare-i-dati-e-chiedere-supporto">10. Risolvere problemi, conservare i dati e chiedere supporto</h2>
+<h3 id="problemi-comuni">Problemi comuni</h3>
+<table>
+<thead>
+<tr>
+<th>Messaggio o situazione</th>
+<th>Azione consigliata</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Backend non raggiungibile</strong></td>
+<td>Verificare che il terminale dell'app sia aperto, leggere eventuali errori di avvio e controllare indirizzo e porta</td>
+</tr>
+<tr>
+<td><strong>Token non valido</strong></td>
+<td>Disconnettere la scheda e usare il token dell'istanza effettiva; non riutilizzare quello di un'altra cartella dati</td>
+</tr>
+<tr>
+<td>Inventario improvvisamente vuoto</td>
+<td>Controllare cartella di avvio e <code>MCP_GUARD_DATA</code>; non ricreare approvazioni prima di aver identificato l'istanza corretta</td>
+</tr>
+<tr>
+<td>Archivio già in uso o porta occupata</td>
+<td>Verificare se un'istanza è già avviata; utilizzare quella o arrestarla ordinatamente prima di riavviare. Non cancellare il lock per forzare l'accesso</td>
+</tr>
+<tr>
+<td>Percorso non disponibile o non leggibile</td>
+<td>Usare un percorso Linux assoluto, verificare esistenza e permessi dell'utente del backend e scegliere un file regolare; i flussi protetti rifiutano link e percorsi riservati</td>
+</tr>
+<tr>
+<td>Contenuto o versione cambiati durante l'approvazione</td>
+<td>Rileggere la sorgente, confrontare differenze e hash, poi esaminare di nuovo la versione corrente</td>
+</tr>
+<tr>
+<td>Policy cambiata durante un'operazione</td>
+<td>Ricaricare la policy e rivalutare l'operazione; un download negato non va trattato come riuscito</td>
+</tr>
+<tr>
+<td><code>OCR_REQUIRED</code>, PDF cifrato o formato non supportato</td>
+<td>Procurarsi una versione testuale ispezionabile dalla sorgente fidata e analizzarla separatamente; conservare la distinzione rispetto all'originale</td>
+</tr>
+<tr>
+<td><code>TIME_LIMIT</code>, limite di memoria o struttura</td>
+<td>Leggere i limiti del report. Un file non analizzato non è autorizzato; evitare tentativi ripetuti senza prima comprenderne la causa</td>
+</tr>
+<tr>
+<td>Worker occupati / <code>WORKERS_BUSY</code></td>
+<td>Lasciare terminare le scansioni o i passaggi in corso, poi riprovare la richiesta necessaria</td>
+</tr>
+<tr>
+<td>Sandbox indisponibile</td>
+<td>Eseguire la diagnostica prevista dal manuale tecnico e verificare kernel, Landlock e libseccomp; non disattivare l'isolamento per ottenere un esito positivo</td>
+</tr>
+<tr>
+<td>Copertura cartella parziale</td>
+<td>Aprire <strong>Ultimo esito</strong>, leggere limiti ed errori, correggere le cause e controllare gli ulteriori passaggi</td>
+</tr>
+<tr>
+<td><code>UNSUPPORTED_CSS</code> o <code>MALFORMED_HTML</code> nella copia</td>
+<td>Consultare il sottoinsieme HTML supportato; un documento visualizzabile dal browser può essere fuori profilo</td>
+</tr>
+<tr>
+<td>Copia HTML presente nello storico ma non scaricabile</td>
+<td>Lo storico conserva metadati. Se occorre una copia, avviare esplicitamente una nuova trasformazione</td>
+</tr>
+<tr>
+<td>Hash o dimensione della copia non verificabili nel browser</td>
+<td>Non utilizzare una copia ricostruita manualmente dalla risposta; conservare ID e messaggio e verificare browser e installazione</td>
+</tr>
+<tr>
+<td>Anomalia audit o integrità della copia registrata</td>
+<td>Sospendere le operazioni interessate, conservare lo stato e seguire il ripristino tecnico; non eliminare le evidenze</td>
+</tr>
+</tbody>
+</table>
+<h3 id="backup-e-ripristino">Backup e ripristino</h3>
+<p>I report esportati sono utili per la consultazione, ma <strong>non sostituiscono il backup dell'intera cartella dati</strong>. L'archivio comprende database, token, chiave di firma e checkpoint; copiarne solo una parte può produrre uno stato incoerente.</p>
+<p>Per una copia manuale coerente:</p>
+<ol>
+<li>Identificare la cartella dati effettiva, compresa l'eventuale impostazione <code>MCP_GUARD_DATA</code>.</li>
+<li>Arrestare ordinatamente l'applicazione e gli eventuali client o comandi che scrivono nello stesso archivio. Se il servizio si riavvia automaticamente, seguire prima la procedura systemd del manuale tecnico.</li>
+<li>Copiare <strong>l'intera cartella dati</strong>, inclusi file nascosti e gli eventuali file SQLite ausiliari presenti, verso una nuova destinazione protetta. Non limitarsi ai soli file con estensione <code>.sqlite3</code> e non cancellare manualmente file WAL, checkpoint o lock.</li>
+<li>Conservare insieme l'identificazione della versione applicativa e le informazioni necessarie a individuare il backup. Conservare separatamente anche le configurazioni MCP sorgenti, con percorsi e versioni coerenti: gli snapshot storici non sostituiscono i file correnti richiesti dal gate. Proteggere le copie almeno quanto i dati originali; possono contenere credenziali e materiale di firma. Scegliere una destinazione esterna alle cartelle del runtime e con permessi di accesso effettivamente applicati dal filesystem.</li>
+<li>Riavviare l'applicazione e verificare l'audit. Periodicamente verificare anche il recupero della copia in un ambiente separato, secondo il manuale tecnico.</li>
+</ol>
+<p>Per il ripristino, tenere l'app arrestata, conservare lo stato problematico e ripristinare un insieme coerente seguendo il <a href="MANUALE_TECNICO.html">manuale tecnico</a>. Non fondere file provenienti da backup differenti e non generare nuove chiavi per far accettare una vecchia cronologia. Il ripristino di dati e checkpoint richiede controlli d'integrità e confronto con i riferimenti fidati disponibili.</p>
+<p>La cartella dati può contenere snapshot di configurazioni con segreti originali. Anche i report possono rivelare nomi, percorsi o frammenti di documenti. La mascheratura dei valori riconosciuti non garantisce di rimuovere ogni dato sensibile scritto in testo libero.</p>
+<h3 id="preparare-una-richiesta-di-supporto">Preparare una richiesta di supporto</h3>
+<p>Annotare versione dell'applicazione, distribuzione Linux, versione Python, messaggio o codice di errore, ora dell'evento, azione eseguita e ID del report o dell'operazione. Aggiungere l'esito della diagnostica se pertinente. Per una riproduzione, preferire un documento innocuo creato appositamente che mostri lo stesso problema.</p>
+<p>Prima di condividere un report JSON o uno screenshot, esaminarlo e rimuovere dati personali, nomi e percorsi riservati. Non condividere <code>api-token</code>, chiavi private, cartella dati, backup completi o configurazioni contenenti credenziali. Se si segnala un problema sul repository pubblico, includere soltanto materiale adatto alla pubblicazione. Non esiste un invio automatico dei documenti al supporto dalla console.</p>
+<p>Per aggiornamento, diagnosi del runtime, permessi, backup coerenti e gestione del servizio consultare <a href="MANUALE_TECNICO.html">MANUALE_TECNICO.md</a>. I risultati delle prove per ciascuna versione, con limiti e attribuzione, sono in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<h2 id="11-domande-frequenti">11. Domande frequenti</h2>
+<p><strong>Basta lasciare aperta la dashboard per proteggere tutti gli agenti?</strong><br />
+No. L'integrazione deve interrogare il gate o usare la lettura protetta prima dell'uso. Un altro programma può ignorare la console e leggere direttamente il filesystem.</p>
+<p><strong>“Sospetto / infetto” significa che ho un virus?</strong><br />
+No. Indica istruzioni o manipolazioni sospette rilevate nel contenuto. Per malware eseguibile serve anche una protezione adatta a quel tipo di minaccia.</p>
+<p><strong>Posso ignorare un'evidenza debole perché il punteggio è basso?</strong><br />
+Un'evidenza debole richiede revisione e impedisce la consegna protetta. Il punteggio non sostituisce la lettura di esito, completezza e limiti. La UI non offre un'approvazione manuale dei file per aggirare questa condizione.</p>
+<p><strong>Un file valido oggi rimane valido se cambia domani?</strong><br />
+Il report riguarda gli esatti byte identificati dal suo SHA-256. Un contenuto cambiato richiede una nuova verifica; il gate e i lettori protetti controllano la versione che viene effettivamente usata.</p>
+<p><strong>Perché devo riapprovare una configurazione dopo aver cambiato solo spazi?</strong><br />
+Il prodotto registra anche la variazione dei byte della sorgente e lega la fiducia alla versione precisa. La differenza viene classificata come formale, ma non riutilizza automaticamente l'approvazione precedente.</p>
+<p><strong>Revoca e quarantena cancellano qualcosa?</strong><br />
+No. Negano l'uso attraverso i controlli integrati. I file originali restano dove si trovano.</p>
+<p><strong>Perché il numero di scansioni è maggiore del numero di documenti?</strong><br />
+Ogni elaborazione salvata conta. Scansioni ripetute e le due analisi di una copia HTML aumentano quel totale; <strong>Contenuti unici</strong> conta invece gli hash distinti.</p>
+<p><strong>Perché trovo più eventi nella verifica audit che nel pannello?</strong><br />
+La verifica considera la catena disponibile; il pannello carica fino a 200 eventi e l'esportazione fino a 100.000. Sono limiti diversi, non una prova di perdita degli eventi precedenti.</p>
+<p><strong>Posso scaricare una copia HTML dal registro dopo aver chiuso la pagina?</strong><br />
+No. Lo storico conserva soltanto metadati e collegamenti ai report. Occorre una nuova richiesta esplicita, con nuova trasformazione e controlli.</p>
+<p><strong>Posso usare la copia testuale al posto dell'HTML senza leggerla?</strong><br />
+La copia può perdere informazioni e non equivale all'originale. Verificarne contenuto e adeguatezza all'uso previsto, anche quando la consegna è consentita.</p>
+<p><strong>Il monitor delle cartelle e quello delle sorgenti sono lo stesso comando?</strong><br />
+No. Il primo analizza documenti nelle cartelle registrate in <strong>File Scanner</strong>; il secondo controlla le configurazioni MCP e si gestisce da <strong>Policy e controlli</strong>. Le radici del lettore MCP sono configurate separatamente nel client.</p>
+<p><strong>Chi è l'approvatore registrato?</strong><br />
+È il nome dichiarato da chi opera con il token amministrativo locale. La firma lega l'approvazione al contenuto e alla chiave dell'istanza; non autentica separatamente una persona o un account aziendale.</p>
+<p><strong>Posso estendere formati e lingue dalla console?</strong><br />
+La console corrente non installa regole o estrattori. Le estensioni richiedono un aggiornamento tecnico verificato; la sola presenza di un registro per formati futuri non rende supportato un nuovo tipo di file.</p>
+<h2 id="riferimenti">Riferimenti</h2>
+<ul>
+<li><a href="MANUALE_TECNICO.html">Manuale tecnico</a>: installazione gestita, struttura, esercizio e recupero.</li>
+<li><a href="MCP_INTEGRATION.html">Integrazione MCP</a>: configurazione del lettore protetto e relativi limiti.</li>
+<li><a href="SANITIZZAZIONE.html">Copia testuale HTML</a>: profilo, controlli e codici di rifiuto.</li>
+<li><a href="LINUX_SANDBOX.html">Sandbox Linux</a>: requisiti e confini dell'isolamento.</li>
+<li><a href="ESTRATTORI.html">Registro degli estrattori</a>: estensioni tecniche e formati non ancora implementati.</li>
+<li><a href="VALIDAZIONE.html">Validazione</a>: prove eseguite e loro attribuzione alle versioni.</li>
+<li><a href="REQUISITI_COPERTURA.html">Requisiti e copertura</a>: confronto fra richiesta originaria e funzionalità realizzate.</li>
+</ul>
+<p>I nomi dei controlli di questo manuale sono verificati sui sorgenti della console italiana. I comandi sono confrontati con gli script di distribuzione e con l'help della CLI; il documento non dichiara nuove prove su dati dell'utente.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

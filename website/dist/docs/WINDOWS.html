@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>App Windows · Cheker</title><meta name="description" content="App Windows di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html" aria-current="page">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="WINDOWS.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="cheker-per-windows">Cheker per Windows</h1>
+<p>Il pacchetto Windows x64 apre una finestra dedicata con la dashboard. Il motore di analisi gira nella distribuzione Linux predefinita di <strong>WSL 2</strong>: le protezioni Linux e i limiti dei formati rimangono gli stessi. Non è un motore di scansione nativo Windows.</p>
+<h2 id="stato-della-distribuzione">Stato della distribuzione</h2>
+<p>Anteprima in collaudo. Il primo EXE è compilato; le prove specifiche della finestra Windows sono in corso. I risultati Linux, anche quando conclusi, non costituiscono un collaudo della GUI Windows. Consultare <a href="VALIDAZIONE.html">Validazione</a> per le prove attribuite a ciascun artefatto.</p>
+<h2 id="primo-avvio">Primo avvio</h2>
+<ol>
+<li>Estrai tutto il pacchetto ZIP in una cartella scrivibile, per esempio <code>D:\Cheker\app\windows</code>. EXE, DLL e cartella <code>linux</code> devono restare insieme.</li>
+<li>Fai doppio clic su <strong>Cheker.exe</strong>. Al primo avvio servono alcuni minuti e una connessione Internet per installare le dipendenze Python fissate nel pacchetto.</li>
+<li>La dashboard si collega automaticamente. Apri <strong>File Scanner</strong>, premi <strong>Scegli file</strong> e seleziona i documenti nelle cartelle Windows.</li>
+<li>Consulta il rapporto di ogni file e i totali. Chiudendo la finestra si arresta il suo motore; i risultati salvati rimangono disponibili al prossimo avvio.</li>
+</ol>
+<p>La guida <code>LEGGIMI.html</code> inclusa nel pacchetto è consultabile anche senza avviare il programma.</p>
+<h2 id="requisiti">Requisiti</h2>
+<ul>
+<li>Windows x64 con .NET Framework 4.8 e WSL 2.</li>
+<li>Una distribuzione WSL configurata come predefinita, con Python 3.11 o successivo e il modulo <code>venv</code>.</li>
+<li>Microsoft Edge WebView2 Runtime.</li>
+<li>Una cartella scrivibile e accesso Internet per la prima installazione delle dipendenze. Dopo la preparazione, l'analisi dei documenti avviene localmente.</li>
+</ul>
+<p>Per preparare WSL seguire la <a href="https://learn.microsoft.com/windows/wsl/install">guida Microsoft</a>. Per Debian il comando Windows è:</p>
+<pre><code class="language-powershell">wsl --install -d Debian
+</code></pre>
+<p>Il sistema può richiedere autorizzazione amministratore e riavvio. Aprire Debian almeno una volta e completare la configurazione dell'utente. Nella distribuzione Linux:</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install python3 python3-venv
+python3 --version
+</code></pre>
+<p>La versione deve essere almeno 3.11. Per selezionare la distribuzione predefinita, da Windows:</p>
+<pre><code class="language-powershell">wsl --set-default Debian
+</code></pre>
+<p>WebView2 è disponibile dal <a href="https://developer.microsoft.com/microsoft-edge/webview2/#download-section">sito Microsoft</a>. Il launcher mostra indicazioni quando non trova i prerequisiti; non installa automaticamente componenti di sistema né modifica impostazioni di sicurezza.</p>
+<h2 id="dati-cartelle-e-aggiornamenti">Dati, cartelle e aggiornamenti</h2>
+<p>La cartella <code>data-linux</code> accanto all'EXE contiene i dati di questa installazione Windows. È distinta dai dati di altre installazioni e dalle anteprime Linux. <code>logs</code> contiene i registri di installazione e servizio; <code>profilo-interfaccia</code> è il profilo WebView2 locale. Queste cartelle non fanno parte del pacchetto distribuito né del repository.</p>
+<p>Per caricare singoli file si usa il selettore Windows. Per sorvegliare cartelle o inserire un percorso si usa la forma Linux: normalmente <code>D:\Documenti</code> diventa <code>/mnt/d/Documenti</code>.</p>
+<p>Le virtualenv Python non sono trasferibili. Estrarre il pacchetto nella destinazione definitiva prima del primo avvio. Per cambiare destinazione, estrarre una nuova copia; con tutte le finestre chiuse, conservare un backup e trasferire l'intera cartella dati nella nuova installazione. Non sovrapporre cartelle dati mentre un motore è in esecuzione.</p>
+<h2 id="diagnostica">Diagnostica</h2>
+<table>
+<thead>
+<tr>
+<th>Messaggio</th>
+<th>Intervento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WSL non risponde</td>
+<td>Avviare la distribuzione, completare la configurazione e controllare che sia la predefinita.</td>
+</tr>
+<tr>
+<td>Python o <code>venv</code> mancanti</td>
+<td>Installarli nella distribuzione, poi premere <strong>Riprova</strong>.</td>
+</tr>
+<tr>
+<td>Protezioni Linux non disponibili</td>
+<td>Aggiornare WSL con <code>wsl --update</code>; il motore non aggira il controllo.</td>
+</tr>
+<tr>
+<td>Windows non raggiunge il motore</td>
+<td>Verificare il collegamento localhost secondo la <a href="https://learn.microsoft.com/windows/wsl/networking">guida Microsoft alla rete WSL</a>.</td>
+</tr>
+<tr>
+<td>Pacchetto non verificabile</td>
+<td>Estrarre nuovamente il pacchetto originale in una nuova cartella; conservare i dati e i log.</td>
+</tr>
+</tbody>
+</table>
+<p>I log <code>logs/installazione.log</code> e <code>logs/servizio.log</code> restano locali. Prima di condividerli controllarne il contenuto.</p>
+<h2 id="interfaccia-e-collegamento-al-motore">Interfaccia e collegamento al motore</h2>
+<p>L'EXE è una finestra WinForms con WebView2. Un processo WSL prepara l'ambiente verificando il manifesto del rilascio e i moduli installati, esegue la diagnostica della sandbox e avvia il backend su una porta loopback libera. La finestra verifica la risposta HMAC del servizio anche dal lato Windows prima di aprire la dashboard.</p>
+<p>Il token passa nella pipe privata del processo e viene inserito nella sessione WebView2 soltanto per l'origine locale verificata. Non viene passato negli argomenti del processo, nella query o nel frammento dell'URL. La finestra non espone oggetti nativi alla pagina; navigazioni e richieste fuori dall'origine dell'app sono bloccate. La chiusura invia al processo un comando di arresto e attende la terminazione del motore.</p>
+<p>Questi controlli non proteggono da un amministratore del dispositivo o da un processo che possa modificare il programma e leggere i dati dell'utente. Il manifesto SHA-256 controlla i byte del pacchetto, non l'identità dell'editore. Questa anteprima <strong>non ha firma Authenticode</strong>: Windows può mostrare un avviso per un'applicazione non riconosciuta.</p>
+<h2 id="costruire-il-pacchetto">Costruire il pacchetto</h2>
+<p>Sorgenti: <a href="https://github.com/okno/cheker/blob/main/windows/Cheker.cs">finestra C#</a>, <a href="https://github.com/okno/cheker/blob/main/windows/desktop_bridge.py">ponte WSL</a>, <a href="https://github.com/okno/cheker/blob/main/windows/build_windows.py">builder</a>. La compilazione attuale richiede WSL con il compilatore .NET Framework x64 disponibile in Windows.</p>
+<p>Il builder riceve un archivio Linux già qualificato, il suo SHA-256, il pacchetto NuGet ufficiale <strong>Microsoft.Web.WebView2 1.0.4191.47</strong> e una destinazione nuova. Verifica entrambi gli hash, copia le librerie necessarie e le licenze Microsoft, compila l'EXE e produce ZIP e manifesto. Il pacchetto SDK è disponibile su <a href="https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.4191.47">NuGet</a>.</p>
+<pre><code class="language-bash">python3 windows/build_windows.py \
+  --linux-release /percorso/mcp-integrity-guard-1.0.0-linux.tar.gz \
+  --linux-sha256 SHA256_VERIFICATO_DEL_RILASCIO \
+  --sdk-package /percorso/Microsoft.Web.WebView2.1.0.4191.47.nupkg \
+  --output /percorso/nuovo/cheker-windows
+</code></pre>
+<p>La documentazione Microsoft descrive <a href="https://learn.microsoft.com/microsoft-edge/webview2/get-started/winforms">WinForms con WebView2</a> e l'<a href="https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.addscripttoexecuteondocumentcreatedasync">inizializzazione degli script prima del documento</a>. Il pacchetto non include un programma antivirus generale né promette il riconoscimento di ogni file malevolo. Per i formati effettivi e gli esiti bloccanti vedere il <a href="MANUALE_UTENTE.html">manuale utente</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

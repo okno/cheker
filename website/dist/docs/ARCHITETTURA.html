@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Architettura · Cheker</title><meta name="description" content="Architettura di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html" aria-current="page">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="ARCHITETTURA.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="architettura-e-modello-delle-minacce">Architettura e modello delle minacce</h1>
+<p>Linux è la piattaforma principale. Il confinamento documentale richiede un kernel con Landlock ABI almeno 3 e libseccomp; in sua assenza il worker nega l’analisi. App e sviluppo restano separati in <code>D:\Cheker\app</code> e <code>D:\Cheker\dev</code>, accessibili in WSL come <code>/mnt/d/Cheker/app</code> e <code>/mnt/d/Cheker/dev</code>. Requisiti di installazione e architetture effettivamente provate sono distinti nel <a href="VALIDAZIONE.html">registro di validazione</a>.</p>
+<pre><code class="language-mermaid">flowchart LR
+    UI[Console React locale] --&gt; API[FastAPI loopback e Bearer token]
+    FS[Configurazioni locali] --&gt; WATCH[Watchdog e riconciliazione]
+    WATCH --&gt; CORE[Normalizzazione, fingerprint e diff]
+    API --&gt; CORE
+    CORE --&gt; STORE[SQLite con lock esclusivo]
+    CORE --&gt; SIGN[Ed25519: approval, policy e audit]
+    SIGN --&gt; HEAD[Checkpoint audit firmato]
+    CLIENT[Client MCP integrato] --&gt; GATE[Gate prima dell'uso]
+    GATE --&gt; CORE
+    CLI[CLI / lettore MCP stdio] --&gt; TRANSPORT[TCP locale con prova HMAC]
+    TRANSPORT --&gt; API
+    FSWATCH[Monitor cartelle esplicite] --&gt; API
+    FILE[Snapshot documento] --&gt; WORKER[Worker Linux: Landlock + seccomp]
+    API --&gt; WORKER
+    WORKER --&gt; BOUNDARY[Validazione report, hash e completamento]
+    BOUNDARY --&gt; REPORT[Registro persistente, totali e audit]
+    BOUNDARY --&gt; READ[Consegna degli stessi byte se VALID + ALLOWED]
+    API --&gt; COPY[Richiesta esplicita di copia HTML]
+    COPY --&gt; INPUT[Scansione completa originale]
+    INPUT --&gt; TRANSFORM[Worker confinato HTML in testo UTF-8]
+    TRANSFORM --&gt; OUTPUT[Nuova scansione degli esatti byte]
+    OUTPUT --&gt; COPYRECORD[Metadati, due report e audit]
+    COPYRECORD --&gt; DELIVERY[Consegna POST solo ALLOWED]
+</code></pre>
+<h2 id="beni-e-confini">Beni e confini</h2>
+<p>I beni protetti sono l’identità della versione approvata, la configurazione di connessione, le evidenze di audit e i contenuti da consegnare al modello. Fonti esterne, nomi dei tool, descrizioni, file e valori MCP sono dati non fidati. Il codice degli adapter, il pacchetto applicativo, l’account locale, la chiave e il checkpoint sono parte della base fidata.</p>
+<table>
+<thead>
+<tr>
+<th>Minaccia</th>
+<th>Controllo implementato</th>
+<th>Limite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0042 mutazione dopo approvazione</td>
+<td>RAW/canonical/fingerprint, versioni, rilettura al gate</td>
+<td>Il client deve usare la definizione verificata</td>
+</tr>
+<tr>
+<td>0052 config write</td>
+<td>Monitor e diff dei campi, invalidazione dei componenti figli</td>
+<td>Non impedisce la scrittura OS, nega l’uso tramite gate</td>
+</tr>
+<tr>
+<td>Riutilizzo nome/ID</td>
+<td>Identità + versione + hash firmati</td>
+<td>Non attesta comportamento dell’eseguibile</td>
+</tr>
+<tr>
+<td>Ripristino di una vecchia definizione</td>
+<td>Nuova versione per ogni modifica osservata</td>
+<td>Modifiche transitorie non osservate fra due letture non sono ricostruibili</td>
+</tr>
+<tr>
+<td>Approval o database manipolati</td>
+<td>Verifica firma, hash snapshot e lifecycle firmato</td>
+<td>Amministratore con chiave fuori dal modello</td>
+</tr>
+<tr>
+<td>Audit modificato/troncato</td>
+<td>Hash chain, firme evento e checkpoint separato</td>
+<td>Rollback completo richiede checkpoint esterno fidato</td>
+</tr>
+<tr>
+<td>Prompt injection in file/tool description</td>
+<td>Regole multilingua, normalizzazione, hidden/encoding</td>
+<td>Euristica, non dimostrazione di innocuità</td>
+</tr>
+<tr>
+<td>Parser bomb/decoder bomb</td>
+<td>Dimensione, profondità, conteggi, timeout e memoria worker</td>
+<td>Le configurazioni usano parser in processo con limiti strutturali</td>
+</tr>
+<tr>
+<td>Compromissione del parser documentale</td>
+<td>Processo isolato prima dell'input, Landlock, seccomp, ambiente minimo e limiti I/O</td>
+<td>Kernel, runtime e pacchetti installati fanno parte della base fidata</td>
+</tr>
+<tr>
+<td>Listener locale contraffatto</td>
+<td>Prova HMAC con nonce, indirizzo e porta reali; richiesta sulla stessa connessione</td>
+<td>Non equivale a TLS o protezione da amministratori e forwarding fra namespace</td>
+</tr>
+<tr>
+<td>Cross-origin e DNS rebinding</td>
+<td>Loopback, Host consentiti, Origin e token</td>
+<td>Altri processi dello stesso account possono leggere il token</td>
+</tr>
+<tr>
+<td>Doppio writer app/CLI</td>
+<td>Lock esclusivo OS e CLI che usa l’API dell’app</td>
+<td>Un solo processo può possedere lo store</td>
+</tr>
+<tr>
+<td>TOCTOU documento</td>
+<td>Lettura stabile con fstat/stat, scan dello snapshot e consegna degli stessi byte</td>
+<td>Non è un lock distribuito sul filesystem</td>
+</tr>
+</tbody>
+</table>
+<h2 id="persistenza-e-ripristino">Persistenza e ripristino</h2>
+<p><code>integrity.sqlite3</code> contiene componenti, snapshot, versioni, approval, eventi e policy. <code>scans.sqlite3</code> contiene report e metadati delle copie testuali, senza conservarne il corpo. <code>approval-key.pem</code> firma le evidenze; <code>audit-head.json</code> lega l’ultimo numero di sequenza al suo hash. <code>api-token</code> abilita l’amministrazione locale.</p>
+<p>Le operazioni ordinarie possono riusare un prefisso dell'audit già verificato. La cache è vincolata alla connessione SQLite, al database e WAL, al contenuto del checkpoint e allo schema effettivo; modifiche o evidenze ambigue richiedono una nuova verifica integrale. L'append avanza la cache solo dopo commit e checkpoint riusciti. La verifica esplicita dell'audit ricalcola sempre l'intera catena. Benchmark e regressioni sono riportati in <code>PERFORMANCE.md</code> e <code>VALIDAZIONE.md</code>.</p>
+<p>Le letture dell'inventario verificano identità, contenuto, fingerprint e versione degli snapshot contro la cronologia firmata, condividendo la raccolta degli eventi tra le righe. Una copia non verificabile viene proiettata come <code>BLOCKED</code>, con <code>snapshot_valid=false</code>, contenuto nascosto e approvazione corrente non esposta; il record originale rimane intatto. La proiezione controlla anche i tipi dei campi mostrati e la stabilità delle evidenze durante la lettura. Non rilegge le sorgenti né esegue il gate durante il polling: <code>snapshot_valid=true</code> descrive la copia registrata e non autorizza da solo l'uso corrente, che richiede ancora firma, policy, ciclo di vita e sorgente validi.</p>
+<p>Eseguire backup della cartella dati con il servizio fermo. Copiare anche chiave e checkpoint in una destinazione con accessi controllati; esportare periodicamente audit e checkpoint fuori dall’host per un riferimento indipendente. Non eliminare automaticamente un checkpoint non valido e non rigenerare la chiave su un archivio esistente. In caso di divergenza, preservare tutti i file per analisi e ripristinare un backup completo verificato. Un nuovo archivio richiede nuove approvazioni.</p>
+<h2 id="api">API</h2>
+<p>La mappa dei payload è in <a href="CONTRACT.html">CONTRACT.md</a>; le implementazioni sono <code>backend/integrity_guard/api.py</code>. Input con campi inattesi vengono rifiutati. UI e API sono servite dalla stessa origine; non vengono caricati font, script, CDN o telemetry esterni. I file upload vengono letti come dati e i report non includono il documento completo. Le rotte della copia testuale, comprese le differenze fra risposta POST e metadati GET, sono documentate in <a href="SANITIZZAZIONE.html">SANITIZZAZIONE.md</a>.</p>
+<h2 id="documenti-e-copie-testuali">Documenti e copie testuali</h2>
+<p>L’estrazione ordinaria produce segmenti visibili, nascosti e di metadati per le regole comuni dello scanner. Il frontmatter Markdown iniziale YAML (<code>---</code>) o TOML (<code>+++</code>) viene aggiunto come testo grezzo al livello <code>METADATA</code>; l’intero sorgente resta anche nel livello visibile. Il blocco non viene deserializzato come configurazione e non può selezionare plugin. Un blocco chiuso oltre 64 KiB o 4096 righe interrompe l’analisi; un delimitatore iniziale senza chiusura resta Markdown ordinario sotto i limiti generali.</p>
+<p>La copia testuale HTML segue un percorso esplicito distinto: scansione completa dell’originale, trasformazione in un worker confinato e nuova scansione degli esatti byte UTF-8 prodotti. Le due scansioni e la trasformazione condividono il limite di due worker, rilasciando lo slot fra gli stadi. <code>transformation_status=SANITIZED</code> descrive la trasformazione riuscita; è possibile avere contemporaneamente <code>delivery_status=DENIED</code>. Solo una copia completa con verdetto <code>VALID</code>, stato <code>ALLOWED</code>, nessun finding, policy corrente e registrazione riuscita viene consegnata.</p>
+<p>Solo la risposta POST corrente può contenere il payload Base64 autorizzato. Il browser lo decodifica in bytes, verifica dimensione e SHA-256 contro i metadati e crea il file senza ricodifica del testo; digest assente o diverso impedisce il download. I GET dello storico restituiscono solo metadati e riferimenti ai report, senza autorizzazione riutilizzabile né corpo della copia. Entrambe le scansioni completate contribuiscono ai normali contatori; l’operazione di trasformazione non è una scansione aggiuntiva.</p>
+<p>Il profilo <code>html-text-v1</code> perde markup, metadati e sottostrutture escluse, con output massimo di 256 KiB. Non dimostra equivalenza semantica o sicurezza universale, non riscrive le istruzioni sospette ancora visibili e non converte altri formati. Il file originale rimane intatto. Nessun lettore o gate acquisisce un’eccezione di autorizzazione grazie a <code>SANITIZED</code>. <a href="SANITIZZAZIONE.html">SANITIZZAZIONE.md</a> descrive profilo, rifiuti e limiti.</p>
+<h2 id="estensioni">Estensioni</h2>
+<p>Il registro degli estrattori aggiuntivi viene costruito da un bootstrap incluso nel wheel e congelato prima della lettura del documento nel worker. I risultati attraversano controlli comuni di tipo, completamento e budget; le normali regole dello scanner analizzano anche i segmenti prodotti dagli estrattori registrati. Il contesto del monitor comprende il fingerprint del registro, del codice confezionato e delle dipendenze dichiarate. Il registro aggiuntivo predefinito è vuoto. <a href="ESTRATTORI.html">ESTRATTORI.md</a> descrive il contratto per lo sviluppo.</p>
+<p>Gli adapter e gli estrattori sono codice di fiducia installato dall’operatore, non plugin caricati da un documento. Una futura integrazione proxy dovrà fissare la versione MCP, gestire inizializzazione, paginazione delle liste, cambiamenti notificati, autorizzazione per sessione, cancellazione e streaming, verificando i contenuti effettivamente inoltrati. Non chiamare gate su una copia e inoltrare una definizione diversa.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Manuale tecnico · Cheker</title><meta name="description" content="Manuale tecnico di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html" aria-current="page">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MANUALE_TECNICO.md" download>Scarica Markdown</a><a href="MANUALE_TECNICO.pdf" download>Scarica PDF</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="manuale-tecnico-e-operativo">Manuale tecnico e operativo</h1>
+<p>Questo manuale descrive MCP Integrity Guard 1.0.0 per amministratori Linux e manutentori. Le interfacce e i limiti sono quelli implementati nel repository; i risultati di collaudo delle singole build sono in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>. Per modificare o rilasciare il software leggere anche <a href="SVILUPPO.html">SVILUPPO.md</a>.</p>
+<h2 id="1-scopo-e-confini">1. Scopo e confini</h2>
+<p>Il programma registra definizioni MCP, rileva variazioni, raccoglie approvazioni firmate e decide se una precisa versione può essere usata. Analizza inoltre documenti in processi Linux confinati e offre letture vincolate ai byte analizzati. Non avvia i comandi trovati nelle configurazioni e non contatta i relativi endpoint.</p>
+<p>Il controllo diventa operativo quando il chiamante usa il gate, la CLI <code>guarded-read</code> o il lettore MCP fornito. Un monitor di filesystem non impedisce a un altro programma di leggere direttamente un file o di ignorare una decisione. Non sono implementati un proxy MCP trasparente, l’attestazione degli eseguibili/container referenziati, un antivirus generale o la verifica universale dell’assenza di prompt injection.</p>
+<p>Il servizio amministrativo, il sistema operativo, l’interprete, le dipendenze e il codice installato appartengono alla base di fiducia. Il token locale conferisce accesso amministrativo: non esistono utenti applicativi separati, RBAC o doppia approvazione. Il nome dell’approvatore è dichiarato nella sessione. Un amministratore dell’host capace di leggere o sostituire la chiave privata è fuori dal confine difeso dal programma.</p>
+<h2 id="2-architettura-reale">2. Architettura reale</h2>
+<pre><code class="language-mermaid">flowchart LR
+  UI[Dashboard React] --&gt; API[API FastAPI loopback]
+  CLI[CLI online] --&gt; API
+  MCP[Lettore MCP stdio] --&gt; API
+  API --&gt; Trust[GuardStore: versioni, firme, gate, audit]
+  API --&gt; Reports[Reports: registrazione e policy documenti]
+  API --&gt; Copy[Servizio copie HTML]
+  Copy --&gt; Reports
+  Copy --&gt; Transform[Worker HTML confinato]
+  Reports --&gt; Worker[Worker scanner confinato]
+  Monitor[Monitor configurazioni] --&gt; Trust
+  Watch[Monitor cartelle esplicite] --&gt; Reports
+  Offline[CLI con app assente] -. lock esclusivo .-&gt; Trust
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Modulo</th>
+<th>Responsabilità</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/core.py">core.py</a>, <a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/canonical.py">canonical.py</a></td>
+<td>Parsing configurazioni, identità, hash, versioni, diff, firme, policy, gate e audit</td>
+</tr>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/api.py">api.py</a>, <a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/connection.py">connection.py</a></td>
+<td>API amministrativa, autenticazione e connessioni locali verificate</td>
+</tr>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/reports.py">reports.py</a></td>
+<td>Supervisione delle scansioni, classificazione, soglie e registro persistente</td>
+</tr>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/scan_worker.py">scan_worker.py</a>, <a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/worker_process.py">worker_process.py</a></td>
+<td>Avvio isolato, pipe, limiti, timeout e raccolta dell’esito</td>
+</tr>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/scanner.py">scanner.py</a>, <a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/extraction.py">extraction.py</a></td>
+<td>Estrazione e analisi dei livelli visibile, nascosto e metadati</td>
+</tr>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/sanitize_worker.py">sanitize_worker.py</a>, <a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/sanitizer.py">sanitizer.py</a></td>
+<td>Trasformazione HTML esplicita, seconda scansione e consegna controllata</td>
+</tr>
+<tr>
+<td><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/monitor.py">monitor.py</a>, <a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/filewatch.py">filewatch.py</a></td>
+<td>Riconciliazione configurazioni e scansione di cartelle scelte dall’operatore</td>
+</tr>
+</tbody>
+</table>
+<p>La CLI usa l’API quando trova il servizio atteso; apre direttamente lo store solo se il listener è assente. Un listener con prova di identità errata provoca un errore, senza ripiego offline. Il lettore MCP richiede sempre il servizio attivo. Un lock del processo impedisce due proprietari contemporanei dello stesso store.</p>
+<p>Gli inventari API verificano la copia persistita, senza rileggere la sorgente durante il polling. <code>snapshot_valid=true</code> non costituisce autorizzazione corrente. Uno snapshot non verificabile viene mostrato come bloccato, con contenuto e approvazione corrente non esposti; i dati originali persistiti non vengono riscritti per mascherare il problema. Il gate resta responsabile di sorgente, firma, ciclo di vita e policy.</p>
+<h2 id="3-identita-canonicalizzazione-e-fiducia">3. Identità, canonicalizzazione e fiducia</h2>
+<p>L’identità del componente deriva da percorso della sorgente e posizione strutturale nel documento, non dal suo contenuto. Una modifica mantiene quindi riconoscibile il componente e incrementa la versione. Il contesto globale e di connessione viene incluso nelle definizioni figlie: cambiare il comando o l’ambiente del server può invalidare anche i suoi tool.</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Significato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>raw_hash</code></td>
+<td>SHA-256 dei byte dell’intera sorgente</td>
+</tr>
+<tr>
+<td><code>canonical_hash</code></td>
+<td>SHA-256 della definizione canonicalizzata, compreso il contesto ereditato</td>
+</tr>
+<tr>
+<td><code>semantic_fingerprint</code></td>
+<td>SHA-256 della forma canonica con prefisso di dominio <code>mcp-integrity-semantic-v1\0</code></td>
+</tr>
+<tr>
+<td><code>version</code>, <code>previous_version</code></td>
+<td>Sequenza delle versioni registrate e collegamento alla precedente</td>
+</tr>
+<tr>
+<td><code>approval_id</code>, <code>approved_at</code>, <code>approved_by</code></td>
+<td>Approvazione corrente e relativi metadati</td>
+</tr>
+</tbody>
+</table>
+<p>JSON, JSON5, YAML, TOML e <code>.env</code> hanno parser reali. La normalizzazione ordina le chiavi, applica Unicode NFC e newline uniformi, conserva null e booleani e rifiuta numeri non finiti, chiavi duplicate o equivalenti dopo normalizzazione. Gli interi, i float e lo zero con segno possono restare distinti. UTF-8 è accettato; UTF-16/32 richiedono BOM. Le variabili <code>.env</code> non vengono espanse; YAML non costruisce oggetti personalizzati e rifiuta alias e merge.</p>
+<p>Il profilo è specifico del prodotto, <strong>non RFC 8785/JCS</strong>. La fingerprint semantica rappresenta una struttura, non una prova di equivalenza linguistica. I valori sensibili partecipano agli hash anche quando vengono mascherati nell’API. La mascheratura strutturale non riconosce necessariamente un segreto arbitrario scritto in prosa; database, report ed esportazioni devono restare dati riservati.</p>
+<p>Il confronto distingue <code>FORMAT_ONLY_CHANGE</code>, <code>SEMANTIC_CHANGE</code> e <code>SECURITY_RELEVANT_CHANGE</code>, con percorso e valori prima/dopo mascherati. La variazione dei byte è verificabile attraverso gli hash RAW, senza una categoria autonoma <code>BYTE_CHANGE</code>. Anche il solo formato produce una nuova versione da approvare. Il ritorno a vecchi byte non ripristina automaticamente una vecchia approvazione.</p>
+<h3 id="workflow-e-gate">Workflow e gate</h3>
+<p>La discovery analizza il candidato prima di registrarlo come <code>PENDING_APPROVAL</code>. L’approvazione lo porta ad <code>APPROVED</code>. Una variazione registra <code>VERSION_CHANGED</code>, una nuova versione e lo stato richiesto dalla policy: riapprovazione, blocco o quarantena. Sono disponibili anche revoca e quarantena esplicite. Le fasi concettuali di analisi, modifica e nuova approvazione sono rappresentate da risultati, versioni ed eventi, senza stati persistenti separati <code>ANALYZED</code>, <code>MODIFIED</code> o <code>APPROVED_NEW_VERSION</code>.</p>
+<p>L’approvazione rilegge la sorgente e confronta hash e versione sottoposti dall’operatore. Firma con Ed25519 un documento contenente identità, hash RAW/canonico, fingerprint, versione, sorgente, approvatore, data, nota e versione della policy. Una richiesta obsoleta riceve un conflitto; non approva implicitamente la versione nuova.</p>
+<p>Prima dell’uso il gate:</p>
+<ol>
+<li>Verifica le evidenze di integrità e rilegge la sorgente corrente.</li>
+<li>Controlla gli eventuali hash e versione richiesti dal chiamante.</li>
+<li>Verifica firma dell’approvazione, corrispondenza del contenuto, policy e ultimo evento rilevante del ciclo di vita.</li>
+<li>Restituisce <code>allowed: true</code> soltanto se tutti i controlli necessari riescono; altrimenti nega.</li>
+</ol>
+<p>Il client deve usare la definizione che corrisponde alla decisione. Una risposta positiva non autorizza una successiva lettura arbitraria o una definizione sostituita nel frattempo. Sorgente mancante, contenuto non analizzabile, snapshot non valido, timeout o risposta non verificabile non sono autorizzazioni.</p>
+<h3 id="policy">Policy</h3>
+<p>Le azioni ammesse sono <code>ALLOW</code>, <code>WARN</code>, <code>REQUIRE_REAPPROVAL</code>, <code>QUARANTINE</code>, <code>BLOCK</code>. Una policy permissiva non crea un’approvazione mancante. I valori iniziali richiedono riapprovazione per formato e semantica e bloccano cambiamenti di sicurezza e contenuti non approvati.</p>
+<p>Le soglie iniziali del servizio documenti sono flag <strong>25</strong>, quarantena <strong>60</strong>, blocco <strong>80</strong>. L’API richiede valori da 1 a 100, strettamente crescenti. Il servizio applica la policy al risultato dello scanner; le soglie autonome in <code>rules.json</code> non sostituiscono la policy amministrativa. Un’analisi incompleta rimane bloccata indipendentemente dalle soglie.</p>
+<p><code>PUT /api/policy</code> riceve anche la versione letta dal client. Un conflitto richiede di ricaricare e riesaminare i valori. Il salvataggio incrementa la versione, firma la policy e richiede nuove approvazioni dei componenti precedentemente approvati. I report storici conservano l’esito e la policy della loro elaborazione; non sono autorizzazioni riutilizzabili dopo una modifica.</p>
+<h2 id="4-scanner-formati-e-limiti">4. Scanner, formati e limiti</h2>
+<p>Il worker viene avviato con Python <code>-I</code>, ambiente ridotto e pipe. Prima dell’input applica limiti del processo e Landlock/seccomp. Lo scanner importa il codice fidato dopo l’attivazione del confinamento. Il parent verifica schema del report, hash e dimensione degli stessi byte ricevuti; un output assente, eccessivo, contraddittorio o incompleto impedisce l’autorizzazione.</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Limite del servizio corrente</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Configurazione</td>
+<td>4 MiB; profondità 64; 100.000 nodi; budget parser massimo 3 s</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>256 componenti, inclusa la configurazione; 8 MiB di contenuti canonici espansi; budget complessivo 10 s</td>
+</tr>
+<tr>
+<td>Diff strutturale</td>
+<td>256 variazioni, poi indicazione esplicita di troncamento; gli hash continuano a coprire tutto</td>
+</tr>
+<tr>
+<td>Documento</td>
+<td>Input 10 MiB; massimo 8.000.000 caratteri e 20.000 segmenti, con budget effettivo anche proporzionale all’input</td>
+</tr>
+<tr>
+<td>Worker scanner</td>
+<td>512 MiB di spazio indirizzi, CPU 10 s, budget scanner 8 s, timeout parent 12 s, output protocollo 4 MiB</td>
+</tr>
+<tr>
+<td>Concorrenza</td>
+<td>Due slot condivisi per scansioni e stadi delle copie HTML; richiesta iniziale senza slot: HTTP 429</td>
+</tr>
+<tr>
+<td>PDF</td>
+<td>Massimo 100 pagine; nessun OCR</td>
+</tr>
+<tr>
+<td>DOCX</td>
+<td>Massimo 2.048 membri; 8.000.000 byte per membro, 24.000.000 totali espansi, rapporto massimo 100</td>
+</tr>
+<tr>
+<td>Frontmatter Markdown chiuso</td>
+<td>64 KiB e 4.096 righe</td>
+</tr>
+<tr>
+<td>Copia HTML</td>
+<td>Input 10 MiB, output UTF-8 256 KiB, protocollo trasformazione 1 MiB</td>
+</tr>
+<tr>
+<td>Richiesta HTTP</td>
+<td>Corpo complessivo massimo 11 MiB; il limite del singolo file rimane 10 MiB</td>
+</tr>
+</tbody>
+</table>
+<p>I budget non sono una promessa di latenza massima per un’intera operazione composta: copia HTML e passate del monitor possono richiedere più stadi. Le dimensioni espresse in MiB usano multipli di 1.048.576 byte; gli altri valori della tabella sono decimali come nel codice.</p>
+<p>Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, <code>.env</code>, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile.</p>
+<p>Il frontmatter iniziale YAML/TOML dei Markdown viene analizzato come testo di metadati, senza deserializzarlo né usarlo come configurazione. L’intero documento resta anche nel livello visibile. Le regole combinano indicatori multilingue, anomalie strutturali/Unicode e decodifiche limitate. I limiti configurati delle decodifiche comprendono profondità 3, rapporto di espansione 6, 512 candidati e 120 finding.</p>
+<p>Il catalogo <code>1.1.2</code> estende il controllo dei caratteri invisibili al blocco Unicode Tags, U+E0000–U+E007F. Una presenza anomala genera <code>INVISIBLE_CHARACTERS</code> e richiede revisione; non è una diagnosi di malware. Le tre sequenze complete RGI delle bandiere di Inghilterra, Scozia e Galles, definite da Unicode Emoji 17.0, sono escluse da questo solo segnale. Tag aggiunti, sequenze incomplete e altri caratteri invisibili restano rilevati. La normalizzazione elimina i tag per il confronto delle regole; le evidenze li rendono leggibili come escape Unicode. Gli originali restano invariati. <a href="https://www.unicode.org/reports/tr51/tr51-29.html#valid-emoji-tag-sequences">Unicode UTS #51, revisione 29</a>.</p>
+<p>Il profilo DOCX rifiuta parti diverse da XML e relazioni XML, salvo directory vuote (<code>DOCX_UNINSPECTED_PART</code>); importazioni <code>altChunk</code> e relazioni <code>aFChunk</code>/<code>afChunk</code> (<code>DOCX_ALTCHUNK_UNSUPPORTED</code>); relazioni esterne diverse dagli hyperlink previsti (<code>DOCX_EXTERNAL_CONTENT</code>). Questi casi producono analisi incompleta, <code>UNSCANNABLE</code> e <code>BLOCKED</code>. Gli hyperlink restano metadati e non vengono recuperati. Campi obbligatori delle relazioni mancanti o modalità non valide producono <code>INVALID_DOCX</code>, distinto dal formato non supportato. I limiti ZIP e i rifiuti specifici per immagini/oggetti incorporati mantengono precedenza. Il controllo non è un validatore completo di conformità OPC/OOXML né un renderer Word. <a href="https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.altchunk?view=openxml-3.0.1">Documentazione Microsoft su altChunk</a>.</p>
+<h3 id="esito-e-autorizzazione-sono-campi-distinti">Esito e autorizzazione sono campi distinti</h3>
+<table>
+<thead>
+<tr>
+<th>Verdetto</th>
+<th>Interpretazione operativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VALID</code></td>
+<td>Analisi completa senza problemi rilevati dai controlli applicati</td>
+</tr>
+<tr>
+<td><code>INFECTED</code></td>
+<td>Istruzioni o manipolazioni sospette significative; non è una diagnosi antivirus</td>
+</tr>
+<tr>
+<td><code>CORRUPTED</code></td>
+<td>Formato o contenuto malformato</td>
+</tr>
+<tr>
+<td><code>REVIEW_REQUIRED</code></td>
+<td>Evidenze deboli, ambigue o condizioni da riesaminare</td>
+</tr>
+<tr>
+<td><code>UNSCANNABLE</code></td>
+<td>Formato non supportato, limite, dipendenza o analisi incompleta</td>
+</tr>
+</tbody>
+</table>
+<p><code>status</code> esprime separatamente <code>ALLOWED</code>, <code>FLAGGED</code>, <code>QUARANTINED</code> o <code>BLOCKED</code>. La lettura protetta richiede esattamente <code>VALID</code>, <code>ALLOWED</code>, analisi completa e riscontro degli stessi byte. Un finding debole non diventa una lettura consentita solo perché il punteggio è basso.</p>
+<p>La quarantena è logica: non sposta o cancella gli originali. Anche una scansione fallita può essere registrata. I contatori contano elaborazioni; <code>unique_files</code> conta SHA-256 distinti non vuoti, non percorsi distinti.</p>
+<h3 id="copie-testuali-html">Copie testuali HTML</h3>
+<p>La trasformazione <code>html-text-v1</code> viene richiesta esplicitamente. Richiede una prima analisi completa dell’originale, poi trasformazione confinata e nuova analisi degli esatti byte UTF-8 prodotti. Un originale sospetto può essere trasformato solo se analizzato completamente; la copia deve superare autonomamente i controlli di consegna.</p>
+<p><code>SANITIZED</code> descrive la trasformazione e può coesistere con <code>delivery_status=DENIED</code>. Solo il POST corrente può restituire il payload Base64, dopo risultato completo <code>VALID</code>/<code>ALLOWED</code>, nessun finding, hash/dimensione/policy coerenti e registrazione riuscita. I GET restituiscono esclusivamente metadati e riferimenti ai due report. Non conservano una copia riscaricabile.</p>
+<p>Markup e metadati possono andare persi; CSS e strutture fuori dal sottoinsieme vengono rifiutati. Non vi sono rendering, esecuzione JavaScript, rete, OCR o garanzia di equivalenza semantica. L’originale rimane invariato. Profilo, errori e percorsi protetti sono descritti in <a href="SANITIZZAZIONE.html">SANITIZZAZIONE.md</a>.</p>
+<h2 id="5-installazione-linux-e-diagnostica">5. Installazione Linux e diagnostica</h2>
+<p>Servono Python almeno 3.11 con <code>venv</code>, Linux nativo a 64 bit <code>x86_64</code> oppure <code>aarch64</code>, Landlock ABI almeno 3 e <code>libseccomp.so.2</code> con API almeno 3. L’ABI viene interrogata: il solo numero di versione del kernel non dimostra che Landlock sia disponibile. La copertura hardware effettivamente collaudata è riportata in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>; non assumere validata un’architettura soltanto perché prevista nel codice.</p>
+<p>Installare i prerequisiti tramite il gestore della propria distribuzione. Il runtime ordinario non richiede Node né rete esterna; l’installer richiede accesso ai pacchetti Python, salvo predisposizione amministrativa di un repository locale. I checksum distribuiti rilevano divergenze dei file ma non sono una firma del distributore.</p>
+<p>Esempio per una distribuzione scaricata nella directory corrente:</p>
+<pre><code class="language-bash">sha256sum -c mcp-integrity-guard-1.0.0-linux.tar.gz.sha256
+mkdir -p &quot;$HOME/.local/opt&quot;
+tar -xzf mcp-integrity-guard-1.0.0-linux.tar.gz -C &quot;$HOME/.local/opt&quot;
+cd &quot;$HOME/.local/opt/mcp-integrity-guard&quot;
+bash install-linux.sh
+runtime-linux/bin/python -I -m integrity_guard.diagnostics
+</code></pre>
+<p>La diagnostica esegue una piccola scansione innocua in un worker reale, senza aprire lo store applicativo. Deve riportare <code>READY</code>, <code>scan_complete=true</code> e <code>sandbox_active=true</code>; exit 0 significa riuscita, exit 2 indisponibilità o errore. Il modulo diagnostico non implementa un parser <code>--help</code>: eseguirlo significa effettuare questo controllo.</p>
+<p>Il filtro impedisce scritture arbitrarie, rete, creazione di processi ed esecuzione di comandi nel worker; consente la lettura delle sole radici del runtime/pacchetto fidato. I parser delle configurazioni restano nel backend con budget propri. Per prerequisiti, limiti reali e verifica delle primitive leggere <a href="LINUX_SANDBOX.html">LINUX_SANDBOX.md</a>.</p>
+<p>Il launcher usa per default <code>data-linux</code> sotto la cartella installata. Per separare dati e release:</p>
+<pre><code class="language-bash">export MCP_GUARD_DATA=&quot;$HOME/.local/share/mcp-integrity-guard&quot;
+GUARD_NO_BROWSER=1 bash start.sh
+</code></pre>
+<p>Il processo resta in primo piano; Ctrl+C lo arresta. Senza <code>GUARD_NO_BROWSER=1</code>, <code>start.sh</code> chiede di aprire il browser dopo la verifica del listener. Il servizio ascolta su <code>127.0.0.1:8765</code>; <code>bash start.sh --port 8877</code> cambia la porta. Il token entra nel frammento URL, viene rimosso dalla pagina e conservato nella sessione del browser. Non copiarlo in log, issue o configurazioni MCP.</p>
+<p>Il modello <a href="https://github.com/okno/cheker/blob/main/docs/mcp-integrity-guard.service">mcp-integrity-guard.service</a> consente un servizio systemd utente. Adattare <code>WorkingDirectory</code>, <code>ExecStart</code>, <code>ReadWritePaths</code> e l’eventuale <code>MCP_GUARD_DATA</code> allo stesso percorso. Non viene installato automaticamente. Usare un filesystem che applichi correttamente permessi POSIX per dati e backup; mount condivisi possono avere semantiche diverse.</p>
+<h2 id="6-persistenza-e-conservazione-della-fiducia">6. Persistenza e conservazione della fiducia</h2>
+<p>Schema interno, non API stabile per scritture SQL:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contenuto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>integrity.sqlite3</code></td>
+<td><code>components</code> (sorgente, locator, record, contenuto, validità); <code>versions</code>; <code>approvals</code>; <code>audit</code>; <code>settings</code> con policy</td>
+</tr>
+<tr>
+<td><code>scans.sqlite3</code></td>
+<td><code>scans</code> con report JSON e indici per verdetto, hash e data; <code>sanitizations</code> con soli metadati delle trasformazioni</td>
+</tr>
+<tr>
+<td><code>filewatch.sqlite3</code></td>
+<td><code>roots</code>, <code>file_index</code>, <code>root_files</code>, <code>walk_dirs</code>: radici, indici, associazioni e continuazioni delle visite</td>
+</tr>
+<tr>
+<td><code>approval-key.pem</code></td>
+<td>Chiave privata Ed25519 PKCS#8, non cifrata dal programma; accesso protetto dal filesystem</td>
+</tr>
+<tr>
+<td><code>audit-head.json</code></td>
+<td>Checkpoint firmato della testa dell’audit</td>
+</tr>
+<tr>
+<td><code>api-token</code></td>
+<td>Segreto di accesso all’API locale</td>
+</tr>
+<tr>
+<td><code>.store.lock</code></td>
+<td>File usato per il lock esclusivo; il lock effettivo è del kernel</td>
+</tr>
+<tr>
+<td>File <code>-wal</code> / <code>-shm</code></td>
+<td>File ausiliari SQLite eventualmente presenti, parte dello stato da preservare</td>
+</tr>
+</tbody>
+</table>
+<p>Le configurazioni originali e gli snapshot nel database possono contenere credenziali non mascherate. I report conservano evidenze e metadati, non il documento originale completo; non assumere per questo che siano pubblicabili senza revisione. L’output delle copie HTML non è conservato nel registro.</p>
+<p>SQLite usa WAL; lo store di fiducia usa anche <code>synchronous=FULL</code>. Gli aggiornamenti delle discovery sono raggruppati. I registri scansioni/trasformazioni e l’audit risiedono in database distinti: non costituiscono una transazione unica fra tutti i file. In caso di interruzione conservare le evidenze e verificare i riferimenti, senza “riparazioni” SQL automatiche.</p>
+<h3 id="audit-e-limite-dellexport">Audit e limite dell’export</h3>
+<p>Ogni evento ha sequenza, timestamp, tipo, componente, dettagli, hash precedente, hash e firma. La verifica controlla catena e checkpoint. Le operazioni ordinarie possono riutilizzare una verifica solo quando le evidenze di database, schema, chiave e checkpoint restano coerenti; la verifica esplicita percorre l’intera catena. Un rollback coordinato di database e checkpoint richiede un riferimento esterno fidato per essere rilevato.</p>
+<p><strong><code>GET /api/audit/export</code> esporta al massimo gli ultimi 100.000 eventi</strong>, ordinati dal più recente. La rotta passa un limite maggiore, ma <code>GuardStore.audit_events</code> applica il tetto effettivo di 100.000. La verifica allegata riguarda la catena completa: <code>verification.checked</code> può quindi essere maggiore di <code>len(events)</code>. <code>GET /api/audit</code> restituisce al massimo 200 eventi. Non esiste paginazione HTTP dell’audit.</p>
+<p>L’export non è un backup dello store, non include la chiave e non garantisce tutta la cronologia quando il tetto è superato. Conservare backup completi e, se richiesto, riferimenti di audit/checkpoint fuori dall’host. Non inviare chiavi private insieme a documentazione pubblica o al repository.</p>
+<h3 id="backup-consistente">Backup consistente</h3>
+<ol>
+<li>Arrestare il servizio e ogni altro processo che usa la stessa directory dati. Attendere la chiusura ordinata dei worker. Non copiare soltanto i file <code>.sqlite3</code> mentre il servizio scrive.</li>
+<li>Copiare <strong>l’intera directory dati</strong>, inclusi chiave, checkpoint, token ed eventuali WAL/SHM, in una destinazione privata. Conservare separatamente versione, wheel e manifest della release.</li>
+<li>Conservare anche le sorgenti MCP necessarie al ripristino, con percorsi e versioni coerenti. Gli snapshot storici non sostituiscono i file correnti richiesti dal gate.</li>
+<li>Verificare il ripristino su una copia isolata. Non avviare una seconda istanza sulla directory di produzione.</li>
+</ol>
+<p>Esempio da eseguire soltanto a servizio arrestato, con <code>MCP_GUARD_DATA</code> impostata al percorso effettivo:</p>
+<pre><code class="language-bash">umask 077
+CHEKER_BACKUP_DIR=&quot;$HOME/backup-cheker/$(date -u +%Y%m%dT%H%M%SZ)&quot;
+mkdir -p -- &quot;$CHEKER_BACKUP_DIR&quot;
+cp -a -- &quot;$MCP_GUARD_DATA/.&quot; &quot;$CHEKER_BACKUP_DIR/&quot;
+</code></pre>
+<p>Il backup contiene segreti: usare una destinazione con accessi controllati e la protezione a riposo prevista dall’organizzazione. Non conservarlo nelle cartelle runtime leggibili dai worker.</p>
+<h3 id="recovery-e-aggiornamento">Recovery e aggiornamento</h3>
+<p>Con chiave mancante su un database esistente, firma incoerente o checkpoint divergente, mantenere il blocco. Arrestare l’app, preservare lo stato problematico e ripristinare un backup completo verificato in una directory distinta. Non eliminare il checkpoint, rigenerare la chiave o modificare gli stati SQL per rendere il gate positivo. Un archivio nuovo richiede nuove approvazioni.</p>
+<p>Per un aggiornamento, verificare il nuovo archivio, installarlo in una directory di release nuova e provare la diagnostica prima di usarlo con dati esistenti. Arrestare la release precedente, fare il backup, quindi avviare la nuova con lo stesso <code>MCP_GUARD_DATA</code>. Le migrazioni previste sono applicate all’apertura dei registri; verificare componenti, approvazioni, policy, report e radici, oltre ad audit e gate di una configurazione approvata. Il gate può registrare eventi durante questa verifica.</p>
+<p>Non spostare contemporaneamente le sorgenti: i percorsi partecipano all’identità e all’approvazione. Un cambio di percorso può richiedere nuova discovery e approvazione. Conservare release e backup precedenti; un downgrade generico dello schema non è garantito. Per tornare indietro usare la release abbinata al suo backup consistente, non una combinazione arbitraria di chiavi, database e checkpoint.</p>
+<h2 id="7-cli-e-integrazione-mcp">7. CLI e integrazione MCP</h2>
+<p>Eseguire dalla directory installata; mantenere <code>MCP_GUARD_DATA</code> coerente con il servizio:</p>
+<pre><code class="language-bash">bash guard.sh --help
+bash guard.sh discover &quot;$HOME/Documents/mcp-notes.json&quot;
+bash guard.sh list
+bash guard.sh scan &quot;$HOME/Documents/notes.txt&quot;
+bash guard.sh gate COMPONENT_ID --hash CANONICAL_HASH --version 1
+bash guard.sh verify-audit
+</code></pre>
+<p><code>COMPONENT_ID</code>, <code>CANONICAL_HASH</code> e versione devono provenire dalla definizione realmente esaminata. Per un’altra porta anteporre al sottocomando <code>--api-url http://127.0.0.1:8877</code>. La CLI non ha sottocomandi <code>approve</code> o <code>revoke</code>: queste operazioni sono nella GUI/API.</p>
+<p>Exit code: <strong>0</strong> successo/consentito, <strong>3</strong> negato o audit non valido, <strong>2</strong> errore operativo. <code>guarded-read</code> restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF/DOCX autorizzati l’output è il file binario originale, non testo estratto.</p>
+<pre><code class="language-bash">umask 077
+CHEKER_SNAPSHOT=&quot;$(mktemp)&quot;
+if bash guard.sh guarded-read &quot;$HOME/Documents/notes.txt&quot; &gt; &quot;$CHEKER_SNAPSHOT&quot;; then
+  printf 'Snapshot analizzato disponibile in: %s\n' &quot;$CHEKER_SNAPSHOT&quot;
+else
+  CHEKER_EXIT=$?
+  rm -- &quot;$CHEKER_SNAPSHOT&quot;
+  exit &quot;$CHEKER_EXIT&quot;
+fi
+</code></pre>
+<p>Il lettore MCP stdio espone soltanto <code>scan_file</code> e <code>read_file</code>, versione di protocollo 2025-11-25. Richiede radici assolute esplicite e l’API già attiva. Esempio di configurazione, sostituendo i percorsi; il JSON non implica espansione automatica di variabili shell:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;guarded-notes&quot;: {
+      &quot;command&quot;: &quot;/home/utente/.local/opt/mcp-integrity-guard/runtime-linux/bin/python&quot;,
+      &quot;args&quot;: [
+        &quot;-I&quot;, &quot;-m&quot;, &quot;integrity_guard.mcp_server&quot;,
+        &quot;--data-dir&quot;, &quot;/home/utente/.local/share/mcp-integrity-guard&quot;,
+        &quot;--root&quot;, &quot;/home/utente/Documents/agent-notes&quot;
+      ]
+    }
+  }
+}
+</code></pre>
+<p>Non inserire il token nel JSON. <code>scan_file</code> accetta fino a 10 MiB senza restituire il contenuto; <code>read_file</code> consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, <code>.env</code> o <code>.log</code>, pur analizzabili con <code>scan_file</code>. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in <a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a>.</p>
+<h2 id="8-api-amministrativa">8. API amministrativa</h2>
+<p>Prefisso <code>/api</code>, JSON per le richieste strutturate e multipart per upload. Le richieste <code>/api/*</code>, eccetto <code>/api/health</code>, richiedono <code>Authorization: Bearer …</code>. I body tipizzati rifiutano proprietà aggiuntive. Host e origini sono limitati; non è un’API pubblica di rete e non espone autenticazione multiutente.</p>
+<p>Swagger, ReDoc e <code>/openapi.json</code> sono disabilitati via HTTP. Lo schema OpenAPI 3.1 può essere generato localmente con <code>app.openapi()</code>; la costruzione ordinaria di <code>create_app</code> apre lo store, quindi non usarla sulla directory di produzione per ottenere documentazione. In <a href="SVILUPPO.html">SVILUPPO.md</a> è riportato un metodo senza store. L’autenticazione è middleware e non compare automaticamente come schema Bearer OpenAPI; le risposte dinamiche richiedono anche il <a href="CONTRACT.html">CONTRACT.md</a> e i controlli del client.</p>
+<h3 id="mappa-delle-rotte">Mappa delle rotte</h3>
+<table>
+<thead>
+<tr>
+<th>Metodo e rotta</th>
+<th>Input/risultato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/health</code></td>
+<td>Stato/versione; <code>nonce</code> opzionale per prova del listener</td>
+</tr>
+<tr>
+<td><code>GET /api/status</code></td>
+<td>Contatori, audit, monitor, policy e capacità scanner; può includere percorso dati locale</td>
+</tr>
+<tr>
+<td><code>GET /api/components</code></td>
+<td>Inventario della copia registrata</td>
+</tr>
+<tr>
+<td><code>POST /api/components/discover</code></td>
+<td><code>{path}</code> assoluto della configurazione → componenti</td>
+</tr>
+<tr>
+<td><code>GET /api/components/{id}</code></td>
+<td>Componente</td>
+</tr>
+<tr>
+<td><code>POST /api/components/{id}/refresh</code></td>
+<td>Rilettura e rivalutazione</td>
+</tr>
+<tr>
+<td><code>POST /api/components/{id}/approve</code></td>
+<td><code>{canonical_hash,version,approver,note?}</code> → componente</td>
+</tr>
+<tr>
+<td><code>POST /api/components/{id}/revoke</code></td>
+<td><code>{reason}</code> → componente</td>
+</tr>
+<tr>
+<td><code>POST /api/components/{id}/quarantine</code></td>
+<td><code>{reason}</code> → componente</td>
+</tr>
+<tr>
+<td><code>GET /api/components/{id}/history</code></td>
+<td>Versioni con snapshot verificati e contenuto mascherato</td>
+</tr>
+<tr>
+<td><code>GET /api/components/{id}/approval</code></td>
+<td>Documento firmato corrente e risultato di verifica</td>
+</tr>
+<tr>
+<td><code>POST /api/gate</code></td>
+<td><code>{component_id,canonical_hash?,version?}</code> → decisione corrente</td>
+</tr>
+<tr>
+<td><code>POST /api/scan</code></td>
+<td>Multipart <code>file</code> → report</td>
+</tr>
+<tr>
+<td><code>POST /api/scan/path</code></td>
+<td><code>{path}</code> sul filesystem del servizio → report, anche fallito se non leggibile</td>
+</tr>
+<tr>
+<td><code>GET /api/scans</code></td>
+<td>Pagine di report: <code>limit</code> 1–500, default 100; <code>offset</code> ≥0; <code>verdict</code>; <code>query</code> fino a 300 caratteri</td>
+</tr>
+<tr>
+<td><code>GET /api/scan/stats</code></td>
+<td>Totali globali e <code>matched</code> filtrato da <code>verdict</code>/<code>query</code></td>
+</tr>
+<tr>
+<td><code>GET /api/scans/{id}</code></td>
+<td>Report persistito</td>
+</tr>
+<tr>
+<td><code>POST /api/sanitizations/html</code></td>
+<td>Multipart <code>file</code>, <code>expected_sha256</code> opzionale → metadati e consegna eventuale</td>
+</tr>
+<tr>
+<td><code>POST /api/sanitizations/html/path</code></td>
+<td><code>{path,expected_sha256?}</code> → stesso contratto</td>
+</tr>
+<tr>
+<td><code>GET /api/sanitizations</code></td>
+<td>Metadati: <code>limit</code> 1–100, default 50; <code>offset</code> ≥0</td>
+</tr>
+<tr>
+<td><code>GET /api/sanitizations/{id}</code></td>
+<td>Metadati, mai contenuto della copia</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>PUT /api/policy</code></td>
+<td>Lettura/salvataggio dell’intero modello con versione attesa</td>
+</tr>
+<tr>
+<td><code>GET /api/audit</code></td>
+<td>Ultimi 200 eventi, ordine decrescente, senza paginazione</td>
+</tr>
+<tr>
+<td><code>GET /api/audit/verify</code></td>
+<td>Verifica completa della catena</td>
+</tr>
+<tr>
+<td><code>GET /api/audit/export</code></td>
+<td>Verifica completa e <strong>al massimo gli ultimi 100.000 eventi</strong></td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>POST /api/monitor</code></td>
+<td>Stato / <code>{enabled}</code> del monitor configurazioni</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>POST /api/filewatch</code></td>
+<td>Stato e radici / <code>{enabled}</code> del monitor documenti</td>
+</tr>
+<tr>
+<td><code>POST /api/filewatch/roots</code></td>
+<td><code>{path,recursive?}</code>; default non ricorsivo</td>
+</tr>
+<tr>
+<td><code>PUT /api/filewatch/roots/{id}</code></td>
+<td><code>{enabled}</code> della singola radice</td>
+</tr>
+<tr>
+<td><code>DELETE /api/filewatch/roots/{id}</code></td>
+<td>Rimozione della radice dal monitor</td>
+</tr>
+<tr>
+<td><code>POST /api/filewatch/roots/{id}/scan</code></td>
+<td>Passata esplicita con risultato e copertura</td>
+</tr>
+</tbody>
+</table>
+<p>L’approvatore ha lunghezza massima 120 nell’API, nota e motivo 2.000, percorso 4.096; hash SHA-256 sono 64 caratteri esadecimali minuscoli. Per aggiornare la policy inviare tutti i campi ricevuti dal GET con la versione osservata. I filtri dei report accettano <code>ALL</code> o uno dei cinque verdetti; i contatori globali non diventano contatori della pagina.</p>
+<p>I percorsi delle API amministrative sono interpretati sul computer del servizio. Non attribuire loro automaticamente il limite delle radici del lettore MCP, che costituisce un’interfaccia distinta. Per la copia HTML da percorso sono applicati inoltre il rifiuto di symlink lungo il percorso, hardlink, file non regolari e dati dell’applicazione.</p>
+<h3 id="client-locale-senza-token-negli-argomenti">Client locale senza token negli argomenti</h3>
+<p>Usare l’interprete installato e <code>MCP_GUARD_DATA</code> impostata come per il servizio. Questo esempio legge soltanto lo stato e stampa un conteggio, senza stampare token o percorsi:</p>
+<pre><code class="language-python">import os
+from pathlib import Path
+from integrity_guard.connection import VerifiedConnection, read_token
+
+data_dir = Path(os.environ[&quot;MCP_GUARD_DATA&quot;]).expanduser()
+token = read_token(data_dir / &quot;api-token&quot;)
+if token is None:
+    raise RuntimeError(&quot;Applicazione non configurata&quot;)
+with VerifiedConnection(&quot;http://127.0.0.1:8765&quot;, token, timeout=10) as connection:
+    if not connection.connect():
+        raise RuntimeError(&quot;Applicazione non disponibile&quot;)
+    status = connection.request(&quot;GET&quot;, &quot;/api/status&quot;)
+print({&quot;components&quot;: status[&quot;components&quot;], &quot;audit_valid&quot;: status[&quot;audit_valid&quot;]})
+</code></pre>
+<p>La connessione verifica prima una prova HMAC v2 su nonce nuovo, legata all’indirizzo/porta effettivi, poi invia token e richiesta sulla stessa connessione TCP. Non usa redirect, proxy ambientali o host remoti. Questa autenticazione locale non sostituisce TLS o la difesa da un amministratore dei namespace di rete. La funzione <code>VerifiedConnection.request</code> accetta rotte senza query string: la paginazione della tabella API descrive il protocollo HTTP; un client che la implementa deve mantenere le stesse proprietà di connessione verificata, senza riaprire una connessione non autenticata dopo la prova.</p>
+<p>Errori comuni: 400 richiesta o file non gestibile, 401 token assente/errato, 403 origine non ammessa, 404 record assente, 409 contenuto/versione/policy obsoleti o conflitto operativo, 413 corpo eccessivo, 422 validazione del modello, 429 slot occupati, 503 registrazione della copia non completata. Gli errori applicativi hanno normalmente <code>detail</code> testuale; gli errori 422 possono avere un elenco strutturato FastAPI. Non interpretare una risposta HTTP 200 come autorizzazione: analizzare i campi del risultato.</p>
+<h2 id="9-monitoraggio-e-diagnosi-operativa">9. Monitoraggio e diagnosi operativa</h2>
+<p>Il monitor configurazioni usa debounce 0,45 s e riconciliazione ogni 5 s. Il monitor documenti usa debounce 0,75 s e riconciliazione ogni 30 s; sono previste 64 radici, profondità massima 64 e al massimo 256 directory osservate tramite eventi. Ogni passata è limitata a 2.000 voci, 128 MiB e 60 s. La continuazione delle visite è persistita: una passata limitata non deve essere presentata come copertura completa.</p>
+<p>Gli stati della visita e gli esiti dei file sono distinti: <code>COMPLETED</code> descrive la visita, non significa che tutti i documenti siano consentiti. Rileggere <code>last_job</code>, <code>errors</code>, file falliti/saltati e stato <code>PARTIAL</code>. Radici disabilitate restano configurate; rimuovere una radice non cancella gli originali né lo storico dei report.</p>
+<p>La cache dei file tiene conto di contenuto/percorso e contesto: policy, regole, codice worker/scanner, parser, registro degli estrattori, Python e versione Unicode. Un cambiamento richiede nuove analisi, non rietichetta retroattivamente i vecchi report. Per il contratto degli estrattori confezionati leggere <a href="ESTRATTORI.html">ESTRATTORI.md</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Sintomo</th>
+<th>Verifica utile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Porta occupata o store già aperto</td>
+<td>Individuare l’istanza proprietaria e la sua directory dati; usare la sua API, senza rimuovere il lock</td>
+</tr>
+<tr>
+<td>CLI non raggiunge l’app</td>
+<td>Controllare <code>--api-url</code>, stesso <code>MCP_GUARD_DATA</code> e processo; una prova listener errata è un errore da investigare</td>
+</tr>
+<tr>
+<td>Sandbox non disponibile</td>
+<td>Eseguire diagnostica, leggere capacità Landlock/libseccomp e requisiti del sistema ospitante</td>
+</tr>
+<tr>
+<td>Componente bloccato dopo aggiornamento</td>
+<td>Controllare sorgente, nuova versione, policy, firma e audit; non forzare lo stato nel database</td>
+</tr>
+<tr>
+<td>Scansione <code>UNSCANNABLE</code></td>
+<td>Leggere <code>failure_kind</code>, finding e <code>limitations</code>; distinguere formato, OCR, cifratura, timeout e dipendenza</td>
+</tr>
+<tr>
+<td>Copia HTML negata</td>
+<td>Leggere <code>reason</code> e i report collegati; trasformazione riuscita non implica consegna</td>
+</tr>
+<tr>
+<td>Monitor apparentemente inattivo</td>
+<td>Verificare stato globale, radice abilitata, errori della passata e prosecuzione del ciclo</td>
+</tr>
+<tr>
+<td>Crescita dei dati</td>
+<td>Controllare numero totale di elaborazioni e audit; non è implementata una retention automatica</td>
+</tr>
+</tbody>
+</table>
+<p>Lo stato del servizio e la verifica audit sono osservabili via API. CPU, RSS, descriptor e thread sono misure del sistema operativo o degli strumenti QA, non metriche Prometheus esposte dal prodotto. I launcher non abilitano access log HTTP dettagliati; conservare i log di servizio secondo la politica locale, evitando token, documenti e dump dei database nei rapporti pubblici. Per misure e limiti delle prove di durata consultare <a href="PERFORMANCE.html">PERFORMANCE.md</a> e <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

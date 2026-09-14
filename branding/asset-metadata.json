@@ -1,0 +1,33 @@
+[
+  {
+    "path": "cheker-logomark.png",
+    "dimensions": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1175037,
+    "partially_transparent_pixels": 394387,
+    "bytes": 457404,
+    "sha256": "16d2036fe87569ead3ca8c205c5020d8e28cb42ef99d4f9d8d4b17df442acdf1",
+    "byte_identical_to_original": true
+  },
+  {
+    "path": "cheker-scan-illustration.png",
+    "dimensions": [
+      1672,
+      941
+    ],
+    "mode": "RGB",
+    "alpha_extrema": null,
+    "fully_transparent_pixels": 0,
+    "partially_transparent_pixels": 0,
+    "bytes": 1567633,
+    "sha256": "4348c12ff6f24e45d0902cdd20e18e99f01063a89c3edf1748c3fdbf6a49d7af",
+    "byte_identical_to_original": true
+  }
+]

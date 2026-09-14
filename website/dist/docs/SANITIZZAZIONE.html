@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Copia testuale HTML · Cheker</title><meta name="description" content="Copia testuale HTML di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html" aria-current="page">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="SANITIZZAZIONE.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="copia-testuale-da-html">Copia testuale da HTML</h1>
+<p>La funzione crea <strong>su richiesta esplicita</strong> una copia UTF-8 di un file <code>.html</code> o
+<code>.htm</code>, secondo il profilo versionato <code>html-text-v1</code>. L'originale non viene
+riscritto, spostato o cancellato. La copia perde markup, metadati e altri
+contenuti esclusi dal profilo: non è una conversione semanticamente equivalente
+al documento e non costituisce una bonifica universale delle prompt injection.</p>
+<p>Nella pagina File Scanner, la sezione <strong>Copie testuali HTML</strong> permette di
+selezionare un file oppure indicarne il percorso assoluto Linux. L'operazione è
+distinta dalla scansione ordinaria. Watcher, gate e lettori MCP non trasformano
+automaticamente i documenti.</p>
+<h2 id="stato-corrente-della-verifica-d59523d2">Stato corrente della verifica: <code>d59523d2…</code></h2>
+<p>Il candidato corretto ha wheel SHA-256
+<code>d59523d28b11da7c7be670e464ed4d99e70899e822e53c900d4aa6f09c6a0973</code>
+e tar verificato
+<code>88c833583a2d8fe66705372c672ed82a547d593bdb68c81a2295c41a51e3de0e</code>.
+Rispetto al precedente <code>891d7fc8…</code> cambia soltanto <code>html_text.py</code>; la UI è
+invariata. L’installazione Linux pulita è <strong>PASS</strong>, con diagnostica <code>READY</code>,
+analisi completa e sandbox attiva su Python 3.13.5. Evidenza:
+<code>dev/.test-data/release-parser-compat.json</code>.</p>
+<p>La QA mirata del runtime installato ha superato <strong>27 controlli browser e 10
+host, 37 complessivi</strong>. Il commento valido di 16.000 caratteri seguito da
+<code>&lt;p&gt;Notes&lt;/p&gt;</code> produce <code>SANITIZED</code>/<code>ALLOWED</code>: il download desktop e mobile
+contiene esattamente <code>Notes</code> seguito da LF, sei byte, SHA-256
+<code>38732073f309589131fec63f417896537e63d27fc29fcf7c60d5f47379f0887a</code>.
+Originale e copia hanno due report distinti e completi. Il commento di 70.000
+caratteri viene negato con <code>STRUCTURE_LIMIT</code>, senza copia o download. Le due
+operazioni generano tre report ordinari e totali coerenti con l’API; lo storico
+contiene solo metadati. Nessun errore JavaScript, console o API, né overflow a
+1440 e 360 pixel; backend della prova chiuso. Evidenza:
+<code>dev/.test-data/parser-compat-ui-20260914/REPORT.md</code>. La precedente suite browser
+da 74 controlli non è stata ripetuta e rimane attribuita al wheel <code>891d7fc8…</code>.</p>
+<p>L’upgrade da <code>ea5e9d26…</code> al candidato corretto ha superato <strong>53 controlli</strong> in
+una sola esecuzione, preservando file di stato, chiave, token, checkpoint,
+componenti, approvazione, report, radice in pausa e policy. Due nuove copie,
+inclusa quella con un commento di 16.384 byte, portano il totale a cinque report
+e due operazioni; audit valido, GET senza payload, diagnostica <code>READY</code> e
+processi chiusi. Evidenza:
+<code>dev/.test-data/upgrade-parser-compat-20260914/REPORT.md</code>.</p>
+<p>La suite completa Python 3.13 è <strong>PASS</strong>: 1.036 test backend, uno SKIP Windows,
+28 metodi QA e 43 sottocasi, senza fallimenti, in 490,162 secondi. Sono passate
+anche le due regressioni del processo isolato reale per i commenti da 16.000
+e 70.000 caratteri. Evidenza: <code>dev/.test-data/linux-parser-compat-result.json</code>.
+La suite installata Python 3.11 è <strong>PASS</strong>: 1.036 test superati e uno SKIP Windows, senza fallimenti, in 561,785 secondi; <code>dev/.test-data/python311-parser-compat/backend-tests.xml</code>. Anche il collaudo prolungato
+è <strong>in corso, non PASS</strong>: avviato
+il 14 settembre alle 19:33:39 UTC, PID 54430 e <code>start_ticks</code> 9584616, sul runtime
+immutabile <code>/tmp/cheker-linux-release-0kslmc33/mcp-integrity-guard/runtime-linux/bin/python</code>.
+Dati separati in <code>/tmp/cheker-linux-finalrun/.test-data/d595-release</code>, controllo
+in <code>d595-control</code>, conclusione dell’esercizio pianificata entro le 02:25 UTC del
+15 settembre. Provenienza: <code>dev/.test-data/soak-d595-launch.json</code>. L’avvio mentre
+entrambe le suite erano in corso non costituisce una convalida del rilascio. La baseline
+r3 precedente rimane distinta. I risultati storici e i fallimenti di <code>891d7fc8…</code>
+sono conservati sotto e in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<h2 id="trasformazione-e-autorizzazione-sono-separate">Trasformazione e autorizzazione sono separate</h2>
+<p>Il servizio esegue tre stadi sequenziali:</p>
+<ol>
+<li>Acquisisce i byte dell'originale e ne registra una scansione ordinaria.</li>
+<li>Se quella scansione è completa, un worker Linux confinato produce la copia
+   testuale. Il parent verifica protocollo, completamento, dimensioni, UTF-8 e
+   hash dei byte ricevuti.</li>
+<li>Una <strong>nuova scansione ordinaria degli esatti byte della copia</strong> determina se
+   il contenuto può essere consegnato.</li>
+</ol>
+<p>Un originale classificato sospetto può quindi essere trasformato, purché la sua
+analisi sia completa. Il suo report resta invariato. Un originale non analizzato
+completamente interrompe il flusso prima della trasformazione.</p>
+<table>
+<thead>
+<tr>
+<th>Campo dell'operazione</th>
+<th>Valori</th>
+<th>Significato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>transformation_status</code></td>
+<td><code>SANITIZED</code>, <code>FAILED</code></td>
+<td>Il profilo ha prodotto una copia, oppure non ha completato la trasformazione.</td>
+</tr>
+<tr>
+<td><code>delivery_status</code></td>
+<td><code>ALLOWED</code>, <code>DENIED</code></td>
+<td>La risposta corrente può contenere i byte della copia, oppure li esclude.</td>
+</tr>
+</tbody>
+</table>
+<p><code>SANITIZED</code> <strong>non autorizza il contenuto</strong>. È possibile ottenere
+<code>SANITIZED</code> insieme a <code>DENIED</code>: per esempio, un'istruzione sospetta ancora
+presente nel testo visibile resta nella copia e viene rilevata dalla seconda
+scansione. Il trasformatore non cerca di riscrivere o reinterpretare quelle
+istruzioni.</p>
+<p>La consegna richiede simultaneamente:</p>
+<ul>
+<li>hash SHA-256 e dimensione corrispondenti agli esatti byte prodotti;</li>
+<li>seconda analisi completa e non troncata;</li>
+<li>verdetto <code>VALID</code>, stato <code>ALLOWED</code> e lista dei finding vuota;</li>
+<li>assenza dei contenuti sensibili specificamente esclusi dal servizio;</li>
+<li>stessa versione di policy fra il report della copia e la registrazione finale;</li>
+<li>registrazione riuscita dell'operazione e del relativo evento audit.</li>
+</ul>
+<p>La verifica della policy avviene nuovamente al termine. Se cambia, la consegna è
+negata con <code>POLICY_CHANGED</code>. Un problema di registrazione restituisce HTTP 503
+senza copia. Gli stati e i protocolli dello scanner ordinario e del gate non
+acquisiscono alcuna eccezione per <code>SANITIZED</code>.</p>
+<h2 id="profilo-html-supportato">Profilo HTML supportato</h2>
+<p>Sono ammessi documenti o frammenti HTML bilanciati, con tag ordinari per testo,
+paragrafi, titoli, elenchi, tabelle e formattazione inline. Sono riconosciuti i
+normali elementi senza chiusura esplicita, come <code>br</code>, <code>hr</code>, <code>img</code>, <code>meta</code>, <code>link</code>,
+<code>wbr</code>, <code>col</code> e <code>source</code>. Il doctype ammesso è <code>&lt;!doctype html&gt;</code>.</p>
+<p>Il profilo decodifica i riferimenti a caratteri HTML, comprime gli spazi del
+testo ordinario, inserisce separatori LF per gli elementi di blocco e tratta
+separatamente il testo in <code>pre</code>. L'output usa UTF-8 senza BOM e termina con LF.
+L'ingresso può essere UTF-8, con o senza BOM, oppure UTF-16 con BOM.</p>
+<p>Vengono esclusi:</p>
+<ul>
+<li>commenti HTML e attributi, compresi URL, alt text e altri metadati;</li>
+<li>contenuti di <code>head</code>, <code>title</code>, <code>meta</code> e <code>link</code>;</li>
+<li>contenuti di <code>script</code>, <code>template</code> e <code>noscript</code>;</li>
+<li>immagini e nodi <code>source</code>, senza recuperare o riconoscere il loro contenuto;</li>
+<li>sottostrutture marcate <code>hidden</code>, <code>aria-hidden="true"</code> o dalle dichiarazioni
+  inline di occultamento riconosciute qui sotto.</li>
+</ul>
+<p>La presenza dell'attributo HTML <code>hidden</code> è sufficiente, anche quando il suo
+valore testuale è <code>false</code>. Un elemento annidato sotto una sottostruttura esclusa
+rimane escluso.</p>
+<h3 id="css-sottoinsieme-letterale-nessun-rendering">CSS: sottoinsieme letterale, nessun rendering</h3>
+<p>Non vengono interpretati fogli di stile o script. I blocchi <code>style</code>, i link a
+fogli di stile esterni e le dichiarazioni inline fuori dal seguente elenco
+producono <code>UNSUPPORTED_CSS</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Proprietà inline</th>
+<th>Valori che escludono il nodo</th>
+<th>Altri valori ammessi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>display</code></td>
+<td><code>none</code></td>
+<td><code>block</code>, <code>inline</code>, <code>inline-block</code></td>
+</tr>
+<tr>
+<td><code>visibility</code></td>
+<td><code>hidden</code>, <code>collapse</code></td>
+<td><code>visible</code></td>
+</tr>
+<tr>
+<td><code>opacity</code></td>
+<td><code>0</code>, <code>0.0</code></td>
+<td><code>1</code>, <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>font-size</code></td>
+<td><code>0</code>, <code>0px</code>, <code>0pt</code>, <code>0em</code>, <code>1px</code>, <code>1pt</code></td>
+<td>Nessuno</td>
+</tr>
+</tbody>
+</table>
+<p>Le dichiarazioni sono separate da punto e virgola; proprietà duplicate vengono
+rifiutate. Colori, selettori, cascata, <code>!important</code>, calcoli e altre sintassi CSS
+non sono supportati da questa trasformazione. L'elenco non descrive un browser
+né garantisce che il testo copiato coincida con quello visibile in ogni ambiente.</p>
+<p>Tag sconosciuti, elementi complessi come SVG o iframe, chiusure implicite o non
+bilanciate, attributi duplicati e dichiarazioni non ammesse vengono rifiutati.
+Un HTML visualizzato correttamente da un browser può quindi non appartenere al
+profilo. In tal caso non viene restituito un risultato parziale.</p>
+<h2 id="limiti-e-worker-linux">Limiti e worker Linux</h2>
+<table>
+<thead>
+<tr>
+<th>Limite</th>
+<th>Valore</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snapshot di ingresso</td>
+<td>10 MiB</td>
+</tr>
+<tr>
+<td>Copia UTF-8, compreso LF finale</td>
+<td>256 KiB</td>
+</tr>
+<tr>
+<td>Profondità HTML</td>
+<td>128</td>
+</tr>
+<tr>
+<td>Eventi strutturali del parser</td>
+<td>20.000</td>
+</tr>
+<tr>
+<td>Token HTML o buffer incompleto</td>
+<td>64 Ki caratteri</td>
+</tr>
+<tr>
+<td>Budget interno di trasformazione</td>
+<td>8 secondi</td>
+</tr>
+<tr>
+<td>Memoria per worker</td>
+<td>512 MiB</td>
+</tr>
+<tr>
+<td>CPU per worker</td>
+<td>10 secondi</td>
+</tr>
+<tr>
+<td>Tempo totale del singolo worker nel parent</td>
+<td>12 secondi</td>
+</tr>
+<tr>
+<td>stdout + stderr del worker di trasformazione</td>
+<td>1 MiB</td>
+</tr>
+</tbody>
+</table>
+<p>Il limite di trasporto della trasformazione è inferiore al limite ordinario di
+4 MiB dello scanner. Il suo protocollo separato include testo in Base64; quello
+dello scanner continua a trasmettere report senza contenuto sorgente.</p>
+<p>Il processo viene avviato con Python <code>-I</code> e ambiente minimo. I limiti di risorse,
+Landlock e seccomp vengono applicati <strong>prima della prima lettura dello snapshot</strong>.
+Servono Linux a 64 bit, Landlock ABI almeno 3 e libseccomp, come descritto in
+<a href="LINUX_SANDBOX.html">LINUX_SANDBOX.md</a>. Senza il confinamento richiesto non viene
+prodotta una copia utilizzabile. Scansioni e trasformazione condividono i due
+slot per worker; ogni stadio rilascia il proprio slot prima del successivo.</p>
+<p>Nessun documento, comando, JavaScript o risorsa esterna viene eseguito o
+recuperato. Rifiuti e diagnostiche del nuovo worker usano codici e messaggi fissi,
+senza riportare frammenti del documento.</p>
+<h2 id="originale-copia-e-registro">Originale, copia e registro</h2>
+<p>Un'operazione contiene <code>input_sha256</code>, <code>output_sha256</code>, dimensioni,
+<code>input_report_id</code>, <code>output_report_id</code>, profilo, stati e motivazione. Gli ID
+collegano le due elaborazioni ai report ordinari. Se il flusso si interrompe,
+l'hash della copia o il suo report possono essere assenti.</p>
+<p>Una richiesta che completa entrambe le scansioni aggiunge <strong>due elaborazioni</strong>
+al registro. L'operazione di trasformazione non è una terza scansione e non
+introduce un nuovo verdetto fra i cinque esistenti. I contenuti unici continuano
+a essere contati per hash distinti, non per numero di copie richieste.</p>
+<p>I contatori <code>omitted_counts</code> riportano commenti, radici di sottostrutture nascoste,
+metadati, contenuti attivi, nodi non testuali e attributi esclusi. I discendenti di
+una sottostruttura già esclusa non sono contati nuovamente come altre radici.
+Non sono una misura dell'efficacia della bonifica.</p>
+<p>La tabella <code>sanitizations</code> in <code>scans.sqlite3</code> conserva <strong>solo metadati</strong>.
+L'evento <code>FILE_SANITIZATION_RECORDED</code> collega operazione, hash e report nell'audit.
+Il corpo della copia non viene aggiunto ai database, ai report o all'audit.</p>
+<p>Solo la risposta POST corrente può contenere il testo. Il browser può convertirlo
+in un file <code>nome.sanitized.txt</code>; lo storico non permette di scaricare nuovamente
+la copia. Dopo un ricaricamento o una nuova sessione occorre ripetere
+esplicitamente l'operazione. Una registrazione storica <code>ALLOWED</code> descrive quella
+richiesta, non un'autorizzazione riutilizzabile.</p>
+<h2 id="api">API</h2>
+<p>Tutte le rotte richiedono l'autenticazione amministrativa locale. Per la
+connessione verificata e il token locale seguire il <a href="../index.html">README</a>,
+senza inserire token in documenti o esempi condivisi.</p>
+<table>
+<thead>
+<tr>
+<th>Rotta</th>
+<th>Richiesta o risposta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/sanitizations/html</code></td>
+<td>Multipart con <code>file</code> e campo facoltativo <code>expected_sha256</code>.</td>
+</tr>
+<tr>
+<td><code>POST /api/sanitizations/html/path</code></td>
+<td>JSON con <code>path</code> e <code>expected_sha256</code> facoltativo.</td>
+</tr>
+<tr>
+<td><code>GET /api/sanitizations?limit=50&amp;offset=0</code></td>
+<td>Elenco dei soli metadati; limite ammesso da 1 a 100.</td>
+</tr>
+<tr>
+<td><code>GET /api/sanitizations/{id}</code></td>
+<td>Metadati della singola operazione, mai contenuto.</td>
+</tr>
+</tbody>
+</table>
+<p>Esempio del solo corpo della richiesta per un percorso Linux:</p>
+<pre><code class="language-json">{&quot;path&quot;:&quot;/srv/documenti/riunione.html&quot;}
+</code></pre>
+<p><code>expected_sha256</code>, quando fornito, deve essere un SHA-256 esadecimale minuscolo
+di 64 caratteri. Se lo snapshot leggibile non corrisponde, il servizio restituisce
+HTTP 409 prima della scansione e della trasformazione.</p>
+<p>La risposta POST include i metadati e <code>delivery</code>. Solo dopo tutti i controlli
+positivi, <code>delivery</code> contiene:</p>
+<pre><code class="language-text">encoding: &quot;base64&quot;
+media_type: &quot;text/plain;charset=utf-8&quot;
+data_base64: i byte verificati codificati in Base64
+</code></pre>
+<p>Negli altri casi <code>delivery</code> è <code>null</code>. Le risposte GET non contengono questo campo.
+<strong>HTTP 200 da solo non autorizza alcuna consegna</strong>: il client deve leggere
+<code>delivery_status</code> e verificare la presenza del payload previsto. Un errore HTTP,
+una risposta incompleta o un fallimento di registrazione non devono produrre un
+download. Il client deve usare i byte decodificati, senza modificarli o
+ricodificarli prima del salvataggio.</p>
+<p>Fra le motivazioni possibili figurano <code>INPUT_INCOMPLETE</code>,
+<code>UNSUPPORTED_TRANSFORMATION</code>, <code>SOURCE_UNAVAILABLE</code>, <code>UNSUPPORTED_CSS</code>,
+<code>MALFORMED_HTML</code>, <code>EMPTY_OUTPUT</code>, <code>OUTPUT_SIZE_LIMIT</code>, <code>WORKERS_BUSY</code>,
+<code>OUTPUT_INCOMPLETE</code>, <code>OUTPUT_REQUIRES_REVIEW</code>, <code>SENSITIVE_CONTENT</code> e
+<code>POLICY_CHANGED</code>. L'esito positivo usa <code>COPY_PASSED_CHECKS</code>.</p>
+<h2 id="percorsi-e-contenuti-esclusi">Percorsi e contenuti esclusi</h2>
+<p>La variante per percorso è disponibile su Linux. Apre ogni componente del
+percorso senza seguire link simbolici, accetta solo file regolari con un unico
+hard link, esclude la cartella dati dell'istanza corrente e controlla che il file
+non cambi durante la lettura. Un percorso non utilizzabile registra un esito
+negato; non viene trattato come una copia riuscita.</p>
+<p>Anche per upload, il servizio nega la consegna quando riconosce blocchi di chiavi
+private PEM o il token dell'istanza corrente nell'ingresso o nell'uscita. Questi
+controlli specifici non equivalgono a riconoscere qualsiasi segreto scritto nel
+documento.</p>
+<p>Non sono implementate trasformazioni per PDF, DOCX, Markdown o altri formati,
+né OCR, esecuzione JavaScript, rendering browser o recupero di risorse esterne.
+Il rilevamento delle istruzioni resta euristico: una copia autorizzata ai
+controlli implementati non è una certificazione di sicurezza universale.</p>
+<h2 id="implementazione-e-verifica">Implementazione e verifica</h2>
+<p>Il profilo e il worker sono in <code>backend/integrity_guard/html_text.py</code>,
+<code>sanitize_worker.py</code> e <code>sanitize_protocol.py</code>; il servizio è in <code>sanitizer.py</code>.
+Le rotte sono definite in <code>api.py</code> e l'interfaccia in
+<code>frontend/src/Sanitizations.tsx</code>.</p>
+<p>I test dei tre moduli coprono conversione, struttura, limiti, schema del
+protocollo, worker Linux reale e successiva scansione degli esatti byte. Il
+risultato consolidato della prima serie su Python 3.13 è <strong>113 test superati, senza skip</strong>. Questa prova
+precede il difetto di compatibilità 3.11 descritto sotto e non valida la correzione
+successiva. Il primo errore sul limite di un commento lungo è
+conservato separatamente dal risultato riuscito in
+<code>dev/.test-data/sanitization-modules-20260914/report.json</code> e relativi JUnit.
+Quella serie conserva due esecuzioni fallite, con 103/104 e 112/113 casi
+superati: precedono il controllo della lunghezza dei token nei callback del
+parser. Non vengono cancellate né confuse con il successivo difetto di
+buffering specifico di Python 3.11.
+Per servizio, API, interfaccia e rilascio fa fede il registro complessivo
+<a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<h3 id="compatibilita-python-311-prove-storiche-del-candidato-precedente">Compatibilità Python 3.11: prove storiche del candidato precedente</h3>
+<p>La suite completa sul wheel precedente <code>891d7fc8…</code> ha concluso su Python 3.11.16
+con <strong>995 test superati, un fallimento e uno skip Windows</strong>, 997 casi in
+659,989 secondi. Le prove sono preservate in
+<code>dev/.test-data/python311-final-features/results.json</code> e <code>backend-tests.xml</code>.
+I PASS ottenuti su Python 3.13, browser e installazione del medesimo wheel restano
+attribuiti a esso e non cancellano questo fallimento.</p>
+<p>Le tracce <code>parser-buffer-python311.json</code> e <code>parser-buffer-python313.json</code>
+confermano una differenza nel buffering di <code>HTMLParser</code> durante <code>feed()</code> a
+blocchi. Su 3.11.16 una parte dei dati resta in <code>_pending</code>; il metodo applicativo
+<code>finish</code> controllava <code>rawdata</code> prima di chiamare <code>close()</code>. Con lo stesso modulo,
+un commento completo di 16.000 caratteri veniva erroneamente rifiutato su 3.11;
+un commento di 70.000 caratteri, oltre il limite, produceva <code>MALFORMED_HTML</code>
+invece del previsto <code>STRUCTURE_LIMIT</code>. Su 3.13 i due esiti erano rispettivamente
+trasformazione riuscita e rifiuto per limite.</p>
+<p>Nessuna consegna impropria è stata osservata nelle prove. La correzione riguarda
+il prodotto e conserva le asserzioni sui commenti validi e sui limiti.
+<code>html_text.py</code> corretto è congelato con SHA-256
+<code>974e9236bf075ee97312b8de5e5758c20718231f21201e447ecad08734b5cb9b</code>.
+In ambienti temporanei separati, 85 test HTML, inclusi 38 nuovi casi, sono
+superati su Python 3.11 in 0,769 secondi e su Python 3.13 in 0,845 secondi.
+Evidenza: <code>dev/.test-data/html-parser-compatibility-20260914/results.json</code>.
+Queste prove mirate non sono una suite completa installata e non hanno avviato
+un worker dai pacchetti temporanei. Le due nuove regressioni del worker reale
+sono poi passate nella suite completa Python 3.13 del candidato corretto;
+anche la suite Python 3.11 è poi passata. I due casi sono verificati anche nella QA
+browser mirata del candidato corretto.</p>
+<p>Il candidato corretto <code>d59523d2…</code> contiene 26 file applicativi e cambia solo
+<code>html_text.py</code> rispetto a <code>891d7fc8…</code>; le verifiche correnti sono descritte nella
+sezione iniziale. Il precedente <code>891d7fc8…</code> è stato sostituito come candidato e
+non verrà usato per la prova prolungata finale. Le sue prove e il fallimento
+Python 3.11 restano conservati con la loro attribuzione.</p>
+<h3 id="prova-breve-storica-del-collaudo-delle-copie-su-891d7fc8">Prova breve storica del collaudo delle copie su <code>891d7fc8…</code></h3>
+<p>Il nuovo harness separato, commit <code>6587f4e</code>, ha superato 16 metodi e 25 sottocasi.
+Una sola esecuzione breve su Python 3.13.5 e wheel <code>891d7fc8…</code> è conclusa PASS in
+181,834 secondi: 38 copie richieste, nove riavvii, 312 report complessivi con i
+casi ordinari della baseline, 118 pagine di metadati controllate e 362 verifiche
+di report storici, comprese riletture dopo riavvio. Bytes, dimensioni, SHA-256,
+collegamenti dei report e GET senza contenuto sono risultati coerenti; nessun
+processo posseduto è rimasto attivo fra quelli osservati. Evidenze:
+<code>dev/.test-data/soak-features-selftest-20260914/REPORT.md</code> e <code>result.json</code>.
+Questa verifica breve non sostituisce la suite completa 3.11 del candidato corretto,
+ora passata, né la sua prova lunga, ancora in corso.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Copertura dei requisiti · Cheker</title><meta name="description" content="Copertura dei requisiti di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html" aria-current="page">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="REQUISITI_COPERTURA.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="matrice-di-copertura-dei-requisiti">Matrice di copertura dei requisiti</h1>
+<p>Riferimento: specifica di progetto ricevuta, conservata nella documentazione locale, più le richieste
+successive di usare Linux, mantenere applicazione e sviluppo in <code>D:\Cheker</code> e
+mostrare file elaborati e totali. Stato documentato: 14 settembre 2026.</p>
+<p>L'allegato disponibile termina nella sezione 15, dopo <code>MET</code>. Non vengono
+ricostruite né dichiarate coperte sezioni mancanti. <strong>Implementato</strong> indica una
+funzione presente con evidenze verificabili; <strong>parziale</strong> indica un perimetro
+più ristretto della richiesta; <strong>non implementato</strong> indica una funzione assente.
+Nessuno di questi stati equivale a una garanzia universale di sicurezza.</p>
+<p>I percorsi dei sorgenti sono relativi a <code>dev</code>: i moduli Python citati si trovano
+in <code>backend/integrity_guard/</code>, i test Python in <code>backend/tests/</code>. Il pacchetto
+applicativo installa i moduli dal wheel; i sorgenti e i test appartengono alla
+cartella di sviluppo. Per le esecuzioni effettive delle suite e dei controlli
+di rilascio fa fede <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>, aggiornato separatamente.
+Le prove browser estese citate per <code>891d7fc8…</code> riguardano il candidato precedente;
+la verifica mirata di <code>d59523d2…</code> riguarda il candidato corrente corretto. I loro
+esiti restano separati e non vengono trasferiti automaticamente fra wheel.</p>
+<h2 id="richieste-successive-dellutente">Richieste successive dell'utente</h2>
+<table>
+<thead>
+<tr>
+<th>Richiesta e stato</th>
+<th>Funzione presente</th>
+<th>File e verifica</th>
+<th>Limiti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Applicazione e sviluppo in D:\Cheker — implementato</strong></td>
+<td><code>D:\Cheker\app</code> contiene app, UI e runtime Linux; <code>D:\Cheker\dev</code> contiene sorgenti, test e strumenti. In WSL il percorso è <code>/mnt/d/Cheker</code>. Dati app in <code>app/data-linux</code>; dati dev separati in <code>dev/.dev-data-linux</code>.</td>
+<td><code>build-linux.sh</code>, <code>package_app.py</code>, <code>start-dev.sh</code>, <code>deploy/linux/start.sh</code>; manifest <code>app/release-manifest.json</code> e verificatore <code>deploy/linux/verify-release.py</code>.</td>
+<td>Un'altra installazione Linux può usare un percorso diverso. Gli ambienti virtuali vengono ricreati, non sono considerati trasferibili fra host.</td>
+</tr>
+<tr>
+<td><strong>Linux come piattaforma principale — implementato con requisiti OS</strong></td>
+<td>Launcher, installazione da wheel, shell per CLI e sviluppo; verifica reale di avvio del worker. Scanner Linux con Landlock e seccomp prima della lettura del documento.</td>
+<td><code>deploy/linux/install-linux.sh</code>, <code>diagnostics.py</code>, <code>linux_sandbox.py</code>, <code>scan_worker.py</code>; <code>test_diagnostics.py</code>, <code>test_linux_sandbox.py</code>, <code>test_scanner_security_review.py</code>.</td>
+<td>Linux 64 bit, Python 3.11+, Landlock ABI almeno 3 e libseccomp. Verifica locale su x86_64/WSL2; aarch64 richiede ancora validazione di rilascio su quell'architettura. Assenza del confine richiesto nega la scansione.</td>
+</tr>
+<tr>
+<td><strong>Elenco dei file elaborati — implementato</strong></td>
+<td>Registro persistente con nome, percorso disponibile, data, hash, stato, verdetto, finding e dettaglio scaricabile. Ricerca, filtri e paginazione.</td>
+<td><code>reports.py</code>, <code>api.py</code>, <code>frontend/src/Scanner.tsx</code>; <code>test_registry.py::test_registry_migrates_legacy_and_counts_beyond_first_page</code>, <code>test_api.py::test_failed_path_scan_is_visible_in_registry</code>.</td>
+<td>Un upload dal browser non fornisce il percorso originale del computer: rimane il nome. Il registro contiene elaborazioni effettuate, non un inventario automatico di tutto il disco.</td>
+</tr>
+<tr>
+<td><strong>Totali analizzati, infetti/sospetti, corrotti, validi — implementato</strong></td>
+<td>Aggregazioni su tutto l'archivio, incluse revisione e non analizzabili; conteggio separato degli stati bloccati e dei contenuti unici. Il filtro restituisce anche il totale corrispondente alla ricerca.</td>
+<td><code>Reports.stats</code>, <code>classify_report</code>, <code>frontend/src/App.tsx</code>, <code>frontend/src/Scanner.tsx</code>; <code>test_registry.py</code>, <code>test_scanner.py::test_analysis_completion_and_failure_kind</code>, benchmark in <code>qa/benchmark_audit.py</code>.</td>
+<td>“Analizzati” conta le elaborazioni registrate, comprese quelle interrotte. <code>INFECTED</code> indica istruzioni/manipolazioni sospette rilevate; non è una classificazione antivirus. <code>VALID</code> significa analisi completa senza rilievi nei controlli implementati.</td>
+</tr>
+<tr>
+<td><strong>Elaborazione di più file e monitor cartelle — implementato</strong></td>
+<td>Selezione multipla con coda e risultati reali; cartelle registrate esplicitamente, scansione manuale o in background, stato delle passate e ripresa di alberi grandi.</td>
+<td><code>frontend/src/Scanner.tsx</code>, <code>frontend/src/FileWatchers.tsx</code>, <code>filewatch.py</code>; <code>ui-smoke.cjs</code>, <code>ui-watch-smoke.cjs</code>, <code>test_filewatch.py</code>, inclusi <code>test_large_directory_continues_past_the_real_2000_entry_limit</code> e <code>test_unfinished_cycle_survives_restart_without_duplicate_reports</code>.</td>
+<td>Passate limitate per file, byte e tempo; <code>PARTIAL</code> non equivale a copertura completa. I link simbolici sono rifiutati. Stop della coda non annulla retroattivamente i report già prodotti.</td>
+</tr>
+<tr>
+<td><strong>Prodotto locale utilizzabile e verificabile — implementato nel perimetro descritto</strong></td>
+<td>Backend reale, interfaccia React in italiano, API e CLI collegate, installazione e diagnosi, controlli browser e harness di durata.</td>
+<td><code>frontend/src/</code>, <code>api.py</code>, <code>cli.py</code>, <code>test.sh</code>, <code>qa/soak.py</code>, <code>ui-smoke.cjs</code>, <code>frontend/tests/mobile-layout.cjs</code>.</td>
+<td>L'harness di durata è uno strumento eseguibile: la sua presenza non attesta da sola che sia stato completato un certo numero di ore. Risultati e durata appartengono al registro di validazione.</td>
+</tr>
+</tbody>
+</table>
+<p>I cinque verdetti del registro sono <code>VALID</code>, <code>INFECTED</code>, <code>CORRUPTED</code>,
+<code>REVIEW_REQUIRED</code>, <code>UNSCANNABLE</code>. Le loro quantità compongono il totale delle
+elaborazioni; <code>blocked</code> è un conteggio ortogonale sullo stato operativo e non va
+sommato nuovamente. I contenuti unici sono SHA-256 distinti non vuoti: tre
+scansioni manuali degli stessi byte producono tre elaborazioni e un contenuto
+unico. Il monitor evita invece nuove registrazioni per una versione invariata
+nel medesimo contesto di regole, policy, parser e controlli del worker.</p>
+<p>Per la copia HTML, originale e copia sono due scansioni ordinarie distinte quando
+entrambi gli stadi vengono eseguiti. Contano anche se la consegna è negata;
+l’operazione di trasformazione non è una terza elaborazione. <code>SANITIZED</code> è uno
+stato della trasformazione, non un nuovo verdetto né un’autorizzazione al
+download. La QA estesa storica sul wheel <code>891d7fc8…</code> ha superato 74 controlli
+browser e 10 host, registrando 11 operazioni e 20 report effettivi:
+<code>.test-data/sanitization-ui-20260914/REPORT.md</code>.</p>
+<p>La QA mirata corrente sul wheel <code>d59523d2…</code> ha superato 27 controlli browser e
+10 host con due operazioni e tre report:
+<code>.test-data/parser-compat-ui-20260914/REPORT.md</code>. Verifica la copia da HTML con
+commento valido di 16.000 caratteri e il rifiuto <code>STRUCTURE_LIMIT</code> del commento
+di 70.000 caratteri, con download esatti, report collegati, contatori e storico
+senza payload. La trasformazione rifiutata non aggiunge il report di una copia
+inesistente. Questa esecuzione mirata non ripete i 74 controlli storici.</p>
+<h2 id="allegato-originale-sezioni-09">Allegato originale, sezioni 0–9</h2>
+<table>
+<thead>
+<tr>
+<th>Area e stato</th>
+<th>Funzione presente</th>
+<th>File e verifica</th>
+<th>Limiti e differenze</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>§0, §1 — Fiducia nel contenuto e mutazioni — implementato tramite integrazione</strong></td>
+<td>Hash e versione vincolano l'approvazione; stesso nome o ID non conserva la fiducia dopo una modifica. Rilevamento esplicito di 0042 e 0052.</td>
+<td><code>core.py</code>, <code>canonical.py</code>; <code>test_core.py::test_0042_postapproval_mutation_same_name_is_denied</code>, <code>test_0052_parent_config_write_invalidates_child</code>, <code>test_same_content_component_cannot_borrow_another_identity_approval</code>.</td>
+<td>Il gate nega l'uso richiesto attraverso di esso; non impedisce una scrittura OS né una chiamata di un client che ignora il gate.</td>
+</tr>
+<tr>
+<td><strong>§0 — Configurazioni pericolose, tool poisoning e capability — parziale, analisi statica</strong></td>
+<td>Analisi di descrizioni, schemi e metadati; rilievi su shell, HTTP, immagini non fissate a digest, privilegi container e accessi filesystem ampi. Diff dei campi modificati.</td>
+<td><code>core.py::config_findings</code>, <code>scanner.py</code>, <code>rules.json</code>; <code>test_core.py::test_risk_findings_are_evidence_based</code>, <code>test_tool_poisoning_description_is_analyzed_without_leaking_secret</code>.</td>
+<td>Non vengono eseguiti server o comandi. Non vengono attestati comportamento remoto, byte degli eseguibili, pacchetti installati o contenuto effettivo dei container. Non c'è un sistema generale di prevenzione dell'esfiltrazione dell'host.</td>
+</tr>
+<tr>
+<td><strong>§0 — Prompt injection, istruzioni nascoste ed esfiltrazione nel testo — parziale, rilevamento euristico</strong></td>
+<td>Pipeline multilingua con regole, decodifiche limitate, livelli di estrazione ed evidenze. Le letture protette negano contenuti sospetti o incompleti.</td>
+<td><code>scanner.py</code>, <code>extraction.py</code>, <code>mcp_server.py</code>, <code>cli.py</code>; corpus in <code>test_scanner.py</code>, <code>test_mcp_server.py</code>, <code>test_cli_transport.py</code>.</td>
+<td>Falsi positivi e attacchi non rilevati rimangono possibili. La protezione vale per i contenuti effettivamente passati a questi strumenti.</td>
+</tr>
+<tr>
+<td><strong>§2 — DISCOVER → AUDIT → ALERT — implementato localmente</strong></td>
+<td>Discovery di configurazioni, analisi, fingerprint, approval, monitor, confronto, gate, audit e visualizzazione dei rilievi nella console. Stato iniziale vuoto; nessuna metrica casuale.</td>
+<td><code>core.py</code>, <code>monitor.py</code>, <code>api.py</code>, <code>frontend/src/App.tsx</code>, <code>Components.tsx</code>, <code>Operations.tsx</code>; <code>test_api.py::test_approval_then_config_mutation_gate_denies</code>, <code>ui-smoke.cjs</code>.</td>
+<td>Gli alert sono stati, evidenze ed errori locali. Invio email/Slack/SIEM, discovery di rete e proxy MCP trasparente non sono implementati.</td>
+</tr>
+<tr>
+<td><strong>§3 — Server, tool, resource e prompt definition — implementato su file/esportazioni</strong></td>
+<td>Inventario della configurazione e delle definizioni contenute; contesto globale e di connessione ereditato dai componenti figli. Adapter registrabili.</td>
+<td><code>core.py::_components</code>, <code>canonical.py::register_adapter</code>; <code>test_core.py</code> su identità, parent config, nomi duplicati e adapter; <code>test_core_limits.py::test_typical_large_tool_catalog_is_accepted_with_one_audit_checkpoint</code>.</td>
+<td>Un server remoto deve essere esportato e registrato dal client. Non viene acquisita automaticamente la sua lista dinamica di tool, resource o prompt.</td>
+</tr>
+<tr>
+<td><strong>§3 — Command, args, env, cwd, executable, Docker, endpoint, URL, header, auth, schemi, capability, percorsi e metadati — implementato come contenuto dichiarato</strong></td>
+<td>I campi del documento strutturato partecipano alla canonicalizzazione e al confronto, inclusi campi non noti al motore. Indicatori selezionati ricevono rilievi di rischio.</td>
+<td><code>canonical.py</code>, <code>core.py</code>; <code>test_core.py::test_diff_is_security_aware_and_redacted</code>, <code>test_secret_values_hashed_but_masked_everywhere</code>, <code>test_0052_parent_config_write_invalidates_child</code>.</td>
+<td>Un percorso o digest dichiarato non prova il contenuto dell'artefatto referenziato. Non sono implementati risoluzione delle immagini, verifica della supply chain, reputazione degli endpoint o controllo completo della sintassi di ogni runtime.</td>
+</tr>
+<tr>
+<td><strong>§4 — Content-addressed trust — implementato</strong></td>
+<td>SHA-256 RAW e canonico, fingerprint semantica con separazione di dominio, approval ID, versione, approvatore/data e versione precedente.</td>
+<td><code>canonical.py::hashes</code>, <code>core.py</code>; <code>test_core.py::test_trust_is_exact_and_signed</code>, <code>test_persistence_and_process_exclusive_store</code>.</td>
+<td><code>semantic_fingerprint</code> è deterministica sui campi, non una prova di equivalenza linguistica. <code>prototype_content_hash</code> è un riferimento concettuale, non un'API esterna implementata. BLAKE3 opzionale non è implementato.</td>
+</tr>
+<tr>
+<td><strong>§5 — Canonicalizzazione — implementato con profilo proprio</strong></td>
+<td>Parser reali, chiavi ordinate, Unicode NFC, newline normalizzati, numeri finiti, null, duplicati/collisioni rifiutati; conservazione dell'hash RAW. JSON, JSON5, YAML, TOML e <code>.env</code>.</td>
+<td><code>canonical.py</code>; <code>test_core.py::test_adapters_have_deterministic_hashes</code>, <code>test_ambiguous_or_unsafe_configuration_rejected</code>, <code>test_unicode_encoding_and_literal_env</code>, test YAML e limiti strutturali.</td>
+<td>Il profilo non è RFC 8785/JCS. Interi, float e segno dello zero possono restare distinti. Alias e merge YAML sono rifiutati.</td>
+</tr>
+<tr>
+<td><strong>§5 — Tipi di variazione — implementato con differenza di nomenclatura</strong></td>
+<td>Variazione RAW identificabile; <code>FORMAT_ONLY_CHANGE</code>, <code>SEMANTIC_CHANGE</code>, <code>SECURITY_RELEVANT_CHANGE</code> e ripristino della sorgente distinti.</td>
+<td><code>core.py::_persist</code>, <code>canonical.py::semantic_diff</code>; <code>test_core.py::test_raw_format_change_invalidates_and_never_silently_restores</code>.</td>
+<td>Il backend non emette <code>BYTE_CHANGE</code> come categoria autonoma: il cambiamento dei byte è espresso dal RAW hash. Anche la sola formattazione richiede una nuova approvazione; una policy permissiva non rende valido un contenuto non approvato.</td>
+</tr>
+<tr>
+<td><strong>§6 — Diff spiegabile — implementato</strong></td>
+<td>Percorso del campo, vecchio/nuovo valore mascherato, aggiunte/rimozioni e severità; differenze presentate nel dettaglio del componente.</td>
+<td><code>canonical.py::semantic_diff</code>, <code>frontend/src/Components.tsx</code>; <code>test_core.py::test_diff_is_security_aware_and_redacted</code>.</td>
+<td>“Semantico” significa confronto strutturale, non comprensione tramite LLM. I diff hanno limiti di dimensione; valori sensibili possono essere mascherati e non leggibili integralmente.</td>
+</tr>
+<tr>
+<td><strong>§7 — Workflow di approvazione — implementato con stati equivalenti</strong></td>
+<td>Analisi alla discovery, <code>PENDING_APPROVAL</code>, <code>APPROVED</code>, nuova versione/riapprovazione, blocco, revoca e quarantena. Rilettura della sorgente e rifiuto di approval obsolete.</td>
+<td><code>core.py</code>, <code>frontend/src/Components.tsx</code>; <code>test_core.py::test_stale_approval_rereads_source</code>, <code>test_revoke_quarantine_and_policy_cannot_allow_unapproved</code>, <code>test_restoring_revoked_record_cannot_resurrect_approval</code>.</td>
+<td><code>ANALYZED</code>, <code>MODIFIED</code> e <code>APPROVED_NEW_VERSION</code> non sono stati persistenti separati: le fasi sono espresse da analisi, eventi e numero di versione. Gli snapshot non verificabili sono mostrati come bloccati senza riscrivere le evidenze (<code>test_snapshot_projection.py</code>). L’inventario descrive la copia registrata; l’autorizzazione corrente viene verificata dal gate, incluse firma, ciclo di vita e policy.</td>
+</tr>
+<tr>
+<td><strong>§8 — Firma digitale — implementato</strong></td>
+<td>Approval Ed25519 su identità, hash, versione, data, approvatore, policy e sorgente. Firma e verifica anche per policy, eventi e checkpoint.</td>
+<td><code>core.py</code>; <code>test_core.py::test_trust_is_exact_and_signed</code>, <code>test_signed_approval_tampering_denied</code>, <code>test_policy_database_tampering_denied</code>.</td>
+<td>Il nome dell'approvatore è dichiarato nella sessione amministrativa locale: non esistono identità individuali, MFA, RBAC, doppia approvazione o HSM. Chi controlla la chiave privata può ricreare le evidenze.</td>
+</tr>
+<tr>
+<td><strong>§1, §2 — Audit concatenato — implementato</strong></td>
+<td>Sequenza, hash precedente, firme e checkpoint separato; export e verifica esplicita integrale. Cache rigorosamente invalidata per le operazioni ordinarie.</td>
+<td><code>core.py</code>, <code>frontend/src/Operations.tsx</code>; <code>test_core.py::test_audit_tamper_and_tail_truncation_detected</code>, <code>test_signed_policy_rollback_cannot_restore_old_trust</code>; <code>test_audit_cache.py</code>, <code>qa/benchmark_audit.py</code>.</td>
+<td>Un rollback coordinato di database e checkpoint richiede un riferimento esterno fidato per essere rilevato. Invio automatico del checkpoint a uno storage immutabile non implementato. Divergenze dopo un crash bloccano la fiducia.</td>
+</tr>
+<tr>
+<td><strong>§9 — Monitor configurazioni e TOCTOU — implementato con confine esplicito</strong></td>
+<td>Watchdog, debounce, riconciliazione periodica e nuova lettura al gate. Snapshot stabili e annullamento dei candidati incompleti.</td>
+<td><code>monitor.py</code>, <code>core.py</code>; <code>test_api.py::test_monitor_detects_change_without_client_polling</code>, <code>test_core.py::test_snapshot_replacement_between_read_and_path_verification_is_denied</code>, <code>test_core_limits.py</code> sui rollback.</td>
+<td>Non è un controllo di accesso del kernel sui server MCP. Modifiche transitorie non osservate fra due letture non sono ricostruibili; il client deve usare lo snapshot/hash verificato.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="allegato-originale-sezioni-1015">Allegato originale, sezioni 10–15</h2>
+<table>
+<thead>
+<tr>
+<th>Area e stato</th>
+<th>Funzione presente</th>
+<th>File e verifica</th>
+<th>Limiti e non implementato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>§10 — SCAN FILE — implementato</strong></td>
+<td>Upload o percorso, analisi del contenuto, report persistente, stato operativo e verdetto. Errori, limiti e analisi incomplete negano la consegna.</td>
+<td><code>reports.py</code>, <code>scanner.py</code>, <code>api.py</code>, <code>frontend/src/Scanner.tsx</code>; <code>test_api.py::test_scanner_process_harmless_and_hidden_injection</code>, <code>test_worker_boundary.py</code>, <code>test_registry.py</code>.</td>
+<td>“Qualsiasi file” è un punto di ingresso, non una promessa di estrazione completa di ogni formato. Un formato non supportato produce un esito non analizzabile/bloccato.</td>
+</tr>
+<tr>
+<td><strong>§10 — Prima della consegna all'agente — implementato per i lettori integrati</strong></td>
+<td><code>guarded-read</code> consegna gli stessi byte analizzati; il server MCP stdio offre <code>scan_file</code> e <code>read_file</code>, con radici esplicite e verifica della connessione locale.</td>
+<td><code>cli.py</code>, <code>connection.py</code>, <code>mcp_server.py</code>; <code>test_api.py::test_guarded_read_delivers_exact_approved_snapshot</code>, <code>test_cli_transport.py</code>, <code>test_mcp_server.py::test_actual_stdio_subprocess_uses_running_api_and_blocks_injection</code>.</td>
+<td><code>read_file</code> MCP consegna solo testo UTF-8 nei formati ammessi, massimo 256 KiB; PDF/DOCX sono solo scansionabili. <code>guarded-read</code> può consegnare il binario originale. Altri strumenti dell'agente possono ignorare questi percorsi.</td>
+</tr>
+<tr>
+<td><strong>§10 — Stati operativi e SANITIZED — implementato con profilo HTML</strong></td>
+<td>Copia HTML→UTF-8 esplicita da file o percorso Linux, originale conservato, scansioni prima e dopo con hash e report collegati. <code>SANITIZED</code> e consegna <code>ALLOWED</code>/<code>DENIED</code> sono separati; la consegna richiede analisi completa VALID/ALLOWED senza finding, policy corrente e registrazione riuscita. La UI verifica dimensione e SHA-256 degli esatti byte prima del download.</td>
+<td><code>scanner.py</code>, <code>reports.py</code>, <code>sanitizer.py</code>, <code>html_text.py</code>, <code>sanitize_worker.py</code>, <code>sanitize_protocol.py</code>, <code>frontend/src/Sanitizations.tsx</code>; <code>test_sanitizer.py</code>, <code>test_html_text.py</code>, <code>test_sanitize_protocol.py</code>, <code>test_sanitize_worker.py</code>; QA estesa storica <code>891d7fc8…</code> in <code>.test-data/sanitization-ui-20260914/REPORT.md</code> (74 controlli browser e 10 host); QA mirata corrente <code>d59523d2…</code> in <code>.test-data/parser-compat-ui-20260914/REPORT.md</code> (27 controlli browser e 10 host).</td>
+<td>Quarantena logica: nessun file spostato o cancellato. Copia limitata al profilo HTML, massimo 256 KiB, con perdita di markup/metadati; nessuna equivalenza o garanzia universale. Solo la risposta POST corrente può contenere i byte; GET e storico non consentono di riscaricare la copia. Nessuna conversione automatica nei lettori né rimozione semantica generale delle istruzioni. <a href="SANITIZZAZIONE.html">SANITIZZAZIONE.md</a>.</td>
+</tr>
+<tr>
+<td><strong>§11 — Formati obbligatori — implementato entro i limiti di estrazione</strong></td>
+<td>TXT, MD, JSON, YAML/YML, TOML, CSV, HTML/XML, LOG, PY, JS, TS, SH, PS1, DOCX e PDF; anche JSON5 e <code>.env</code>. Il codice sorgente è letto come testo.</td>
+<td><code>extraction.py</code>; <code>test_scanner.py::test_supported_text_formats</code>, <code>test_docx_hidden_and_metadata</code>, <code>test_pdf_visible_hidden_encrypted</code>, <code>test_malformed_unsupported_fail_closed</code>.</td>
+<td>PDF cifrati, contenuti attivi, oggetti incorporati e immagini non ispezionabili vengono bloccati. OCR assente. I parser non eseguono i comandi contenuti nei file.</td>
+</tr>
+<tr>
+<td><strong>§11 — Plugin futuri — predisposizione implementata</strong></td>
+<td>Registro congelato di estrattori inclusi esplicitamente nel wheel, formati/versioni/dipendenze, bootstrap ripetuto in ogni worker prima dell’input. Controllo comune del risultato e del budget; fingerprint del registro nel contesto del monitor.</td>
+<td><code>extractor_registry.py</code>, <code>trusted_extractors.py</code>, <code>extraction.py</code>, <code>scan_worker.py</code>, <code>filewatch.py</code>; <code>test_extractor_registry.py</code>, <code>test_extractor_integration.py</code>, incluso worker reale con estensione sintetica e nuova scansione al cambio di fingerprint.</td>
+<td>Il registro aggiuntivo predefinito è vuoto. XLSX, PPTX, EML, MSG, RTF e ODT restano non supportati finché non viene incluso e verificato un estrattore. Nessuna installazione automatica, discovery di entry point o import da file utente. <a href="ESTRATTORI.html">ESTRATTORI.md</a>.</td>
+</tr>
+<tr>
+<td><strong>§12 — Pipeline e regole versionate — implementato</strong></td>
+<td>Regole statiche multiple, normalizzazione, analisi dei livelli estratti, decodifiche limitate e classificazione dei finding. Set di regole versionato in JSON.</td>
+<td><code>scanner.py</code>, <code>rules.json</code>; <code>test_scanner.py::test_determinism_and_versioned_config</code>, <code>test_expanded_attack_corpus</code>, <code>test_literal_optimization_preserves_all_corpus_detections</code>.</td>
+<td>Regole modificate come codice fidato, con test e rebuild; nessun editor grafico delle regex o aggiornamento automatico da feed. Nessun modello statistico/LLM che garantisca comprensione del contesto.</td>
+</tr>
+<tr>
+<td><strong>§13 — Ordini all'agente e cinque lingue — implementato su pattern</strong></td>
+<td>Pattern inglesi, italiani, tedeschi, francesi e spagnoli; autorità simulata, ruoli, richieste a tool, estrazione di prompt/segreti, modifica di configurazioni e deviazione del compito.</td>
+<td><code>rules.json</code>, <code>scanner.py</code>; <code>test_scanner.py::test_policy_override_all_languages</code>, <code>test_expanded_attack_corpus</code>, <code>test_benign_document_controls</code>.</td>
+<td>Varianti non presenti nei pattern possono sfuggire. La presenza di una frase relativa alla sicurezza o di un prompt debole è distinta da un'istruzione ad alto rischio e può richiedere revisione.</td>
+</tr>
+<tr>
+<td><strong>§14 — Offuscamento e limiti — implementato euristicamente</strong></td>
+<td>Base64, hex, URL/form encoding, entità HTML, escape Unicode, ROT13, caratteri invisibili/bidirezionali, confusabili selezionati, testo spezzato e concatenazioni. Profondità, espansione, dimensione e tempo limitati.</td>
+<td><code>scanner.py</code>, <code>extraction.py</code>; <code>test_scanner.py::test_encoded_instructions</code>, <code>test_nested_encoding</code>, <code>test_unicode_and_split_instructions</code>, <code>test_mixed_transform_depth_limit_cannot_allow_uninspected_instructions</code>.</td>
+<td>Non è un decoder generale di ogni cifratura né un interprete di codice offuscato. Decodifiche troppo profonde o espansioni incomplete non vengono autorizzate.</td>
+</tr>
+<tr>
+<td><strong>§15 — Contenuto nascosto e metadati — parziale</strong></td>
+<td>Commenti HTML/XML/Markdown; frontmatter Markdown iniziale YAML (<code>---</code>) o TOML (<code>+++</code>) grezzo in <code>METADATA</code>, conservando il sorgente visibile completo; attributi, CSS semplici, alt text e metadati; run DOCX nascosti, note/campi; testo PDF visibile/invisibile. Report con <code>VISIBLE_CONTENT</code>, <code>HIDDEN_CONTENT</code>, <code>METADATA</code>.</td>
+<td><code>extraction.py</code>; <code>test_scanner.py::test_html_hidden_layers</code>, <code>test_xml_and_markdown_comments</code>, <code>test_docx_hidden_and_metadata</code>, <code>test_pdf_visible_hidden_encrypted</code>, <code>test_markdown_frontmatter.py</code>.</td>
+<td>Frontmatter chiuso limitato a 64 KiB/4096 righe; il delimitatore senza chiusura resta testo ordinario nel budget generale. Nessun parser YAML/TOML sui metadati e nessuna trasformazione Markdown. Non c'è un browser di rendering, cascata CSS completa o OCR. Colori, dimensioni e layout sono euristici. La voce troncata <code>MET</code> dell'allegato è rappresentata dal livello effettivo <code>METADATA</code>, non da un requisito inventato successivo.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="riscontri-aggiuntivi-del-14-settembre-ore-22-utc">Riscontri aggiuntivi del 14 settembre, ore 22 UTC</h2>
+<p>La correzione del dettaglio aperto segue il componente corrente e invalida conferme, firme, storico e gate del contesto precedente. La nuova UI (<code>index-Dl4DPlJo.js</code>) ha superato 53 controlli browser e 10 host: approvazioni, risposte tardive, revoca, quarantena, salvataggio policy, audit e 26 file reali su due pagine. Filtri e navigazione conservano le sommatorie globali. Il primo errore di attesa dell’harness è conservato. Riferimento: <code>.test-data/ui-live-detail-20260914/REPORT.md</code>; attribuzione e hash in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<p>Per §15, cinque documenti innocui verificano direttamente note/commenti/campi DOCX, DocumentInfo/XMP/AcroForm/annotazioni PDF e proprietà tipografiche. Un PDF con testo e un’immagine effettiva resta bloccato per OCR assente. Un timeout iniziale del worker Python 3.11 è conservato come errore; la diagnosi circoscritta non ne stabilisce la causa, pur ottenendo poi gli esiti attesi su 3.11 e 3.13. Queste prove ampliano il riscontro delle capacità implementate senza rendere completa l’analisi del rendering o l’OCR.</p>
+<p>La GUI audit visualizza gli ultimi 200 eventi; l’export è limitato a 100.000 eventi, mentre la verifica esplicita della catena resta integrale. Il registro dei file mantiene la propria paginazione indipendente.</p>
+<h2 id="controlli-trasversali-verificabili">Controlli trasversali verificabili</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Implementazione ed evidenze</th>
+<th>Confine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Isolamento del parser documentale</td>
+<td><code>linux_sandbox.py</code>, <code>scan_worker.py</code>, <code>worker_process.py</code>, <code>scan_protocol.py</code>; <code>test_linux_sandbox.py</code>, <code>test_scanner_security_review.py</code>, <code>test_worker_process.py</code>. Prove reali su letture/scritture, rete, processi, descriptor, mapping condivisi e ABI alternativa.</td>
+<td>Runtime, pacchetti, kernel e account locale appartengono alla base fidata. Non vengono isolati i server MCP esterni. I parser di configurazione restano nel processo del backend con limiti strutturali e temporali fra gli stadi.</td>
+</tr>
+<tr>
+<td>Risorse e risposta del worker</td>
+<td>Massimo due scansioni contemporanee; limiti di input, memoria, CPU, tempo e output; hash, schema, completamento e stato del report verificati nel parent. <code>test_worker_boundary.py</code>, <code>test_worker_process.py</code>, <code>test_scanner_security_review.py</code>.</td>
+<td>Un risultato incoerente viene registrato come non completato e non autorizza il contenuto. Il limite temporale del worker non elimina ogni costo delle operazioni di database successive.</td>
+</tr>
+<tr>
+<td>Accesso locale e identità del servizio</td>
+<td><code>api.py</code>, <code>connection.py</code>, launcher; token, Host/Origin, challenge HMAC e richiesta sulla stessa connessione. <code>test_api.py</code>, <code>test_cli_transport.py</code>, <code>test_mcp_server.py</code>.</td>
+<td>Non è TLS, autenticazione multiutente o difesa da amministratori che controllano chiavi, filesystem o namespace di rete.</td>
+</tr>
+<tr>
+<td>Mascheramento dei segreti</td>
+<td><code>canonical.py::redact</code>, <code>scanner.py</code>, API e diff; <code>test_core.py::test_secret_values_hashed_but_masked_everywhere</code>, <code>test_scanner.py::test_report_redacts_credentials</code>, test di mancata esposizione nei lettori protetti.</td>
+<td>I valori originali necessari al confronto rimangono nei file e negli snapshot privati. Segreti arbitrari in prosa non sono riconoscibili universalmente.</td>
+</tr>
+<tr>
+<td>Interfaccia e accessibilità</td>
+<td>React/TypeScript con stati vuoti, caricamento, errori, focus e controlli tastiera; build e prove browser in <code>ui-smoke.cjs</code>, <code>ui-watch-smoke.cjs</code>, <code>frontend/tests/mobile-layout.cjs</code>. QA estesa storica <code>891d7fc8…</code>: download esatti, esiti distinti, storico, contatori e viewport 360/768/1440 in <code>.test-data/sanitization-ui-20260914/REPORT.md</code>. QA mirata corrente <code>d59523d2…</code>: i due casi del parser corretto, download e report, contatori e storico a 360/1440 in <code>.test-data/parser-compat-ui-20260914/REPORT.md</code>.</td>
+<td>Queste prove non equivalgono a certificazione WCAG o compatibilità con ogni browser e tecnologia assistiva.</td>
+</tr>
+<tr>
+<td>Rilascio e dipendenze</td>
+<td><code>build-linux.sh</code>, <code>package_app.py</code>, lock backend/frontend, manifesto e verificatore di checksum. Diagnostica con worker reale e harness <code>qa/soak.py</code>.</td>
+<td>Installazione iniziale richiede dipendenze/rete secondo l'installer. I checksum distribuiti insieme al pacchetto non costituiscono una firma indipendente del distributore.</td>
+</tr>
+<tr>
+<td>Prestazioni e conservazione delle prove</td>
+<td>Cache dell'audit con verifica esplicita sempre integrale; <code>test_audit_cache.py</code>, <code>qa/benchmark_audit.py</code>, <a href="PERFORMANCE.html">PERFORMANCE.md</a>.</td>
+<td>Le misure sono legate all'host e al filesystem osservati. La ricerca della policy resta lineare; non è dichiarata capacità illimitata dell'archivio.</td>
+</tr>
+</tbody>
+</table>
+<p>Il criterio operativo resta invariato: nome del tool, stato dell'inventario o
+vecchio report non autorizzano da soli un uso corrente. Serve una decisione
+valida del gate o del lettore protetto, riferita al contenuto effettivamente
+utilizzato. I dettagli dei confini sono in <a href="ARCHITETTURA.html">ARCHITETTURA.md</a>,
+<a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a> e <a href="LINUX_SANDBOX.html">LINUX_SANDBOX.md</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>

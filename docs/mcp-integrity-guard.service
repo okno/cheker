@@ -1,0 +1,22 @@
+[Unit]
+Description=MCP Integrity Guard local security console
+After=network.target
+
+[Service]
+Type=simple
+# Install in ~/.config/systemd/user after adapting the two absolute paths below.
+WorkingDirectory=/mnt/d/Cheker/app
+ExecStart=/bin/bash /mnt/d/Cheker/app/start.sh
+Environment=GUARD_NO_BROWSER=1
+UMask=0077
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/mnt/d/Cheker/app/data-linux
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,529 @@
+{
+  "version": "1.1.2",
+  "thresholds": {
+    "flag": 20,
+    "quarantine": 60,
+    "block": 80
+  },
+  "limits": {
+    "max_decode_depth": 3,
+    "max_expansion_ratio": 6,
+    "max_candidates": 512,
+    "max_findings": 120
+  },
+  "rules": [
+    {
+      "id": "POLICY_OVERRIDE",
+      "title": "Instruction to ignore or override prior policies",
+      "severity": "HIGH",
+      "category": "PROMPT_INJECTION",
+      "score": 65,
+      "patterns": {
+        "en": [
+          "\\b(?:ignore|disregard|forget|override)\\b.{0,55}\\b(?:previous|prior|above|all|system|developer|safety|security)\\b.{0,35}\\b(?:instructions?|prompts?|polic(?:y|ies)|rules?|messages?)\\b",
+          "\\bsystem\\s+override\\b",
+          "\\b(?:forget|ignore|disregard|override|supersede)\\s+(?:your|the|these|any)\\s+(?:instructions?|rules?|constraints?|restrictions?|polic(?:y|ies)|guidelines?)\\b",
+          "\\b(?:safety|security|ethical|previous|prior)\\s+(?:rules?|restrictions?|instructions?|constraints?|polic(?:y|ies))\\s+(?:are|is|have\\s+been)\\s+(?:now\\s+)?(?:suspended|disabled|revoked|irrelevant|overridden)\\b",
+          "\\b(?:ignore|disregard|forget)\\b.{0,30}\\b(?:user.s?\\s+(?:request|question)|original\\s+task)\\b",
+          "\\b(?:previous|prior|above|earlier)\\s+(?:instructions?|prompts?|rules?|polic(?:y|ies))\\b.{0,30}\\b(?:obsolete|invalid|no\\s+longer\\s+(?:apply|valid)|must\\s+be\\s+ignored)\\b",
+          "\\b(?:you|assistant|agent|model)\\b.{0,30}\\b(?:free|exempt|released)\\b.{0,20}\\bfrom\\b.{0,25}\\b(?:restrictions|constraints|safety|policies|rules)\\b"
+        ],
+        "it": [
+          "\\b(?:ignora|ignorare|dimentica|scavalca|disattendi)\\b.{0,65}\\b(?:istruzioni|regole|politiche|prompt|precedenti)\\b",
+          "\\b(?:non\\s+seguire|non\\s+rispettare|sostituisci)\\b.{0,40}\\b(?:istruzioni|regole|restrizioni|politiche)\\b",
+          "\\b(?:regole|istruzioni|restrizioni)\\b.{0,25}\\b(?:sospese|revocate|disattivate|annullate)\\b"
+        ],
+        "de": [
+          "\\b(?:ignoriere|ignorieren|vergiss|missachte)\\b.{0,65}\\b(?:anweisungen|regeln|richtlinien|vorherigen|bisherigen)\\b",
+          "\\b(?:befolge|beachte)\\b.{0,35}\\b(?:regeln|anweisungen|richtlinien)\\b.{0,20}\\bnicht\\b",
+          "\\b(?:anweisungen|regeln|beschrankungen)\\b.{0,30}\\b(?:aufgehoben|deaktiviert|ausgesetzt)\\b"
+        ],
+        "fr": [
+          "\\b(?:ignore|ignorez|ignorer|oublie|oubliez|outrepasse)\\b.{0,65}\\b(?:instructions|regles|consignes|precedentes)\\b",
+          "\\bne\\s+(?:suis|suivez|respecte|respectez)\\s+pas\\b.{0,40}\\b(?:instructions|regles|consignes)\\b",
+          "\\b(?:regles|instructions|restrictions)\\b.{0,30}\\b(?:suspendues|revoquees|desactivees)\\b"
+        ],
+        "es": [
+          "\\b(?:ignora|ignore|olvida|omite|desobedece)\\b.{0,65}\\b(?:instrucciones|reglas|politicas|anteriores)\\b",
+          "\\bno\\s+(?:sigas|respete|respetes)\\b.{0,40}\\b(?:instrucciones|reglas|restricciones)\\b",
+          "\\b(?:reglas|instrucciones|restricciones)\\b.{0,30}\\b(?:suspendidas|revocadas|desactivadas)\\b"
+        ]
+      }
+    },
+    {
+      "id": "PROMPT_DISCLOSURE",
+      "title": "Request to reveal internal instructions",
+      "severity": "HIGH",
+      "category": "PROMPT_EXTRACTION",
+      "score": 60,
+      "patterns": {
+        "en": [
+          "\\b(?:reveal|print|show|repeat|output|disclose)\\b.{0,45}\\b(?:system\\s+prompt|developer\\s+message|hidden\\s+instructions|your\\s+prompt)\\b"
+        ],
+        "it": [
+          "\\b(?:rivela|mostra|stampa|ripeti)\\b.{0,45}\\b(?:prompt|istruzioni\\s+(?:interne|nascoste|di\\s+sistema))\\b"
+        ],
+        "de": [
+          "\\b(?:zeige|verrate|drucke|offenbare)\\b.{0,45}\\b(?:systemprompt|systemanweisungen|system.prompt|geheimen\\s+anweisungen)\\b"
+        ],
+        "fr": [
+          "\\b(?:revele|revelez|affiche|affichez|montre)\\b.{0,45}\\b(?:prompt|instructions\\s+(?:systeme|cachees))\\b"
+        ],
+        "es": [
+          "\\b(?:revela|muestra|imprime|divulga)\\b.{0,45}\\b(?:prompt|instrucciones\\s+(?:del\\s+sistema|ocultas))\\b"
+        ]
+      }
+    },
+    {
+      "id": "SECRET_ACCESS",
+      "title": "Instruction to read credentials or private data",
+      "severity": "HIGH",
+      "category": "SECRET_ACCESS",
+      "score": 65,
+      "patterns": {
+        "en": [
+          "\\b(?:read|retrieve|dump|collect|extract|open|cat)\\b.{0,60}(?:~?/\\.ssh|id_rsa|id_ed25519|\\.env\\b|environment\\s+variables|api[ _-]?keys?|secret[ _-]?(?:keys?|tokens?)|passwords?|credentials)",
+          "\\b(?:read|cat|open|dump|retrieve|extract)\\b.{0,50}(?:/etc/(?:passwd|shadow)|\\.aws/credentials|\\.kube/config|\\.npmrc|\\.netrc|private\\s+keys?|access\\s+tokens?|secrets?\\b)"
+        ],
+        "it": [
+          "\\b(?:leggi|raccogli|estrai|recupera|apri)\\b.{0,60}\\b(?:segreti|password|credenziali|variabili\\s+d.ambiente|chiavi\\s+api)\\b"
+        ],
+        "de": [
+          "\\b(?:lies|lese|sammle|extrahiere|offne)\\b.{0,60}\\b(?:geheimnisse|passworter|zugangsdaten|umgebungsvariablen|api.schlussel)\\b"
+        ],
+        "fr": [
+          "\\b(?:lis|lisez|extrais|recupere|collecte)\\b.{0,60}\\b(?:secrets|mots\\s+de\\s+passe|identifiants|variables\\s+d.environnement|cles\\s+api)\\b"
+        ],
+        "es": [
+          "\\b(?:lee|leer|extrae|recopila|recupera)\\b.{0,60}\\b(?:secretos|contrasenas|credenciales|variables\\s+de\\s+entorno|claves\\s+api)\\b"
+        ]
+      }
+    },
+    {
+      "id": "DATA_EXFILTRATION",
+      "title": "Instruction to transmit data or secrets",
+      "severity": "CRITICAL",
+      "category": "EXFILTRATION",
+      "score": 80,
+      "patterns": {
+        "en": [
+          "\\bexfiltrate\\b",
+          "\\b(?:send|upload|post|transmit|forward)\\b.{0,60}\\b(?:secrets?|credentials?|passwords?|api[ _-]?keys?|private[ _-]?keys?|data|files?)\\b.{0,60}(?:https?://|\\bto\\b|\\bexternal\\b)",
+          "\\b(?:send|upload|post|transmit|forward|email)\\b.{0,90}(?:https?://|[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,})\\b.{0,50}\\b(?:secrets?|credentials?|passwords?|private|data|files?|contents?)\\b",
+          "\\b(?:fetch|request|visit|open)\\b.{0,50}https?://[^\\s<>]{1,160}[?&](?:token|secret|password|key|data|content)="
+        ],
+        "it": [
+          "\\b(?:invia|carica|trasmetti|esfiltra)\\b.{0,55}\\b(?:segreti|credenziali|password|dati|file|chiavi)\\b.{0,55}(?:https?://|\\ba\\b|\\ball.esterno\\b)",
+          "\\b(?:invia|trasmetti|carica)\\b.{0,80}(?:https?://|[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,})\\b.{0,50}\\b(?:segreti|dati|password|contenuto|credenziali)\\b"
+        ],
+        "de": [
+          "\\b(?:sende|lade|ubermittle|exfiltriere)\\b.{0,55}\\b(?:geheimnisse|zugangsdaten|passworter|daten|dateien|schlussel)\\b.{0,55}(?:https?://|\\ban\\b|\\bhoch\\b)",
+          "\\b(?:sende|ubermittle|lade)\\b.{0,80}(?:https?://|[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,})\\b.{0,50}\\b(?:geheimnisse|daten|passworter|inhalt|zugangsdaten)\\b"
+        ],
+        "fr": [
+          "\\b(?:envoie|envoyez|televerse|transmets|exfiltre)\\b.{0,55}\\b(?:secrets|identifiants|donnees|fichiers|cles|mots\\s+de\\s+passe)\\b.{0,55}(?:https?://|\\ba\\b|\\bvers\\b)",
+          "\\b(?:envoie|envoyez|transmets)\\b.{0,80}(?:https?://|[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,})\\b.{0,50}\\b(?:secrets|donnees|contenu|identifiants)\\b"
+        ],
+        "es": [
+          "\\b(?:envia|sube|transmite|exfiltra)\\b.{0,55}\\b(?:secretos|credenciales|contrasenas|datos|archivos|claves)\\b.{0,55}(?:https?://|\\ba\\b|\\bhacia\\b)",
+          "\\b(?:envia|transmite|sube)\\b.{0,80}(?:https?://|[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,})\\b.{0,50}\\b(?:secretos|datos|contrasenas|contenido|credenciales)\\b"
+        ]
+      }
+    },
+    {
+      "id": "COMMAND_EXECUTION",
+      "title": "Instruction to execute commands or invoke tools",
+      "severity": "HIGH",
+      "category": "TOOL_MANIPULATION",
+      "score": 45,
+      "patterns": {
+        "en": [
+          "\\b(?:execute|run)\\s+(?:the\\s+|this\\s+|a\\s+)?(?:shell|command|powershell|bash|script|terminal)\\b",
+          "\\b(?:use\\s+your\\s+tools|call\\s+(?:this|the|a)\\s+tool)\\b",
+          "(?:curl|wget)\\b.{0,120}\\|\\s*(?:ba)?sh\\b"
+        ],
+        "it": [
+          "\\b(?:esegui|lancia)\\b.{0,25}\\b(?:comando|shell|script|powershell|terminale)\\b",
+          "\\b(?:usa\\s+i\\s+tuoi\\s+strumenti|chiama\\s+(?:il|questo)\\s+tool)\\b"
+        ],
+        "de": [
+          "\\b(?:fuhre|starte)\\b.{0,35}\\b(?:befehl|shell|skript|powershell)\\b",
+          "\\b(?:benutze\\s+deine\\s+werkzeuge|rufe\\s+das\\s+tool)\\b"
+        ],
+        "fr": [
+          "\\b(?:execute|executez|lance|lancez)\\b.{0,25}\\b(?:commande|shell|script|powershell)\\b",
+          "\\b(?:utilise\\s+tes\\s+outils|appelle\\s+cet\\s+outil)\\b"
+        ],
+        "es": [
+          "\\b(?:ejecuta|ejecute|lanza)\\b.{0,25}\\b(?:comando|shell|script|powershell)\\b",
+          "\\b(?:usa\\s+tus\\s+herramientas|llama\\s+a\\s+esta\\s+herramienta)\\b"
+        ]
+      }
+    },
+    {
+      "id": "SECURITY_BYPASS",
+      "title": "Instruction to disable security controls or alter configuration",
+      "severity": "HIGH",
+      "category": "SECURITY_BYPASS",
+      "score": 65,
+      "patterns": {
+        "en": [
+          "\\b(?:disable|bypass|remove|turn\\s+off)\\b.{0,35}\\b(?:security|safety|authentication|authorization|audit|guardrails?|filters?|validation|controls?)\\b",
+          "\\b(?:modify|overwrite|replace|write)\\b.{0,35}\\b(?:mcp|server|tool)\\b.{0,25}\\bconfig(?:uration)?\\b",
+          "\\b(?:operate|respond|act|answer)\\b.{0,25}\\bwithout\\b.{0,25}\\b(?:safety|ethical|security|policy)\\s+(?:constraints|restrictions|checks|rules|filters)\\b",
+          "\\b(?:you\\s+are|become|act\\s+as)\\s+(?:now\\s+)?dan\\b",
+          "\\b(?:do\\s+anything\\s+now|never\\s+refuse\\s+(?:any|a|the)\\s+(?:request|instruction))\\b"
+        ],
+        "it": [
+          "\\b(?:disabilita|disattiva|aggira|rimuovi)\\b.{0,35}\\b(?:sicurezza|controlli|autenticazione|audit|filtri)\\b",
+          "\\b(?:modifica|sovrascrivi)\\b.{0,35}\\bconfigurazione\\b.{0,20}\\bmcp\\b"
+        ],
+        "de": [
+          "\\b(?:deaktiviere|umgehe|entferne)\\b.{0,35}\\b(?:sicherheit|sicherheitskontrollen|authentifizierung|protokollierung|filter)\\b"
+        ],
+        "fr": [
+          "\\b(?:desactive|desactivez|contourne|supprime)\\b.{0,35}\\b(?:securite|controles|authentification|audit|filtres)\\b"
+        ],
+        "es": [
+          "\\b(?:desactiva|deshabilita|evita|elude)\\b.{0,35}\\b(?:seguridad|controles|autenticacion|auditoria|filtros)\\b"
+        ]
+      }
+    },
+    {
+      "id": "CONCEALMENT",
+      "title": "Instruction to conceal actions from the user",
+      "severity": "HIGH",
+      "category": "SOCIAL_ENGINEERING",
+      "score": 45,
+      "patterns": {
+        "en": [
+          "\\b(?:do\\s+not|don't|never)\\s+(?:tell|inform|notify|mention\\s+to)\\s+(?:the\\s+)?user\\b",
+          "\\bkeep\\s+this\\s+(?:secret|hidden)\\s+from\\s+(?:the\\s+)?user\\b",
+          "\\b(?:hide|conceal|omit|suppress)\\b.{0,40}\\b(?:actions?|tool\\s+calls?|requests?|this\\s+instruction|warnings?|audit\\s+logs?)\\b.{0,30}\\b(?:user|response|answer|logs?)\\b",
+          "\\b(?:silently|secretly)\\s+(?:read|send|upload|execute|modify|delete|call)\\b"
+        ],
+        "it": [
+          "\\bnon\\s+(?:dire|rivelare|comunicare)\\b.{0,35}\\butente\\b"
+        ],
+        "de": [
+          "\\b(?:sage|sag|informiere)\\b.{0,35}\\bbenutzer\\b.{0,20}\\bnicht\\b"
+        ],
+        "fr": [
+          "\\bne\\s+(?:dis|dites|revele)\\s+(?:rien|pas)\\b.{0,30}\\butilisateur\\b"
+        ],
+        "es": [
+          "\\bno\\s+(?:digas|reveles|informes)\\b.{0,30}\\busuario\\b"
+        ]
+      }
+    },
+    {
+      "id": "ROLE_SPOOFING",
+      "title": "Agent-directed role or authority impersonation",
+      "severity": "MEDIUM",
+      "category": "PROMPT_HINT",
+      "score": 35,
+      "patterns": {
+        "en": [
+          "\\b(?:you\\s+are\\s+now\\s+(?:(?:an?|the)\\s+)?(?:unrestricted|uncensored|dan|developer|system|assistant|agent|ai|language\\s+model)|the\\s+user\\s+has\\s+authorized\\s+you|when\\s+the\\s+(?:ai|assistant)\\s+reads.{0,40}(?:must|shall)|before\\s+answering.{0,25}(?:send|upload|execute))\\b",
+          "(?:^|\\n)\\s*(?:assistant|system|developer)\\s*:\\s*(?:ignore|execute|override|you\\s+must)"
+        ],
+        "it": [
+          "\\b(?:ora\\s+sei\\s+(?:(?:un|una|il|la)\\s+)?(?:assistente|agente|modello|ia|sviluppatore|senza\\s+limiti)|l.utente\\s+ti\\s+ha\\s+autorizzato|quando\\s+l.(?:ia|assistente).{0,35}deve|prima\\s+di\\s+rispondere.{0,25}(?:invia|esegui))\\b"
+        ],
+        "de": [
+          "\\b(?:du\\s+bist\\s+jetzt\\s+(?:(?:ein|eine|der|die)\\s+)?(?:assistent|agent|ki|sprachmodell|entwickler|uneingeschrankt)|der\\s+benutzer\\s+hat\\s+dich\\s+autorisiert|bevor\\s+du\\s+antwortest.{0,25}(?:sende|fuhre))\\b"
+        ],
+        "fr": [
+          "\\b(?:(?:tu\\s+es\\s+maintenant|vous\\s+etes\\s+maintenant)\\s+(?:(?:un|une|le|la)\\s+)?(?:assistant|agent|modele|ia|developpeur|sans\\s+limites)|l.utilisateur\\s+vous\\s+a\\s+autorise|avant\\s+de\\s+repondre.{0,25}(?:envoie|execute))\\b"
+        ],
+        "es": [
+          "\\b(?:ahora\\s+eres\\s+(?:(?:un|una|el|la)\\s+)?(?:asistente|agente|modelo|ia|desarrollador|sin\\s+limites)|el\\s+usuario\\s+te\\s+ha\\s+autorizado|antes\\s+de\\s+responder.{0,25}(?:envia|ejecuta))\\b"
+        ]
+      }
+    },
+    {
+      "id": "PROMPT_REFERENCE",
+      "title": "Reference to privileged model instructions",
+      "severity": "LOW",
+      "category": "PROMPT_REFERENCE",
+      "score": 20,
+      "patterns": {
+        "en": [
+          "\\b(?:system\\s+prompt|developer\\s+message|hidden\\s+instructions)\\b"
+        ],
+        "it": [
+          "\\b(?:prompt\\s+di\\s+sistema|messaggio\\s+dello\\s+sviluppatore)\\b"
+        ],
+        "de": [
+          "\\b(?:systemprompt|entwicklernachricht)\\b"
+        ],
+        "fr": [
+          "\\b(?:prompt\\s+systeme|message\\s+developpeur)\\b"
+        ],
+        "es": [
+          "\\b(?:prompt\\s+del\\s+sistema|mensaje\\s+del\\s+desarrollador)\\b"
+        ]
+      }
+    },
+    {
+      "id": "AUTHORITY_SPOOFING",
+      "title": "Content claims superior authority over agent instructions",
+      "severity": "HIGH",
+      "category": "AUTHORITY_SPOOFING",
+      "score": 60,
+      "patterns": {
+        "en": [
+          "\\b(?:system|developer|administrator|admin|security\\s+team|user)\\b.{0,35}\\b(?:authorized|approved|granted|consented)\\b.{0,45}\\b(?:you|the\\s+(?:ai|agent|assistant)|all\\s+tool\\s+calls)\\b",
+          "\\b(?:these|this|following)\\s+(?:instructions?|messages?|directives?)\\b.{0,45}\\b(?:highest\\s+priority|override|supersede|take\\s+precedence)\\b",
+          "\\b(?:developer|admin|debug|unrestricted|god)\\s+mode\\s+(?:is\\s+)?(?:enabled|activated|on)\\b"
+        ],
+        "it": [
+          "\\b(?:utente|amministratore|sviluppatore)\\b.{0,35}\\b(?:autorizzato|approvato|concesso)\\b.{0,35}\\b(?:te|l.agente|l.assistente|tutte\\s+le\\s+chiamate)\\b",
+          "\\b(?:queste|seguenti)\\s+istruzioni\\b.{0,45}\\b(?:priorita\\s+(?:massima|assoluta)|sostituiscono|prevalgono)\\b"
+        ],
+        "de": [
+          "\\b(?:benutzer|administrator|entwickler)\\b.{0,35}\\b(?:dich|den\\s+assistenten|den\\s+agenten)\\b.{0,35}\\b(?:autorisiert|genehmigt|berechtigt)\\b",
+          "\\b(?:diese|folgenden)\\s+anweisungen\\b.{0,45}\\b(?:hochste\\s+prioritat|haben\\s+vorrang|ersetzen)\\b"
+        ],
+        "fr": [
+          "\\b(?:utilisateur|administrateur|developpeur)\\b.{0,35}\\b(?:autorise|approuve)\\b.{0,40}\\b(?:vous|toi|l.assistant|tous\\s+les\\s+appels)\\b",
+          "\\b(?:ces|les\\s+suivantes)\\s+instructions\\b.{0,45}\\b(?:priorite\\s+(?:absolue|maximale)|remplacent|prevalent)\\b"
+        ],
+        "es": [
+          "\\b(?:usuario|administrador|desarrollador)\\b.{0,35}\\b(?:autorizado|aprobado)\\b.{0,40}\\b(?:te|ti|al\\s+asistente|todas\\s+las\\s+llamadas)\\b",
+          "\\b(?:estas|siguientes)\\s+instrucciones\\b.{0,45}\\b(?:prioridad\\s+(?:absoluta|maxima)|reemplazan|prevalecen)\\b"
+        ]
+      }
+    },
+    {
+      "id": "CONTENT_INSTRUCTION_PROMOTION",
+      "title": "Untrusted content asks to become privileged agent instructions",
+      "severity": "HIGH",
+      "category": "PROMPT_INJECTION",
+      "score": 65,
+      "patterns": {
+        "en": [
+          "\\b(?:treat|interpret|consider|use)\\b.{0,40}\\b(?:document|file|page|content|tool\\s+(?:response|result)|text)\\b.{0,40}\\b(?:as|like)\\b.{0,20}\\b(?:system|developer|highest.priority|trusted)\\s+(?:prompt|message|instructions?)\\b",
+          "\\b(?:follow|obey|apply)\\b.{0,25}\\b(?:instructions?|directives?)\\b.{0,30}\\b(?:tool\\s+(?:response|result)|this\\s+(?:document|page|file))\\b"
+        ],
+        "it": [
+          "\\b(?:tratta|considera|interpreta|usa)\\b.{0,35}\\b(?:documento|file|pagina|contenuto|testo)\\b.{0,35}\\bcome\\b.{0,20}\\b(?:prompt|istruzioni|messaggio)\\b.{0,20}\\b(?:sistema|sviluppatore|fidat[oe])\\b"
+        ],
+        "de": [
+          "\\b(?:behandle|betrachte|verwende|interpretiere)\\b.{0,35}\\b(?:dokument|datei|seite|inhalt|text)\\b.{0,35}\\bals\\b.{0,25}\\b(?:systemprompt|systemanweisungen|entwicklernachricht)\\b"
+        ],
+        "fr": [
+          "\\b(?:traite|traitez|considere|considerez|interprete)\\b.{0,35}\\b(?:document|fichier|page|contenu|texte)\\b.{0,35}\\bcomme\\b.{0,20}\\b(?:prompt|instructions|message)\\b.{0,20}\\b(?:systeme|developpeur)\\b"
+        ],
+        "es": [
+          "\\b(?:trata|considera|interpreta|usa)\\b.{0,35}\\b(?:documento|archivo|pagina|contenido|texto)\\b.{0,35}\\bcomo\\b.{0,20}\\b(?:prompt|instrucciones|mensaje)\\b.{0,20}\\b(?:sistema|desarrollador)\\b"
+        ]
+      }
+    },
+    {
+      "id": "ROLE_BOUNDARY_INJECTION",
+      "title": "Conversation control delimiters or privileged role boundaries in a file",
+      "severity": "HIGH",
+      "category": "ROLE_SPOOFING",
+      "score": 60,
+      "patterns": {
+        "all": [
+          "<\\|(?:im_start|start_header_id|start|end|eot_id)\\|>\\s*(?:system|developer|assistant)?",
+          "\\[/?inst\\]|<<\\s*/?sys\\s*>>",
+          "(?:^|\\n)\\s*(?:#{1,6}\\s*)?(?:\\[\\s*(?:system|developer)\\s*\\]|<\\s*(?:system|developer)\\s*>)\\s*[:\\n]?",
+          "\\b(?:begin|start)\\s+(?:system|developer)\\s+(?:message|prompt|instructions)\\b"
+        ]
+      }
+    },
+    {
+      "id": "CONFIG_MANIPULATION",
+      "title": "Instruction to change agent configuration, tool schemas or trust metadata",
+      "severity": "HIGH",
+      "category": "CONFIG_MANIPULATION",
+      "score": 65,
+      "patterns": {
+        "en": [
+          "\\b(?:modify|edit|overwrite|replace|update|patch|rewrite|append|write|delete|remove)\\b.{0,65}(?:\\b(?:mcp|agent|tool|server)[ _-]?(?:config(?:uration)?|definition|schema)|\\b(?:inputschema|allowed_paths|mcpservers|agents\\.md|claude\\.md|settings\\.json|mcp\\.json)\\b|\\b(?:approval|canonical|prototype_content)[ _-]?hash\\b)",
+          "\\b(?:set|change|point|redirect)\\b.{0,40}\\b(?:endpoint|command|allowed_paths|capabilities|permissions)\\b.{0,30}\\b(?:to|as)\\b.{0,40}(?:https?://|\\*|/|execute|shell|unrestricted)"
+        ],
+        "it": [
+          "\\b(?:modifica|sovrascrivi|sostituisci|aggiorna|riscrivi|cancella|aggiungi)\\b.{0,60}(?:\\b(?:configurazione|schema|definizione)\\b.{0,20}\\b(?:mcp|tool|agente|server)\\b|\\b(?:agents\\.md|mcp\\.json|inputschema|allowed_paths)\\b)"
+        ],
+        "de": [
+          "\\b(?:andere|bearbeite|uberschreibe|ersetze|aktualisiere|losche)\\b.{0,60}(?:\\b(?:mcp|tool|agent|server)[- ]?(?:konfiguration|schema|definition)\\b|\\b(?:agents\\.md|mcp\\.json|inputschema|allowed_paths)\\b)"
+        ],
+        "fr": [
+          "\\b(?:modifie|modifiez|ecrase|remplace|mettez\\s+a\\s+jour|supprime)\\b.{0,60}(?:\\b(?:configuration|schema|definition)\\b.{0,20}\\b(?:mcp|outil|agent|serveur)\\b|\\b(?:agents\\.md|mcp\\.json|inputschema|allowed_paths)\\b)"
+        ],
+        "es": [
+          "\\b(?:modifica|sobrescribe|reemplaza|actualiza|reescribe|elimina|anade)\\b.{0,60}(?:\\b(?:configuracion|esquema|definicion)\\b.{0,20}\\b(?:mcp|herramienta|agente|servidor)\\b|\\b(?:agents\\.md|mcp\\.json|inputschema|allowed_paths)\\b)"
+        ]
+      }
+    },
+    {
+      "id": "TASK_HIJACK",
+      "title": "Instruction redirects or contaminates the requested answer",
+      "severity": "HIGH",
+      "category": "PROMPT_INJECTION",
+      "score": 60,
+      "patterns": {
+        "en": [
+          "\\b(?:instead\\s+of|rather\\s+than)\\s+(?:answering|following|completing)\\b.{0,45}\\b(?:user|question|request|task)\\b.{0,60}\\b(?:respond|say|output|return|send|execute|write)\\b",
+          "\\b(?:always|only)\\s+(?:answer|respond|output|return|say)\\b.{0,80}\\b(?:regardless|whatever|no\\s+matter)\\b.{0,30}\\b(?:user|question|request|task)\\b",
+          "\\b(?:insert|include|append)\\b.{0,50}\\b(?:your\\s+(?:answer|response)|final\\s+(?:answer|response))\\b.{0,50}\\b(?:regardless|unrelated|secretly|silently)\\b"
+        ],
+        "it": [
+          "\\b(?:invece\\s+di|anziche)\\s+(?:rispondere|seguire|completare)\\b.{0,40}\\b(?:utente|domanda|richiesta|compito)\\b.{0,55}\\b(?:rispondi|scrivi|invia|esegui)\\b"
+        ],
+        "de": [
+          "\\b(?:anstatt|statt)\\b.{0,40}\\b(?:frage|anfrage|aufgabe)\\b.{0,30}\\b(?:beantworten|befolgen|erledigen)\\b.{0,50}\\b(?:antworte|schreibe|sende)\\b"
+        ],
+        "fr": [
+          "\\b(?:au\\s+lieu\\s+de|plutot\\s+que\\s+de)\\s+(?:repondre|suivre|completer)\\b.{0,40}\\b(?:utilisateur|question|demande|tache)\\b.{0,55}\\b(?:reponds|repondez|ecris|envoie)\\b"
+        ],
+        "es": [
+          "\\b(?:en\\s+vez\\s+de|en\\s+lugar\\s+de)\\s+(?:responder|seguir|completar)\\b.{0,40}\\b(?:usuario|pregunta|solicitud|tarea)\\b.{0,55}\\b(?:responde|escribe|envia|ejecuta)\\b"
+        ]
+      }
+    },
+    {
+      "id": "TOOL_CALL_DIRECTIVE",
+      "title": "Agent-directed request to invoke a named tool or execute an embedded payload",
+      "severity": "HIGH",
+      "category": "TOOL_MANIPULATION",
+      "score": 55,
+      "patterns": {
+        "en": [
+          "\\b(?:invoke|call|trigger|use)\\s+(?:(?:the|your|this)\\s+)?(?:tool|function|mcp\\s+server)\\b",
+          "\\b(?:decode|decrypt|evaluate)\\b.{0,65}\\b(?:then|and)\\s+(?:execute|run|eval|follow|obey)\\b",
+          "\\b(?:curl|wget)\\s+.{0,120}(?:--data(?:-binary)?|-d|-T|--upload-file)\\s+@?(?:\\$|~|/|\\.env)"
+        ],
+        "it": [
+          "\\b(?:invoca|chiama|attiva|usa)\\s+(?:(?:il|la|questo|questa)\\s+)?(?:tool|strumento|funzione|server\\s+mcp)\\b",
+          "\\b(?:decodifica|decripta|interpreta)\\b.{0,60}\\b(?:poi|ed?|e\\s+poi)\\s+(?:esegui|segui)\\b"
+        ],
+        "de": [
+          "\\b(?:rufe|verwende|benutze|starte)\\s+(?:(?:das|die|dieses|diese)\\s+)?(?:tool|werkzeug|funktion|mcp.server)\\b",
+          "\\b(?:dekodiere|entschlussle)\\b.{0,60}\\b(?:und|dann)\\b.{0,10}\\b(?:fuhre|befolge)\\b"
+        ],
+        "fr": [
+          "\\b(?:appelle|appelez|invoque|utilise|utilisez)\\s+(?:(?:le|la|cet|cette)\\s+)?(?:outil|fonction|serveur\\s+mcp)\\b",
+          "\\b(?:decode|decodez|dechiffre)\\b.{0,60}\\b(?:puis|et)\\s+(?:execute|executez|suis|suivez)\\b"
+        ],
+        "es": [
+          "\\b(?:invoca|llama|activa|usa|utiliza)\\s+(?:(?:a\\s+)?(?:la|el|esta|este)\\s+)?(?:herramienta|funcion|servidor\\s+mcp)\\b",
+          "\\b(?:decodifica|descifra)\\b.{0,60}\\b(?:luego|y)\\s+(?:ejecuta|sigue)\\b"
+        ]
+      }
+    },
+    {
+      "id": "AGENT_DIRECTIVE_HINT",
+      "title": "Text addresses an AI agent with instructions; review its intended trust level",
+      "severity": "MEDIUM",
+      "category": "PROMPT_HINT",
+      "score": 25,
+      "patterns": {
+        "en": [
+          "\\b(?:assistant|ai\\s+(?:agent|assistant|model)|language\\s+model|llm|chatgpt)\\s*[,;:]\\s*(?:please\\s+)?(?:you|do|must|should|read|summarize|answer|respond|follow|act|write|return)\\b",
+          "\\b(?:you\\s+(?:must|shall|should)|your\\s+task\\s+is\\s+to|act\\s+as|pretend\\s+to\\s+be)\\b.{0,65}\\b(?:answer|respond|write|summarize|assistant|agent|model|output|return|follow)\\b"
+        ],
+        "it": [
+          "\\b(?:assistente|agente\\s+ia|modello\\s+linguistico)\\s*[,;:]\\s*(?:per\\s+favore\\s+)?(?:devi|dovresti|leggi|riassumi|rispondi|segui|agisci|scrivi)\\b",
+          "\\b(?:il\\s+tuo\\s+compito\\s+e|devi|dovresti|agisci\\s+come)\\b.{0,50}\\b(?:rispondere|scrivere|riassumere|assistente|agente|modello)\\b"
+        ],
+        "de": [
+          "\\b(?:assistent|ki.assistent|sprachmodell)\\s*[,;:]\\s*(?:bitte\\s+)?(?:du|lies|fasse|antworte|befolge|schreibe)\\b",
+          "\\b(?:deine\\s+aufgabe\\s+ist|du\\s+musst|du\\s+sollst|agiere\\s+als)\\b.{0,50}\\b(?:antworten|beantworten|schreiben|zusammenfassen|assistent|agent|modell)\\b"
+        ],
+        "fr": [
+          "\\b(?:assistant|agent\\s+ia|modele\\s+de\\s+langage)\\s*[,;:]\\s*(?:veuillez\\s+)?(?:tu|vous|lis|lisez|resume|reponds|repondez|suis|ecris)\\b",
+          "\\b(?:ta\\s+tache\\s+est|votre\\s+tache\\s+est|tu\\s+dois|vous\\s+devez|agis\\s+comme)\\b.{0,50}\\b(?:repondre|ecrire|resumer|assistant|agent|modele)\\b"
+        ],
+        "es": [
+          "\\b(?:asistente|agente\\s+ia|modelo\\s+de\\s+lenguaje)\\s*[,;:]\\s*(?:por\\s+favor\\s+)?(?:debes|lee|resume|responde|sigue|actua|escribe)\\b",
+          "\\b(?:tu\\s+tarea\\s+es|debes|deberias|actua\\s+como)\\b.{0,50}\\b(?:responder|escribir|resumir|asistente|agente|modelo)\\b"
+        ]
+      }
+    },
+    {
+      "id": "PROMPT_TASK_HINT",
+      "title": "Embedded prompt-like request to transform text or constrain an answer",
+      "severity": "LOW",
+      "category": "PROMPT_HINT",
+      "score": 20,
+      "patterns": {
+        "en": [
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:please\\s+)?(?:summarize|translate|rewrite|classify|analyze)\\b.{0,65}\\b(?:following|below|this\\s+(?:document|text|report)|provided\\s+(?:text|document))\\b",
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:please\\s+)?(?:output|return|respond|answer|reply)\\s+(?:only|exactly|with|in\\s+(?:json|xml|markdown))\\b"
+        ],
+        "it": [
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:per\\s+favore\\s+)?(?:riassumi|traduci|riscrivi|classifica|analizza)\\b.{0,65}\\b(?:seguente|sottostante|questo\\s+(?:documento|testo|rapporto))\\b",
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:rispondi|restituisci|scrivi)\\s+(?:solo|esattamente|in\\s+(?:json|xml|markdown))\\b"
+        ],
+        "de": [
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:bitte\\s+)?(?:fasse|ubersetze|analysiere|klassifiziere)\\b.{0,65}\\b(?:folgenden|folgende|dieses\\s+dokument|diesen\\s+text)\\b",
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:antworte|gib|schreibe)\\s+(?:nur|genau|ausschliesslich|in\\s+(?:json|xml|markdown))\\b"
+        ],
+        "fr": [
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:veuillez\\s+)?(?:resume|resumez|resumer|traduis|traduisez|traduire|analyse|analysez)\\b.{0,65}\\b(?:suivant|suivante|ci.dessous|ce\\s+(?:document|texte|rapport))\\b",
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:reponds|repondez|ecris|retourne)\\s+(?:seulement|uniquement|exactement|en\\s+(?:json|xml|markdown))\\b"
+        ],
+        "es": [
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:por\\s+favor\\s+)?(?:resume|traduce|reescribe|clasifica|analiza)\\b.{0,65}\\b(?:siguiente|a\\s+continuacion|este\\s+(?:documento|texto|informe))\\b",
+          "(?:^|[\\n.!?:\"\\']\\s*)(?:responde|devuelve|escribe)\\s+(?:solo|solamente|exactamente|en\\s+(?:json|xml|markdown))\\b"
+        ]
+      }
+    },
+    {
+      "id": "CHAT_ROLE_STRUCTURE",
+      "title": "Serialized chat roles or a prompt template require review",
+      "severity": "LOW",
+      "category": "PROMPT_STRUCTURE",
+      "score": 20,
+      "patterns": {
+        "all": [
+          "[\"\\']role[\"\\']\\s*:\\s*[\"\\'](?:system|developer|assistant)[\"\\']",
+          "(?:^|\\n)\\s*(?:system|developer|assistant)\\s*:\\s*\\S",
+          "\\{\\{\\s*(?:system_prompt|instructions|user_input|assistant_response)\\s*\\}\\}"
+        ]
+      }
+    },
+    {
+      "id": "SENSITIVE_OUTPUT",
+      "title": "Instruction to expose private credentials in the response",
+      "severity": "HIGH",
+      "category": "SECRET_ACCESS",
+      "score": 65,
+      "patterns": {
+        "en": [
+          "\\b(?:print|show|display|reveal|expose|list|output|echo|attach)\\b.{0,60}(?:\\b(?:secrets?|credentials?|passwords?|private\\s+keys?|access\\s+tokens?|environment\\s+variables|api[ _-]?keys?)\\b|\\.env\\b|id_rsa\\b|id_ed25519\\b)"
+        ],
+        "it": [
+          "\\b(?:stampa|mostra|elenca|rivela|allega)\\b.{0,60}\\b(?:segreti|credenziali|password|chiavi\\s+private|variabili\\s+d.ambiente|chiavi\\s+api)\\b"
+        ],
+        "de": [
+          "\\b(?:zeige|gib|liste|offenbare|drucke)\\b.{0,60}\\b(?:geheimnisse|zugangsdaten|passworter|private\\s+schlussel|umgebungsvariablen|api.schlussel)\\b"
+        ],
+        "fr": [
+          "\\b(?:affiche|affichez|montre|revele|liste)\\b.{0,60}\\b(?:secrets|identifiants|mots\\s+de\\s+passe|cles\\s+privees|variables\\s+d.environnement|cles\\s+api)\\b"
+        ],
+        "es": [
+          "\\b(?:imprime|muestra|enumera|revela|adjunta)\\b.{0,60}\\b(?:secretos|credenciales|contrasenas|claves\\s+privadas|variables\\s+de\\s+entorno|claves\\s+api)\\b"
+        ]
+      }
+    },
+    {
+      "id": "SECURITY_TOPIC_REFERENCE",
+      "title": "Reference to attack techniques without a confirmed instruction pattern",
+      "severity": "LOW",
+      "category": "PROMPT_REFERENCE",
+      "score": 20,
+      "patterns": {
+        "all": [
+          "\\b(?:exfiltration|exfiltrating|esfiltrazione|datenexfiltration|exfiltracion|jailbreak)\\b",
+          "\\bprompt[ -]injection\\b"
+        ]
+      }
+    }
+  ]
+}

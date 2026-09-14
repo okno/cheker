@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "document-reader": {
+      "command": "python",
+      "args": ["reader.py"],
+      "cwd": "/srv/mcp/documents",
+      "env": {"LOG_LEVEL": "info"},
+      "tools": [
+        {
+          "name": "read_document",
+          "description": "Read a project document selected by the user.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}},
+            "required": ["path"],
+            "additionalProperties": false
+          },
+          "annotations": {"readOnlyHint": true}
+        }
+      ]
+    }
+  }
+}

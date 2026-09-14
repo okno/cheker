@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cheker verifica l’integrità delle configurazioni MCP e analizza i file prima del loro utilizzo. Un’applicazione locale per Linux, con registro, approvazioni e audit.">
+  <meta name="theme-color" content="#08151e">
+  <title>Cheker — Integrità MCP e analisi dei file su Linux</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2308151e'/%3E%3Cpath d='m8 17 5 5L25 9' fill='none' stroke='%2324cba7' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#contenuto">Vai al contenuto</a>
+  <header class="header wrap">
+    <a class="wordmark" href="./" aria-label="Cheker, pagina iniziale"><img class="brand-logo" src="assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a>
+    <nav aria-label="Navigazione principale"><a href="#come-funziona">Come funziona</a><a href="#documentazione">Documentazione</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav>
+  </header>
+  <main id="contenuto">
+    <section class="hero wrap" aria-labelledby="titolo">
+      <div class="hero-copy"><p class="eyebrow">MCP INTEGRITY GUARD · LINUX</p><h1 id="titolo">Ogni modifica<br>lascia una <em>traccia.</em></h1><p class="lead">Controlla le configurazioni MCP. Analizza i file. Decidi quali contenuti possono essere utilizzati, con approvazioni legate alla loro versione esatta.</p><div class="actions"><a class="button" href="#documentazione">Inizia dalla guida <span aria-hidden="true">↗</span></a><a class="text-link" href="#come-funziona">Esplora il funzionamento</a></div><p class="hero-note">Elaborazione locale · Nessuna telemetria · Python + interfaccia web</p></div>
+      <figure class="hero-art"><img src="assets/cheker-scan-illustration.png" alt="Illustrazione: un piano di scansione attraversa tre documenti traslucidi." width="1672" height="941" fetchpriority="high"><figcaption>Osserva il contenuto. Verifica le differenze.</figcaption></figure>
+    </section>
+    <section class="section wrap" id="come-funziona"><div class="section-heading"><p class="eyebrow">UN CONTROLLO VISIBILE</p><h2>Dalla modifica<br>alla decisione.</h2></div><div class="feature-grid"><article><span class="index">01 / INTEGRITÀ</span><h3>La fiducia segue il contenuto.</h3><p>Una modifica ai byte invalida l’approvazione precedente. Confronta le versioni, valuta le differenze e approva consapevolmente quella corrente.</p></article><article><span class="index">02 / FILE</span><h3>Ogni analisi ha un risultato.</h3><p>Il registro mostra file processati, rilievi e sommatorie: validi, sospetti/infetti, corrotti, da rivedere e non analizzabili. Ricerca e pagine mantengono i totali globali.</p></article><article><span class="index">03 / AUDIT</span><h3>Le decisioni sono verificabili.</h3><p>Approvazioni firmate, storico e audit permettono di ricostruire le azioni. Il gate rilegge la sorgente prima di consentirne l’utilizzo.</p></article></div></section>
+    <section class="section wrap formats" aria-labelledby="formati"><div><p class="eyebrow">DOCUMENTI E CONTENUTI</p><h2 id="formati">Sapere cosa<br>è stato analizzato.</h2><p class="muted">Un risultato incompleto resta visibile nel registro e non autorizza l’utilizzo del file.</p></div><div class="format-list"><div><strong>TXT · Markdown · formati testuali</strong><p>Analisi del testo, codifiche e contenuti nascosti previsti dal formato.</p></div><div><strong>PDF · DOCX</strong><p>Estrazione del testo e dei livelli supportati. Immagini che richiedono OCR e contenuti incorporati non ispezionabili restano bloccati.</p></div><div><strong>DOC · XLS · XLSX</strong><p>Formati non ancora supportati: il registro li indica come non analizzabili.</p></div><a class="text-link" href="docs/ESTRATTORI.html">Consulta formati, limiti e prerequisiti ↗</a></div></section>
+    <section class="section wrap docs-section" id="documentazione"><div><p class="eyebrow">DUE PERCORSI, UN SOLO PRODOTTO</p><h2>Usarlo bene.<br>Capirlo a fondo.</h2><p>Guide operative e riferimenti tecnici accompagnano il codice. Leggi online o scarica i manuali in PDF e Markdown. È disponibile anche la guida alla nuova interfaccia Windows tramite WSL 2.</p></div><div class="docs-links"><a href="docs/MANUALE_UTENTE.html"><span>PER CHI USA CHEKER</span><strong>Manuale utente ↗</strong><p>Installazione, file, approvazioni e risoluzione dei problemi.</p></a><a href="docs/MANUALE_TECNICO.html"><span>PER CHI LO SVILUPPA</span><strong>Documentazione tecnica ↗</strong><p>Architettura, API, MCP, persistenza e verifiche.</p></a><a href="docs/SVILUPPO.html"><span>DAL SORGENTE AL RILASCIO</span><strong>Guida allo sviluppo ↗</strong><p>Ambiente Linux, dipendenze, test e distribuzione.</p></a><a href="docs/WINDOWS.html"><span>ANTEPRIMA WINDOWS</span><strong>Una finestra, avvio guidato ↗</strong><p>Interfaccia Windows con il motore Linux locale tramite WSL 2.</p></a></div></section>
+    <section class="limits wrap"><p class="eyebrow">COSA SIGNIFICA UN RISULTATO</p><p>Cheker rileva classi di istruzioni sospette e anomalie con controlli espliciti. Un file «valido» ha completato questi controlli; non è una garanzia di assenza di qualsiasi minaccia. I formati non analizzabili restano bloccati. Il controllo si applica ai percorsi protetti da Cheker.</p></section>
+  </main>
+  <footer class="footer wrap"><a class="wordmark" href="./">cheker<span class="wordmark-dot">.</span></a><p>MCP Integrity Guard · Progettato per Linux</p><a href="https://github.com/okno/cheker">Sorgenti su GitHub ↗</a></footer>
+</body>
+</html>
