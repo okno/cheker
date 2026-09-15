@@ -15,7 +15,7 @@ automaticamente i documenti.
 
 La wheel `f426c5aa25e23466a6401c883c44fb6cb224335296797370b8391ec43db10d9e`, qualificata e installata il 15 settembre 2026, conserva la copia HTML e il parser corretto già presenti in d595. Rispetto alla precedente 039e cambiano soltanto estrazione, bootstrap del registro e nuovo modulo XLSX; il trasformatore HTML e i quattro file UI sono invariati. Le suite installate f426 concludono con **1.146 test backend superati e uno SKIP Windows per ciascuno di Python 3.13 e 3.11**; la QA 3.13 comprende separatamente **28 metodi e 43 sottocasi**. Installazione pulita, upgrade 48/48 e deploy sono conclusi: identità ed evidenze in [VALIDAZIONE.md](VALIDAZIONE.md).
 
-Le prove browser HTML da 74+10 e 27+10 controlli rimangono rispettivamente attribuite a 891 e d595; non sono nuove esecuzioni su f426. La nuova prova prolungata f426 esercita soltanto scansioni di un XLSX ordinario e non qualifica la durata delle copie HTML. Le run HTML su d595 conservano runtime e dati separati, senza esito finale acquisito in questo aggiornamento.
+Le prove browser HTML da 74+10 e 27+10 controlli rimangono rispettivamente attribuite a 891 e d595; non sono nuove esecuzioni su f426. La nuova prova prolungata f426 esercita soltanto scansioni di un XLSX ordinario e non qualifica la durata delle copie HTML. Le run HTML su d595 conservano runtime e dati separati: quella continua e quella con riavvii sono entrambe **PASS**, con evidenze distinte. Attribuzioni, misure e raccolte finali sono centralizzate nella [tabella delle cinque prove](VALIDAZIONE.md#cinque-prove-di-durata-attribuzioni-separate).
 
 ## Prove storiche del parser corretto: `d59523d2…`
 
@@ -53,16 +53,29 @@ La suite completa Python 3.13 è **PASS**: 1.036 test backend, uno SKIP Windows,
 28 metodi QA e 43 sottocasi, senza fallimenti, in 490,162 secondi. Sono passate
 anche le due regressioni del processo isolato reale per i commenti da 16.000
 e 70.000 caratteri. Evidenza: `dev/.test-data/linux-parser-compat-result.json`.
-La suite installata Python 3.11 è **PASS**: 1.036 test superati e uno SKIP Windows, senza fallimenti, in 561,785 secondi; `dev/.test-data/python311-parser-compat/backend-tests.xml`. Anche il collaudo prolungato
-è **in corso, non PASS**: avviato
-il 14 settembre alle 19:33:39 UTC, PID 54430 e `start_ticks` 9584616, sul runtime
-immutabile `/tmp/cheker-linux-release-0kslmc33/mcp-integrity-guard/runtime-linux/bin/python`.
-Dati separati in `/tmp/cheker-linux-finalrun/.test-data/d595-release`, controllo
-in `d595-control`, conclusione dell’esercizio pianificata entro le 02:25 UTC del
-15 settembre. Provenienza: `dev/.test-data/soak-d595-launch.json`. L’avvio mentre
-entrambe le suite erano in corso non costituisce una convalida del rilascio. La baseline
-r3 precedente rimane distinta. I risultati storici e i fallimenti di `891d7fc8…`
-sono conservati sotto e in [VALIDAZIONE.md](VALIDAZIONE.md).
+La suite installata Python 3.11 è **PASS**: 1.036 test superati e uno SKIP Windows, senza fallimenti, in 561,785 secondi; `dev/.test-data/python311-parser-compat/backend-tests.xml`. Il collaudo prolungato con riavvii
+è **PASS**. Era stato avviato il 14 settembre alle 19:33:39 UTC, PID 54430 e
+`start_ticks` 9584616, sul runtime immutabile
+`/tmp/cheker-linux-release-0kslmc33/mcp-integrity-guard/runtime-linux/bin/python`,
+con dati separati in `/tmp/cheker-linux-finalrun/.test-data/d595-release` e
+controllo in `d595-control`. Provenienza: `dev/.test-data/soak-d595-launch.json`.
+L’avvio mentre entrambe le suite erano in corso costituiva una sola osservazione
+iniziale; il PASS si basa sul rapporto terminale, sulla raccolta verificata e
+sul confronto finale di persistenza, riportati in [VALIDAZIONE.md](VALIDAZIONE.md).
+Database, ledger e baseline preesistente concordano, con record storici invariati.
+I riavvii pianificati distinguono questa prova da quella continua descritta sotto.
+La baseline r3 precedente rimane distinta. I risultati storici e i fallimenti di
+`891d7fc8…` sono conservati sotto e in [VALIDAZIONE.md](VALIDAZIONE.md).
+
+La run separata d595 **senza riavvii è PASS**. Il controller ha completato
+l’esercizio del profilo sintetico `html-copies-v1`; il collector ha verificato
+le evidenze e la terminazione delle identità di processo osservate. Un
+osservatore distinto ha confrontato database, ledger e baseline preesistente,
+conservando l’identità dei record storici e riscontrando le nuove aggiunte.
+Misure e riferimenti sono nella [tabella delle cinque prove e nelle note
+successive](VALIDAZIONE.md#cinque-prove-di-durata-attribuzioni-separate).
+Il risultato riguarda quel runtime e quel profilo: non copre tutti i documenti,
+non sostituisce la run con riavvii e non dimostra assenza di memory leak.
 
 ## Trasformazione e autorizzazione sono separate
 
@@ -341,4 +354,6 @@ collegamenti dei report e GET senza contenuto sono risultati coerenti; nessun
 processo posseduto è rimasto attivo fra quelli osservati. Evidenze:
 `dev/.test-data/soak-features-selftest-20260914/REPORT.md` e `result.json`.
 Questa verifica breve non sostituisce la suite completa 3.11 del candidato corretto,
-ora passata, né la sua prova lunga, ancora in corso.
+ora passata, né le prove di durata d595, entrambe PASS con evidenze separate
+per la run continua e quella con riavvii. Esiti e limiti sono distinti nella
+[tabella delle cinque prove](VALIDAZIONE.md#cinque-prove-di-durata-attribuzioni-separate).

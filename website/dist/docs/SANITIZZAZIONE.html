@@ -13,7 +13,7 @@ distinta dalla scansione ordinaria. Watcher, gate e lettori MCP non trasformano
 automaticamente i documenti.</p>
 <h2 id="attribuzione-della-release-f426c5aa">Attribuzione della release f426c5aa…</h2>
 <p>La wheel <code>f426c5aa25e23466a6401c883c44fb6cb224335296797370b8391ec43db10d9e</code>, qualificata e installata il 15 settembre 2026, conserva la copia HTML e il parser corretto già presenti in d595. Rispetto alla precedente 039e cambiano soltanto estrazione, bootstrap del registro e nuovo modulo XLSX; il trasformatore HTML e i quattro file UI sono invariati. Le suite installate f426 concludono con <strong>1.146 test backend superati e uno SKIP Windows per ciascuno di Python 3.13 e 3.11</strong>; la QA 3.13 comprende separatamente <strong>28 metodi e 43 sottocasi</strong>. Installazione pulita, upgrade 48/48 e deploy sono conclusi: identità ed evidenze in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
-<p>Le prove browser HTML da 74+10 e 27+10 controlli rimangono rispettivamente attribuite a 891 e d595; non sono nuove esecuzioni su f426. La nuova prova prolungata f426 esercita soltanto scansioni di un XLSX ordinario e non qualifica la durata delle copie HTML. Le run HTML su d595 conservano runtime e dati separati, senza esito finale acquisito in questo aggiornamento.</p>
+<p>Le prove browser HTML da 74+10 e 27+10 controlli rimangono rispettivamente attribuite a 891 e d595; non sono nuove esecuzioni su f426. La nuova prova prolungata f426 esercita soltanto scansioni di un XLSX ordinario e non qualifica la durata delle copie HTML. Le run HTML su d595 conservano runtime e dati separati: quella continua e quella con riavvii sono entrambe <strong>PASS</strong>, con evidenze distinte. Attribuzioni, misure e raccolte finali sono centralizzate nella <a href="VALIDAZIONE.html#cinque-prove-di-durata-attribuzioni-separate">tabella delle cinque prove</a>.</p>
 <h2 id="prove-storiche-del-parser-corretto-d59523d2">Prove storiche del parser corretto: <code>d59523d2…</code></h2>
 <p>Il candidato corretto ha wheel SHA-256
 <code>d59523d28b11da7c7be670e464ed4d99e70899e822e53c900d4aa6f09c6a0973</code>
@@ -46,16 +46,28 @@ processi chiusi. Evidenza:
 28 metodi QA e 43 sottocasi, senza fallimenti, in 490,162 secondi. Sono passate
 anche le due regressioni del processo isolato reale per i commenti da 16.000
 e 70.000 caratteri. Evidenza: <code>dev/.test-data/linux-parser-compat-result.json</code>.
-La suite installata Python 3.11 è <strong>PASS</strong>: 1.036 test superati e uno SKIP Windows, senza fallimenti, in 561,785 secondi; <code>dev/.test-data/python311-parser-compat/backend-tests.xml</code>. Anche il collaudo prolungato
-è <strong>in corso, non PASS</strong>: avviato
-il 14 settembre alle 19:33:39 UTC, PID 54430 e <code>start_ticks</code> 9584616, sul runtime
-immutabile <code>/tmp/cheker-linux-release-0kslmc33/mcp-integrity-guard/runtime-linux/bin/python</code>.
-Dati separati in <code>/tmp/cheker-linux-finalrun/.test-data/d595-release</code>, controllo
-in <code>d595-control</code>, conclusione dell’esercizio pianificata entro le 02:25 UTC del
-15 settembre. Provenienza: <code>dev/.test-data/soak-d595-launch.json</code>. L’avvio mentre
-entrambe le suite erano in corso non costituisce una convalida del rilascio. La baseline
-r3 precedente rimane distinta. I risultati storici e i fallimenti di <code>891d7fc8…</code>
-sono conservati sotto e in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+La suite installata Python 3.11 è <strong>PASS</strong>: 1.036 test superati e uno SKIP Windows, senza fallimenti, in 561,785 secondi; <code>dev/.test-data/python311-parser-compat/backend-tests.xml</code>. Il collaudo prolungato con riavvii
+è <strong>PASS</strong>. Era stato avviato il 14 settembre alle 19:33:39 UTC, PID 54430 e
+<code>start_ticks</code> 9584616, sul runtime immutabile
+<code>/tmp/cheker-linux-release-0kslmc33/mcp-integrity-guard/runtime-linux/bin/python</code>,
+con dati separati in <code>/tmp/cheker-linux-finalrun/.test-data/d595-release</code> e
+controllo in <code>d595-control</code>. Provenienza: <code>dev/.test-data/soak-d595-launch.json</code>.
+L’avvio mentre entrambe le suite erano in corso costituiva una sola osservazione
+iniziale; il PASS si basa sul rapporto terminale, sulla raccolta verificata e
+sul confronto finale di persistenza, riportati in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.
+Database, ledger e baseline preesistente concordano, con record storici invariati.
+I riavvii pianificati distinguono questa prova da quella continua descritta sotto.
+La baseline r3 precedente rimane distinta. I risultati storici e i fallimenti di
+<code>891d7fc8…</code> sono conservati sotto e in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<p>La run separata d595 <strong>senza riavvii è PASS</strong>. Il controller ha completato
+l’esercizio del profilo sintetico <code>html-copies-v1</code>; il collector ha verificato
+le evidenze e la terminazione delle identità di processo osservate. Un
+osservatore distinto ha confrontato database, ledger e baseline preesistente,
+conservando l’identità dei record storici e riscontrando le nuove aggiunte.
+Misure e riferimenti sono nella <a href="VALIDAZIONE.html#cinque-prove-di-durata-attribuzioni-separate">tabella delle cinque prove e nelle note
+successive</a>.
+Il risultato riguarda quel runtime e quel profilo: non copre tutti i documenti,
+non sostituisce la run con riavvii e non dimostra assenza di memory leak.</p>
 <h2 id="trasformazione-e-autorizzazione-sono-separate">Trasformazione e autorizzazione sono separate</h2>
 <p>Il servizio esegue tre stadi sequenziali:</p>
 <ol>
@@ -383,4 +395,6 @@ collegamenti dei report e GET senza contenuto sono risultati coerenti; nessun
 processo posseduto è rimasto attivo fra quelli osservati. Evidenze:
 <code>dev/.test-data/soak-features-selftest-20260914/REPORT.md</code> e <code>result.json</code>.
 Questa verifica breve non sostituisce la suite completa 3.11 del candidato corretto,
-ora passata, né la sua prova lunga, ancora in corso.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>
+ora passata, né le prove di durata d595, entrambe PASS con evidenze separate
+per la run continua e quella con riavvii. Esiti e limiti sono distinti nella
+<a href="VALIDAZIONE.html#cinque-prove-di-durata-attribuzioni-separate">tabella delle cinque prove</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>
