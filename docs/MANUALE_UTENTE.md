@@ -1,6 +1,6 @@
 # Manuale utente — MCP Integrity Guard
 
-**Nota di versione — XLSX:** il profilo statico descritto qui è presente nel sorgente aggiornato il 15 settembre 2026 e destinato a un nuovo pacchetto. La release con wheel `039e0fd8…` già consegnata non lo include. Usarlo soltanto dopo aver installato e verificato una release che lo contenga; i risultati di collaudo precedenti non qualificano automaticamente il nuovo estrattore.
+**Nota di versione — XLSX:** il profilo statico descritto qui appartiene alla wheel qualificata `f426c5aa…`, installata il 15 settembre 2026. La precedente wheel `039e0fd8…` non lo include. Formati, limiti ed esiti sono attribuiti alla wheel effettivamente installata; il numero `1.0.0` da solo non la identifica. Hash completo e prove sono in [VALIDAZIONE.md](VALIDAZIONE.md).
 
 Questo manuale descrive l'applicazione Linux e i controlli disponibili nella console italiana. MCP Integrity Guard registra le configurazioni MCP, lega le approvazioni al loro contenuto e analizza documenti prima dell'uso da parte di un agente. Le analisi e i report rimangono sul dispositivo che esegue l'applicazione.
 
@@ -16,7 +16,7 @@ Per rendere effettivo il blocco prima dell'uso, l'agente o il programma chiamant
 | **DOC** (`.doc`) | **No: non supportato, bloccato** | Il formato Word binario precedente non è DOCX |
 | **DOCX** (`.docx`) | Sì, entro i limiti dell'estrattore | Immagini che richiedono OCR e oggetti incorporati non ispezionabili possono causare il blocco |
 | **XLS** (`.xls`) | **No: non supportato, bloccato** | Il formato Excel binario non è analizzato |
-| **XLSX** (`.xlsx`) | Profilo statico nel nuovo sorgente; **assente nella release 039e** | Celle e metadati del sottoinsieme Transitional; formule, immagini e strutture non coperte bloccano l’analisi |
+| **XLSX** (`.xlsx`) | Profilo statico della wheel **f426c5aa…** | Celle e metadati del sottoinsieme Transitional; formule, immagini e strutture non coperte bloccano l’analisi |
 | **TXT** (`.txt`) | Sì | Restano i controlli di codifica, contenuto e dimensione |
 | **Markdown** (`.md`) | Sì | Testo e frontmatter iniziale sono coperti secondo i limiti descritti sotto |
 
@@ -43,6 +43,10 @@ L'estensione seleziona il formato da analizzare, ma non dimostra che i byte sian
 Servono Linux a 64 bit, architettura x86_64 o aarch64, Python 3.11 o successivo con supporto `venv`, Landlock ABI almeno 3 e la libreria `libseccomp.so.2`. Landlock ABI 3 richiede un kernel Linux 6.2 o successivo con la funzionalità abilitata: il solo numero di versione del kernel non basta. I risultati effettivamente verificati sulle piattaforme sono riportati in [VALIDAZIONE.md](VALIDAZIONE.md).
 
 L'installazione delle dipendenze richiede una connessione di rete. L'esecuzione ordinaria non richiede rete esterna o Node.js. Lo scanner usa processi isolati: se il confinamento necessario non è disponibile, l'analisi viene negata. La diagnostica di installazione deve terminare con `status: READY`, `scan_complete: true` e `sandbox_active: true`.
+
+### Finestra Windows e setup
+
+L’anteprima Windows usa lo stesso motore Linux tramite WSL 2. Con i prerequisiti della [guida Windows](WINDOWS.md) già installati, aprire `cheker-setup-xlsx-preview-2.exe`, scegliere la cartella e premere **Installa e avvia**. Il setup propone `D:\Cheker\app\windows` se esiste l’unità D, altrimenti una cartella sotto `%LOCALAPPDATA%\Cheker\app\windows`; crea al suo interno la cartella della versione. Il primo avvio prepara le dipendenze Python. La guida distingue setup e ZIP, dati persistenti e prove effettivamente eseguite. La pubblicazione preview.2 è prevista; non è dichiarata completata da questo manuale.
 
 ### Installazione da distribuzione Linux
 
@@ -197,7 +201,7 @@ Durante una selezione multipla, **Ferma la coda** lascia terminare il file corre
 | Markup | `.html`, `.htm`, `.xml` |
 | Codice come testo | `.py`, `.js`, `.ts`, `.sh`, `.ps1` |
 | Documenti strutturati | `.docx`, `.pdf`, quando il contenuto è ispezionabile |
-| Fogli statici, nuovo sorgente | `.xlsx` nel profilo descritto sotto; assente nella release 039e |
+| Fogli statici | `.xlsx` nel profilo della wheel f426c5aa… descritto sotto |
 
 Il codice e gli script vengono letti come contenuto, mai eseguiti per l'analisi. Lo scanner usa regole statiche, strutture di istruzioni, normalizzazione Unicode e decodifiche limitate. Le lingue previste dalle regole correnti sono inglese, italiano, tedesco, francese e spagnolo; non è un servizio di traduzione né una garanzia di riconoscere ogni espressione in quelle lingue.
 
@@ -213,21 +217,21 @@ HTML e documenti strutturati possono contenere commenti, nodi nascosti, testo al
 
 Il frontmatter iniziale Markdown delimitato da `---` per YAML o `+++` per TOML è analizzato anche come metadati grezzi; l'intero sorgente resta coperto come testo visibile. Un blocco chiuso oltre 64 KiB o 4096 righe interrompe l'analisi. Un delimitatore iniziale senza chiusura resta testo Markdown ordinario, entro i limiti generali.
 
-OCR non è implementato. PDF/DOCX con immagini che richiedono riconoscimento, PDF cifrati, oggetti attivi o incorporati non ispezionabili e formati non supportati possono essere bloccati senza una lettura completa. PPTX, EML, MSG, RTF e ODT non sono supportati. DOC e XLS legacy, XLSM e XLSB restano non supportati. Il nuovo estrattore XLSX statico richiede un aggiornamento distinto dalla release 039e; la sola presenza del registro non aggiunge automaticamente altri formati. Rinominare un'estensione non converte il documento.
+OCR non è implementato. PDF/DOCX con immagini che richiedono riconoscimento, PDF cifrati, oggetti attivi o incorporati non ispezionabili e formati non supportati possono essere bloccati senza una lettura completa. PPTX, EML, MSG, RTF e ODT non sono supportati. DOC e XLS legacy, XLSM e XLSB restano non supportati. L’estrattore XLSX statico è incluso nella wheel f426c5aa…; la sola presenza del registro non aggiunge automaticamente altri formati. Rinominare un'estensione non converte il documento.
 
 Un DOCX può contenere appendici in altri formati o riferimenti a contenuti esterni. Se Cheker non può ispezionarli completamente, il file risulta **Non analizzabile / Bloccato**; non significa necessariamente che sia infetto. Il report indica `DOCX_UNINSPECTED_PART`, `DOCX_ALTCHUNK_UNSUPPORTED` o `DOCX_EXTERNAL_CONTENT`. Ottenere dalla sorgente una versione autonoma in un formato analizzabile e sottoporla a una nuova scansione. I normali collegamenti vengono esaminati come metadati, senza aprire le destinazioni.
 
 I caratteri Unicode invisibili anomali possono produrre **Da verificare** anche in un documento ordinario. Il report mostra la posizione e rappresenta i caratteri con codici leggibili, per esempio `\U000e0061`. Le tre bandiere regionali RGI complete previste da Unicode sono riconosciute come uso ordinario; altri casi richiedono revisione. Non eliminare automaticamente gli indizi soltanto per ottenere un esito valido: controllare provenienza e significato del contenuto.
 
-### Fogli XLSX statici: profilo del nuovo sorgente
+### Fogli XLSX statici: profilo supportato
 
-Il nuovo profilo legge workbook `.xlsx` Transitional con celle statiche di testo, numeri, booleani, date ISO ed errori, stringhe condivise o inline, proprietà e commenti XML. Un foglio di appunti con valori già inseriti può rientrare nel profilo; basta invece una formula innocua come `SUM` o `1+2` perché l’intero file risulti **Non analizzabile / Bloccato** (`XLSX_FORMULA_UNSUPPORTED`). Non vengono calcolate formule né verificati i risultati memorizzati da Excel. Anche formule di validazione e nomi definiti sono fuori profilo.
+Il profilo legge workbook `.xlsx` Transitional con celle statiche di testo, numeri, booleani, date ISO ed errori, stringhe condivise o inline, proprietà e commenti XML. Un foglio di appunti con valori già inseriti può rientrare nel profilo; basta invece una formula innocua come `SUM` o `1+2` perché l’intero file risulti **Non analizzabile / Bloccato** (`XLSX_FORMULA_UNSUPPORTED`). Non vengono calcolate formule né verificati i risultati memorizzati da Excel. Anche formule di validazione e nomi definiti sono fuori profilo.
 
 Fogli, righe e colonne nascosti, testo esplicitamente bianco o molto piccolo e formati numerici personalizzati ricevono una classificazione prudente nel livello nascosto. Commenti e metadati restano nell’analisi. Questa distinzione non riproduce la visualizzazione di Excel. I normali hyperlink sono letti come metadati e non vengono aperti.
 
 Immagini, anche miniature, richiedono OCR assente; macro, binari e oggetti incorporati vengono rifiutati. Grafici, pivot, VML, commenti threaded, estensioni e altre strutture non ispezionate possono bloccare anche un foglio altrimenti semplice. I commenti XML sono coperti, ma un file che li accompagna con VML resta fuori profilo. I namespace Strict non sono supportati.
 
-Il limite resta 10 MiB di input; sono ammessi al massimo 100 fogli, 20.000 celle materialmente presenti e 20.000 stringhe condivise, oltre ai budget comuni di tempo, estrazione e archivio. Un blocco per copertura o limiti non significa che il file sia infetto. Conservare l’originale; un’eventuale esportazione statica ottenuta da uno strumento fidato va analizzata come documento distinto. Cheker non converte XLS/XLSX e non elimina formule per renderli ammissibili. I dettagli e i codici sono nel [manuale tecnico](MANUALE_TECNICO.md#profilo-xlsx-statico-del-nuovo-sorgente).
+Il limite resta 10 MiB di input; sono ammessi al massimo 100 fogli, 20.000 celle materialmente presenti e 20.000 stringhe condivise, oltre ai budget comuni di tempo, estrazione e archivio. Un blocco per copertura o limiti non significa che il file sia infetto. Conservare l’originale; un’eventuale esportazione statica ottenuta da uno strumento fidato va analizzata come documento distinto. Cheker non converte XLS/XLSX e non elimina formule per renderli ammissibili. I dettagli e i codici sono nel [manuale tecnico](MANUALE_TECNICO.md#profilo-xlsx-statico).
 
 ### Interpretare l'esito
 
@@ -365,7 +369,7 @@ Per leggere gli stessi byte che hanno superato l'analisi:
 bash guard.sh guarded-read /srv/documenti/nota.txt
 ```
 
-`guarded-read` emette il contenuto su stdout solo con analisi completa, esito `VALID`, decisione `ALLOWED` e hash corrispondente. In caso di rifiuto stdout è vuoto e stderr riporta un riepilogo senza testo sorgente. Per PDF/DOCX e, nelle release che includono il nuovo estrattore, XLSX, un eventuale output consentito è il file binario originale, non testo estratto: non inviarlo direttamente a un terminale testuale. Il chiamante deve controllare il codice di uscita e usare esattamente i byte ricevuti.
+`guarded-read` emette il contenuto su stdout solo con analisi completa, esito `VALID`, decisione `ALLOWED` e hash corrispondente. In caso di rifiuto stdout è vuoto e stderr riporta un riepilogo senza testo sorgente. Per PDF, DOCX e XLSX nella wheel f426c5aa…, un eventuale output consentito è il file binario originale, non testo estratto: non inviarlo direttamente a un terminale testuale. Il chiamante deve controllare il codice di uscita e usare esattamente i byte ricevuti.
 
 | Codice di uscita | Significato |
 |---|---|
@@ -373,7 +377,7 @@ bash guard.sh guarded-read /srv/documenti/nota.txt
 | `3` | Uso negato oppure audit non valido |
 | `2` | Errore operativo |
 
-Il lettore MCP protetto offre `scan_file` e `read_file` su trasporto stdio. Richiede l'app avviata e radici esplicite impostate nel client; non eredita le cartelle selezionate nella UI. `read_file` consegna solo testo UTF-8 entro 256 KiB negli specifici formati ammessi. PDF, DOCX, `.env` e `.log` sono disponibili con `scan_file`, ma non con `read_file`. Anche XLSX, dopo installazione di una release che includa il nuovo estrattore statico, resta solo scansionabile tramite MCP: `read_file` non consegna il foglio né il suo testo estratto. Seguire [MCP_INTEGRATION.md](MCP_INTEGRATION.md) per la configurazione completa, senza inserire il token nei file del client.
+Il lettore MCP protetto offre `scan_file` e `read_file` su trasporto stdio. Richiede l'app avviata e radici esplicite impostate nel client; non eredita le cartelle selezionate nella UI. `read_file` consegna solo testo UTF-8 entro 256 KiB negli specifici formati ammessi. PDF, DOCX, `.env` e `.log` sono disponibili con `scan_file`, ma non con `read_file`. Anche XLSX nella wheel f426c5aa… resta solo scansionabile tramite MCP: `read_file` non consegna il foglio né il suo testo estratto. Seguire [MCP_INTEGRATION.md](MCP_INTEGRATION.md) per la configurazione completa, senza inserire il token nei file del client.
 
 ## 10. Risolvere problemi, conservare i dati e chiedere supporto
 

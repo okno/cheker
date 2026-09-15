@@ -1,8 +1,8 @@
 # Manuale tecnico e operativo
 
-**Attribuzione XLSX:** il profilo statico aggiunto al sorgente il 15 settembre 2026 è destinato a un nuovo candidato e non appartiene alla release consegnata con wheel `039e0fd8…`. Le descrizioni XLSX in questo manuale riguardano quel sorgente; prove, installazione e disponibilità di una nuova release devono essere documentate separatamente.
+**Attribuzione XLSX:** questo manuale descrive il profilo statico della wheel qualificata `f426c5aa…`, installata il 15 settembre 2026. L’estrattore non appartiene alla precedente wheel `039e0fd8…`. Hash completo, suite installate, upgrade e verifiche della GUI sono in [VALIDAZIONE.md](VALIDAZIONE.md); i risultati storici rimangono attribuiti ai rispettivi artefatti.
 
-Questo manuale descrive MCP Integrity Guard 1.0.0 per amministratori Linux e manutentori. Le interfacce e i limiti sono quelli implementati nel repository; i risultati di collaudo delle singole build sono in [VALIDAZIONE.md](VALIDAZIONE.md). Per modificare o rilasciare il software leggere anche [SVILUPPO.md](SVILUPPO.md).
+Questo manuale descrive MCP Integrity Guard 1.0.0 per amministratori Linux e manutentori. Le interfacce e i limiti descritti si riferiscono alla wheel f426c5aa…; i risultati di collaudo delle singole build sono in [VALIDAZIONE.md](VALIDAZIONE.md). Per modificare o rilasciare il software leggere anche [SVILUPPO.md](SVILUPPO.md).
 
 ## 1. Scopo e confini
 
@@ -99,14 +99,14 @@ Il worker viene avviato con Python `-I`, ambiente ridotto e pipe. Prima dell’i
 | Concorrenza | Due slot condivisi per scansioni e stadi delle copie HTML; richiesta iniziale senza slot: HTTP 429 |
 | PDF | Massimo 100 pagine; nessun OCR |
 | DOCX | Massimo 2.048 membri; 8.000.000 byte per membro, 24.000.000 totali espansi, rapporto massimo 100 |
-| XLSX statico, nuovo sorgente | 100 fogli; 20.000 celle presenti; 20.000 shared strings; limiti ZIP/XML e rifiuti descritti sotto |
+| XLSX statico, wheel f426c5aa… | 100 fogli; 20.000 celle presenti; 20.000 shared strings; limiti ZIP/XML e rifiuti descritti sotto |
 | Frontmatter Markdown chiuso | 64 KiB e 4.096 righe |
 | Copia HTML | Input 10 MiB, output UTF-8 256 KiB, protocollo trasformazione 1 MiB |
 | Richiesta HTTP | Corpo complessivo massimo 11 MiB; il limite del singolo file rimane 10 MiB |
 
 I budget non sono una promessa di latenza massima per un’intera operazione composta: copia HTML e passate del monitor possono richiedere più stadi. Le dimensioni espresse in MiB usano multipli di 1.048.576 byte; gli altri valori della tabella sono decimali come nel codice.
 
-Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, `.env`, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile. Il sorgente successivo alla release 039e aggiunge XLSX tramite il registro statico fidato, entro il profilo seguente. DOC, XLS, XLSM, XLSB, PPTX, EML, MSG, RTF e ODT restano non supportati.
+Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, `.env`, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile. La wheel f426c5aa… include XLSX tramite il registro statico fidato, entro il profilo seguente. DOC, XLS, XLSM, XLSB, PPTX, EML, MSG, RTF e ODT restano non supportati.
 
 Il frontmatter iniziale YAML/TOML dei Markdown viene analizzato come testo di metadati, senza deserializzarlo né usarlo come configurazione. L’intero documento resta anche nel livello visibile. Le regole combinano indicatori multilingue, anomalie strutturali/Unicode e decodifiche limitate. I limiti configurati delle decodifiche comprendono profondità 3, rapporto di espansione 6, 512 candidati e 120 finding.
 
@@ -114,7 +114,7 @@ Il catalogo `1.1.2` estende il controllo dei caratteri invisibili al blocco Unic
 
 Il profilo DOCX rifiuta parti diverse da XML e relazioni XML, salvo directory vuote (`DOCX_UNINSPECTED_PART`); importazioni `altChunk` e relazioni `aFChunk`/`afChunk` (`DOCX_ALTCHUNK_UNSUPPORTED`); relazioni esterne diverse dagli hyperlink previsti (`DOCX_EXTERNAL_CONTENT`). Questi casi producono analisi incompleta, `UNSCANNABLE` e `BLOCKED`. Gli hyperlink restano metadati e non vengono recuperati. Campi obbligatori delle relazioni mancanti o modalità non valide producono `INVALID_DOCX`, distinto dal formato non supportato. I limiti ZIP e i rifiuti specifici per immagini/oggetti incorporati mantengono precedenza. Il controllo non è un validatore completo di conformità OPC/OOXML né un renderer Word. [Documentazione Microsoft su altChunk](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.altchunk?view=openxml-3.0.1).
 
-### Profilo XLSX statico del nuovo sorgente
+### Profilo XLSX statico
 
 [trusted_extractors.py](../backend/integrity_guard/trusted_extractors.py) registra esplicitamente `xlsx`, estensione `.xlsx`, handler `integrity_guard.xlsx_extractor.extract_xlsx`, versione `1.0.0`, con dipendenza `defusedxml` (versione del lock: `0.7.1`). Il bootstrap viene ricostruito dopo l’attivazione del sandbox e prima dell’input in ogni worker. Non richiede Office, rete o un nuovo percorso di esecuzione: usa `Budget`, `Extraction`, report, policy e registro delle scansioni ordinari. Il fingerprint include anche il nuovo modulo e invalida la corrispondenza della cache dopo l’aggiornamento. [Contratto del registro](ESTRATTORI.md).
 
@@ -267,7 +267,7 @@ bash guard.sh verify-audit
 
 `COMPONENT_ID`, `CANONICAL_HASH` e versione devono provenire dalla definizione realmente esaminata. Per un’altra porta anteporre al sottocomando `--api-url http://127.0.0.1:8877`. La CLI non ha sottocomandi `approve` o `revoke`: queste operazioni sono nella GUI/API.
 
-Exit code: **0** successo/consentito, **3** negato o audit non valido, **2** errore operativo. `guarded-read` restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF/DOCX e, nelle release con il nuovo estrattore, XLSX autorizzati l’output è il file binario originale, non testo estratto.
+Exit code: **0** successo/consentito, **3** negato o audit non valido, **2** errore operativo. `guarded-read` restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF, DOCX e XLSX autorizzati nella wheel f426c5aa… l’output è il file binario originale, non testo estratto.
 
 ```bash
 umask 077
@@ -298,7 +298,7 @@ Il lettore MCP stdio espone soltanto `scan_file` e `read_file`, versione di prot
 }
 ```
 
-Non inserire il token nel JSON. `scan_file` accetta fino a 10 MiB senza restituire il contenuto; `read_file` consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, `.env` o `.log`, pur analizzabili con `scan_file`. Il nuovo XLSX statico, quando incluso nella release installata, è disponibile soltanto per `scan_file`: non estende i formati consegnabili da `read_file`. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in [MCP_INTEGRATION.md](MCP_INTEGRATION.md).
+Non inserire il token nel JSON. `scan_file` accetta fino a 10 MiB senza restituire il contenuto; `read_file` consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, `.env` o `.log`, pur analizzabili con `scan_file`. XLSX statico nella wheel f426c5aa… è disponibile soltanto per `scan_file`: non estende i formati consegnabili da `read_file`. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in [MCP_INTEGRATION.md](MCP_INTEGRATION.md).
 
 ## 8. API amministrativa
 
