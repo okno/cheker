@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Copia testuale HTML · Cheker</title><meta name="description" content="Copia testuale HTML di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html" aria-current="page">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="SANITIZZAZIONE.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="copia-testuale-da-html">Copia testuale da HTML</h1>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="PRIMI_PASSI.html">Primi passi</a><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html" aria-current="page">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="SANITIZZAZIONE.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="copia-testuale-da-html">Copia testuale da HTML</h1>
 <p>La funzione crea <strong>su richiesta esplicita</strong> una copia UTF-8 di un file <code>.html</code> o
 <code>.htm</code>, secondo il profilo versionato <code>html-text-v1</code>. L'originale non viene
 riscritto, spostato o cancellato. La copia perde markup, metadati e altri
@@ -11,7 +11,10 @@ al documento e non costituisce una bonifica universale delle prompt injection.</
 selezionare un file oppure indicarne il percorso assoluto Linux. L'operazione è
 distinta dalla scansione ordinaria. Watcher, gate e lettori MCP non trasformano
 automaticamente i documenti.</p>
-<h2 id="stato-corrente-della-verifica-d59523d2">Stato corrente della verifica: <code>d59523d2…</code></h2>
+<h2 id="attribuzione-della-release-f426c5aa">Attribuzione della release f426c5aa…</h2>
+<p>La wheel <code>f426c5aa25e23466a6401c883c44fb6cb224335296797370b8391ec43db10d9e</code>, qualificata e installata il 15 settembre 2026, conserva la copia HTML e il parser corretto già presenti in d595. Rispetto alla precedente 039e cambiano soltanto estrazione, bootstrap del registro e nuovo modulo XLSX; il trasformatore HTML e i quattro file UI sono invariati. Le suite installate f426 concludono con <strong>1.146 test backend superati e uno SKIP Windows per ciascuno di Python 3.13 e 3.11</strong>; la QA 3.13 comprende separatamente <strong>28 metodi e 43 sottocasi</strong>. Installazione pulita, upgrade 48/48 e deploy sono conclusi: identità ed evidenze in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
+<p>Le prove browser HTML da 74+10 e 27+10 controlli rimangono rispettivamente attribuite a 891 e d595; non sono nuove esecuzioni su f426. La nuova prova prolungata f426 esercita soltanto scansioni di un XLSX ordinario e non qualifica la durata delle copie HTML. Le run HTML su d595 conservano runtime e dati separati, senza esito finale acquisito in questo aggiornamento.</p>
+<h2 id="prove-storiche-del-parser-corretto-d59523d2">Prove storiche del parser corretto: <code>d59523d2…</code></h2>
 <p>Il candidato corretto ha wheel SHA-256
 <code>d59523d28b11da7c7be670e464ed4d99e70899e822e53c900d4aa6f09c6a0973</code>
 e tar verificato
@@ -366,8 +369,8 @@ sono poi passate nella suite completa Python 3.13 del candidato corretto;
 anche la suite Python 3.11 è poi passata. I due casi sono verificati anche nella QA
 browser mirata del candidato corretto.</p>
 <p>Il candidato corretto <code>d59523d2…</code> contiene 26 file applicativi e cambia solo
-<code>html_text.py</code> rispetto a <code>891d7fc8…</code>; le verifiche correnti sono descritte nella
-sezione iniziale. Il precedente <code>891d7fc8…</code> è stato sostituito come candidato e
+<code>html_text.py</code> rispetto a <code>891d7fc8…</code>; le sue verifiche sono descritte nella
+sezione storica d595. Il precedente <code>891d7fc8…</code> è stato sostituito come candidato e
 non verrà usato per la prova prolungata finale. Le sue prove e il fallimento
 Python 3.11 restano conservati con la loro attribuzione.</p>
 <h3 id="prova-breve-storica-del-collaudo-delle-copie-su-891d7fc8">Prova breve storica del collaudo delle copie su <code>891d7fc8…</code></h3>

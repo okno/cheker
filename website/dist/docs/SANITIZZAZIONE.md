@@ -11,7 +11,13 @@ selezionare un file oppure indicarne il percorso assoluto Linux. L'operazione è
 distinta dalla scansione ordinaria. Watcher, gate e lettori MCP non trasformano
 automaticamente i documenti.
 
-## Stato corrente della verifica: `d59523d2…`
+## Attribuzione della release f426c5aa…
+
+La wheel `f426c5aa25e23466a6401c883c44fb6cb224335296797370b8391ec43db10d9e`, qualificata e installata il 15 settembre 2026, conserva la copia HTML e il parser corretto già presenti in d595. Rispetto alla precedente 039e cambiano soltanto estrazione, bootstrap del registro e nuovo modulo XLSX; il trasformatore HTML e i quattro file UI sono invariati. Le suite installate f426 concludono con **1.146 test backend superati e uno SKIP Windows per ciascuno di Python 3.13 e 3.11**; la QA 3.13 comprende separatamente **28 metodi e 43 sottocasi**. Installazione pulita, upgrade 48/48 e deploy sono conclusi: identità ed evidenze in [VALIDAZIONE.md](VALIDAZIONE.md).
+
+Le prove browser HTML da 74+10 e 27+10 controlli rimangono rispettivamente attribuite a 891 e d595; non sono nuove esecuzioni su f426. La nuova prova prolungata f426 esercita soltanto scansioni di un XLSX ordinario e non qualifica la durata delle copie HTML. Le run HTML su d595 conservano runtime e dati separati, senza esito finale acquisito in questo aggiornamento.
+
+## Prove storiche del parser corretto: `d59523d2…`
 
 Il candidato corretto ha wheel SHA-256
 `d59523d28b11da7c7be670e464ed4d99e70899e822e53c900d4aa6f09c6a0973`
@@ -319,8 +325,8 @@ anche la suite Python 3.11 è poi passata. I due casi sono verificati anche nell
 browser mirata del candidato corretto.
 
 Il candidato corretto `d59523d2…` contiene 26 file applicativi e cambia solo
-`html_text.py` rispetto a `891d7fc8…`; le verifiche correnti sono descritte nella
-sezione iniziale. Il precedente `891d7fc8…` è stato sostituito come candidato e
+`html_text.py` rispetto a `891d7fc8…`; le sue verifiche sono descritte nella
+sezione storica d595. Il precedente `891d7fc8…` è stato sostituito come candidato e
 non verrà usato per la prova prolungata finale. Le sue prove e il fallimento
 Python 3.11 restano conservati con la loro attribuzione.
 

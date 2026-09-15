@@ -1,13 +1,12 @@
 <!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Estrattori · Cheker</title><meta name="description" content="Estrattori di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html" aria-current="page">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="ESTRATTORI.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="registro-degli-estrattori-fidati">Registro degli estrattori fidati</h1>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="PRIMI_PASSI.html">Primi passi</a><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html" aria-current="page">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="ESTRATTORI.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="registro-degli-estrattori-fidati">Registro degli estrattori fidati</h1>
 <p>Il §11 dei requisiti chiede di predisporre nuovi formati senza considerarli già
 supportati. <code>extractor_registry.py</code> offre un registro per estrattori inclusi
-esplicitamente nel codice fidato del wheel. La release consegnata con wheel <code>039e0fd8…</code> ha un bootstrap vuoto. Il sorgente
-aggiornato il 15 settembre 2026 registra invece il solo profilo XLSX statico,
-destinato a un nuovo candidato: questa aggiunta non viene attribuita alla release
-039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Gli estrattori incorporati
+esplicitamente nel codice fidato del wheel. La precedente wheel <code>039e0fd8…</code> aveva un bootstrap vuoto. La wheel qualificata
+<code>f426c5aa…</code> registra invece il solo profilo XLSX statico. L’aggiunta è verificata
+separatamente e non viene attribuita alla precedente 039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Gli estrattori incorporati
 continuano a usare il percorso già previsto in <code>extraction.py</code>.</p>
 <p>Non esistono installazione di plugin dall'interfaccia, caricamento da documenti,
 ricerca in cartelle utente, entry point automatici o variabili d'ambiente per
@@ -53,7 +52,7 @@ rimane responsabilità di chi sviluppa l'estrattore; il registro non ricostruisc
 automaticamente tutti gli import transitivi.</p>
 <h2 id="bootstrap-riproducibile-nel-worker">Bootstrap riproducibile nel worker</h2>
 <p><code>trusted_extractors.register_all(registry)</code> è l'unico elenco statico previsto per
-la produzione. Nel nuovo sorgente contiene un import letterale di
+la produzione. Nella wheel f426c5aa… contiene un import letterale di
 <code>xlsx_extractor.extract_xlsx</code> e la registrazione esplicita:</p>
 <pre><code class="language-python">registry.register_extractor(&quot;xlsx&quot;, (&quot;.xlsx&quot;,), &quot;1.0.0&quot;, extract_xlsx, (&quot;defusedxml&quot;,))
 </code></pre>
@@ -66,7 +65,7 @@ fornita dall’utente o da un documento.</p>
 entro limiti dichiarati. Formule, nomi definiti, media/OCR, macro, oggetti
 incorporati, dati esterni e strutture non ispezionate restano bloccati. Anche
 XLSM, XLSB e XLS legacy sono fuori profilo. Vedere il
-<a href="MANUALE_TECNICO.html#profilo-xlsx-statico-del-nuovo-sorgente">profilo tecnico XLSX</a>.
+<a href="MANUALE_TECNICO.html#profilo-xlsx-statico">profilo tecnico XLSX</a>.
 Registrare <code>.xlsx</code> non abilita i formati futuri né rende ammissibile ogni file
 con quella estensione.</p>
 <p><code>get_registry()</code> esegue il bootstrap una volta per processo, verifica i
@@ -131,10 +130,13 @@ esecuzione del contratto <code>Budget</code>, collisioni, metadati, sorgenti e d
 congelamento, variazioni del fingerprint e bootstrap in processi Python nuovi.
 Una regressione dedicata verifica che cambiare soltanto un helper confezionato
 invalida il fingerprint, mantenendo invariati gestore e versione.
-Le prove del nuovo XLSX sono in <code>backend/tests/test_xlsx_extractor.py</code> e includono
+Le prove XLSX sono in <code>backend/tests/test_xlsx_extractor.py</code> e includono
 worker reali per documento statico, formula innocua e contenuto fuori profilo.
 Il registro viene verificato anche in processi nuovi con la registrazione
 statica XLSX presente; le istanze isolate dei test non installano plugin utente.
 Le prove dei formati e della loro integrazione nel worker devono accompagnare
-ogni modifica del bootstrap. L’esito della release 039e non qualifica questa
-aggiunta: i test del nuovo candidato vanno attribuiti separatamente.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>
+ogni modifica del bootstrap. Sulla wheel f426c5aa… i 59 casi XLSX passano
+sia su Python 3.13 sia su Python 3.11 e sono già compresi nei 1.146 test backend
+superati su ciascun interprete. Installazione pulita, upgrade e GUI Windows
+hanno prove distinte: <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>. Questi risultati
+non attestano ogni documento XLSX né futuri estrattori.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>

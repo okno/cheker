@@ -14,9 +14,11 @@ Il setup singolo revisione 2 incorpora lo stesso ZIP: **28 controlli del motore 
 | `cheker-windows-anteprima-4.zip` | `b626390c9e169d48706a096e83743b5b81eea8df2370c6a5c83d1690db46fb81` |
 | `Cheker.exe` contenuto nello ZIP 4 | `c0af87a4959da43751b80ed3a9075f1fc443a3d7d48a47aaf356375c8d22d51c` |
 
-La [release v1.0.0-preview.2](https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2) è prevista, non ancora dichiarata pubblicata in questo aggiornamento. La documentazione interna degli archivi conserva lo snapshot del freeze; questa guida e i manuali aggiornati sono preparati separatamente per il rilascio.
+La [release v1.0.0-preview.2](https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2) è pubblicata e include archivio Linux, ZIP Windows, setup singolo e checksum. La documentazione interna degli archivi conserva lo snapshot del freeze; questa guida e i manuali aggiornati sono disponibili separatamente sul web e nei sorgenti. I tre PDF aggiornati sono allegati separatamente alla stessa release, con checksum dedicati.
 
 ## Primo avvio con il setup singolo
+
+Prima di avviare una nuova versione, chiudi eventuali finestre Cheker già aperte. L’app consente una sola istanza desktop per sessione Windows; lasciare aperta la versione precedente impedisce l’apertura della nuova.
 
 1. Verifica i prerequisiti elencati sotto e la provenienza del setup. Il programma non installa automaticamente WSL, una distribuzione Linux, Python, WebView2 o .NET Framework.
 2. Apri **cheker-setup-xlsx-preview-2.exe**. Scegli una cartella scrivibile. Se esiste l’unità D, viene proposto `D:\Cheker\app\windows`; altrimenti `%LOCALAPPDATA%\Cheker\app\windows`.

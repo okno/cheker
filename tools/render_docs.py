@@ -12,6 +12,7 @@ from urllib.parse import urlsplit, unquote
 import markdown
 
 DOCUMENTS = {
+    'PRIMI_PASSI': 'Primi passi',
     'MANUALE_UTENTE': 'Manuale utente',
     'MANUALE_TECNICO': 'Manuale tecnico',
     'SVILUPPO': 'Sviluppo e rilascio',
@@ -36,7 +37,7 @@ def render(source: Path, site: Path) -> list[str]:
     public={path.resolve(): key+'.html' for key,path in selected.items()}
     outputs=[]
     for key,path in selected.items():
-        md=markdown.Markdown(extensions=['fenced_code','tables','toc','footnotes'])
+        md=markdown.Markdown(extensions=['fenced_code','tables','toc','footnotes','sane_lists'])
         content=md.convert(path.read_text(encoding='utf-8'))
         def link(match):
             original=unquote(match.group(1)); parts=urlsplit(original)

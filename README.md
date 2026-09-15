@@ -2,7 +2,9 @@
 
 Cheker è un’applicazione locale per **Linux** che verifica l’integrità delle configurazioni MCP, registra le modifiche e analizza i file prima del loro utilizzo attraverso i lettori integrati. La console mostra i file processati, i risultati, le sommatorie, le approvazioni e l’audit.
 
-È disponibile in anteprima anche il pacchetto **Windows x64 con GUI**, che avvia lo stesso motore Linux locale tramite WSL 2. La [guida Windows](docs/WINDOWS.md) descrive il setup singolo `cheker-setup-xlsx-preview-2.exe`, la scelta della cartella e **Installa e avvia**, oltre all’alternativa ZIP. WSL 2, una distribuzione predefinita con Python 3.11+ e `venv`, WebView2 e .NET Framework 4.8 devono essere già disponibili; il setup non li installa automaticamente. La pubblicazione della [release preview.2](https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2) è prevista, non ancora confermata in questo aggiornamento documentale.
+Per installare l’app e analizzare il primo documento, segui [Primi passi con Cheker](docs/PRIMI_PASSI.md).
+
+È disponibile in anteprima anche il pacchetto **Windows x64 con GUI**, che avvia lo stesso motore Linux locale tramite WSL 2. La [guida Windows](docs/WINDOWS.md) descrive il setup singolo `cheker-setup-xlsx-preview-2.exe`, la scelta della cartella e **Installa e avvia**, oltre all’alternativa ZIP. WSL 2, una distribuzione predefinita con Python 3.11+ e `venv`, WebView2 e .NET Framework 4.8 devono essere già disponibili; il setup non li installa automaticamente. La [release preview.2](https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2) è pubblicata e include archivio Linux, ZIP Windows, setup singolo e checksum. I manuali aggiornati sono disponibili sul web e nei sorgenti; i tre PDF sono allegati alla stessa release.
 
 Una modifica ai byte della configurazione invalida l’approvazione precedente. Il gate verifica nuovamente sorgente, versione, firma e policy prima di consentire l’uso. Le approvazioni sono legate al contenuto, non al solo nome del componente.
 
@@ -35,7 +37,7 @@ bash install-linux.sh
 bash start.sh
 ```
 
-L’installer richiede rete per le dipendenze e crea un ambiente Python locale. L’uso ordinario non richiede Node o servizi esterni. Il pacchetto contiene wheel, interfaccia compilata, script, esempi e manuali; non contiene dati, token o chiavi preesistenti. Il checksum rileva alterazioni rispetto al riferimento, ma non è una firma indipendente del distributore. I manuali incorporati negli archivi conservano lo snapshot del freeze; le note e i manuali aggiornati per la release sono preparati separatamente per la pubblicazione, senza modificare wheel, ZIP o tar già qualificati.
+L’installer richiede rete per le dipendenze e crea un ambiente Python locale. L’uso ordinario non richiede Node o servizi esterni. Il pacchetto contiene wheel, interfaccia compilata, script, esempi e manuali; non contiene dati, token o chiavi preesistenti. Il checksum rileva alterazioni rispetto al riferimento, ma non è una firma indipendente del distributore. I manuali incorporati negli archivi conservano lo snapshot del freeze; le note e i manuali aggiornati sono disponibili separatamente sul web e nei sorgenti, senza modificare wheel, ZIP o tar già qualificati. I tre manuali PDF aggiornati sono allegati alla release preview.2.
 
 La console ascolta su `http://127.0.0.1:8765`. Il launcher verifica il servizio e apre la sessione; mantenere il processo attivo e usare Ctrl+C per arrestarlo. La prima apertura è vuota: non vengono inseriti dati fittizi. Il token locale è una credenziale amministrativa e non deve essere condiviso. Se il sandbox non è disponibile, le scansioni restano bloccate.
 

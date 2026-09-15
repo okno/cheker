@@ -2,9 +2,9 @@
 
 **Rapporto tecnico — 15 settembre 2026.** Destinatari: manutentori, integratori di agenti e responsabili tecnici che devono decidere quali documenti e strumenti ammettere in un flusso di lavoro Linux.
 
-Il riferimento implementativo è MCP Integrity Guard 1.0.0, wheel SHA-256 `039e0fd80f2e3a914d262a7b7b6e69d97073dc97666aafe1cdb7cfe3ef0052de`, qualificata e installata il 15 settembre 2026 (ora locale). I confronti con la baseline precedente d595 sono indicati dove rilevanti; eventuali sviluppi successivi non sono attribuiti a questa build. Le fonti esterne sono state consultate il 15 settembre 2026, ora locale europea.
+Il riferimento implementativo è MCP Integrity Guard 1.0.0, wheel SHA-256 `f426c5aa25e23466a6401c883c44fb6cb224335296797370b8391ec43db10d9e`, qualificata e installata il 15 settembre 2026 (ora locale). I confronti con le precedenti wheel 039e e d595 sono indicati dove rilevanti; eventuali sviluppi successivi non sono attribuiti a questa build. Le fonti esterne sono state consultate il 15 settembre 2026, ora locale europea.
 
-Aggiornamento successivo del sorgente: è stato implementato un profilo XLSX statico Transitional con registro esplicito. Esamina celle, stringhe, proprietà e viste nascoste; rifiuta formule, immagini, incorporamenti, contenuti esterni e parti non coperte. Le 156 verifiche mirate sono passate; la qualifica del nuovo pacchetto è distinta dalle prove della 039e. Il contratto completo è in [Estrattori](ESTRATTORI.md). La matrice di questo rapporto continua a descrivere la baseline 039e, che non contiene questo estrattore.
+La wheel f426 include il profilo XLSX statico Transitional con registro esplicito: celle, stringhe, proprietà e viste nascoste entro limiti; formule, immagini, incorporamenti, contenuti esterni fuori profilo e parti non coperte sono rifiutati. Dopo il preflight storico da 156 verifiche mirate, la wheel installata ha superato le suite complete su Python 3.13 e 3.11, l’installazione pulita, l’upgrade e una prova Windows con XLSX ordinario. I 59 casi XLSX per interprete sono già inclusi nelle suite: non vengono sommati di nuovo. [Estrattori](ESTRATTORI.md) descrive il contratto e [Validazione](VALIDAZIONE.md) attribuisce gli esiti. La matrice seguente descrive f426, non la precedente 039e priva di estrattore XLSX.
 
 ## 1. Conclusione tecnica e metodo
 
@@ -20,7 +20,7 @@ Nel testo le evidenze sono distinte così:
 | **Esperimento** | Dimostrazione, studio controllato o benchmark con condizioni proprie |
 | **Implementazione** | Comportamento riscontrabile nel codice e nella documentazione di Cheker |
 | **Inferenza** | Conseguenza progettuale proposta qui, non risultato misurato sul prodotto |
-| **In corso** | Modifica implementata ma non ancora qualificata e distribuita come nuovo candidato in questo rapporto |
+| **In corso** | Prova avviata della quale non è ancora disponibile un risultato finale |
 
 Sono stati letti articoli, documentazione normativa e sorgenti pertinenti. Non sono stati scaricati corpora o documenti malevoli, generati nuovi payload, riprodotti exploit o eseguite nuove prove del prodotto per questa ricerca. Le percentuali degli studi rimangono attribuite agli autori e alle rispettive distribuzioni; non diventano stime dell’efficacia di Cheker.
 
@@ -76,7 +76,7 @@ Per l’integratore ne discende una regola operativa: un risultato `ALLOWED` val
 
 ## 4. Matrice dei formati prioritari
 
-La colonna di stato descrive il profilo della build 039e, incluse le estensioni DOCX e Unicode Tags. “Supportato” non significa che ogni documento formalmente valido venga accettato.
+La colonna di stato descrive il profilo della wheel f426, inclusi XLSX statico e i controlli DOCX e Unicode Tags ereditati dalla 039e. “Supportato” non significa che ogni documento formalmente valido venga accettato.
 
 | Formato | Superfici da considerare | Profilo e limite effettivo |
 |---|---|---|
@@ -84,7 +84,7 @@ La colonna di stato descrive il profilo della build 039e, incluse le estensioni 
 | **DOC** | Contenitore binario composto, flussi e strutture Word | **Non supportato**; non viene reinterpretato come testo o DOCX |
 | **DOCX** | Parti ZIP, XML, stili, note, commenti, metadati, import e relazioni | Supporto ristretto, senza immagini/oggetti incorporati. Rifiuto esplicito delle parti non ispezionate, degli import alternativi e dei contenuti esterni non supportati |
 | **XLS** | Struttura binaria, record e sottoflussi del workbook | **Non supportato**; nessuna esecuzione o valutazione delle formule |
-| **XLSX** | Fogli separati, stringhe condivise, formule, stati nascosti e relazioni | **Non supportato**; il registro per estrattori futuri non ne abilita uno |
+| **XLSX** | Fogli separati, stringhe condivise, formule, stati nascosti e relazioni | Profilo statico Transitional; celle, stringhe, proprietà e viste nascoste. Formule, media, macro, parti non ispezionate e strutture fuori profilo restano bloccati |
 | **TXT** | Istruzioni in prosa, caratteri invisibili, direzionalità e codifiche | Supportato con decodifica rigorosa e analisi testuale; nessuna comprensione universale dell’intento |
 | **MD** | Testo, link, codice, HTML incorporato e frontmatter | Supportato come testo e metadati iniziali; non esegue codice, non visita link e non riproduce un renderer Markdown |
 
@@ -100,7 +100,9 @@ La documentazione pypdf distingue estrazione testuale e OCR: il testo può esser
 
 Le specifiche Microsoft descrivono DOC attraverso un contenitore Compound File con flussi e storages; XLS impiega flussi di record e sottoflussi per elementi del workbook. Non sono formati UTF-8 equivalenti a TXT o CSV.[^14][^15] SpreadsheetML distribuisce informazioni fra parti, fogli, stringhe condivise e altri elementi; la specifica SDK distingue stati del foglio visibile, nascosto e molto nascosto.[^16][^17]
 
-**Inferenza.** Un futuro supporto deve dichiarare quali parti esamina, come tratta formule e valori memorizzati, quali risorse esclude e quando rinuncia alla completezza. Estrarre soltanto celle visibili o rinominare il suffisso produrrebbe un contratto ambiguo. Il registro attuale consente soltanto estrattori confezionati nel codice fidato; il bootstrap è vuoto. Non è installazione di plugin da documenti o percorsi dell’utente.[^23]
+**Implementazione f426.** Il registro include soltanto l’estrattore XLSX statico confezionato nel codice fidato. Il profilo dichiara parti, livelli, budget e rifiuti; analizza anche viste nascoste e metadati, senza calcolare formule o accettarne soltanto il valore memorizzato. DOC e XLS binari, XLSM e XLSB restano non supportati. Non esiste installazione di plugin da documenti o percorsi dell’utente.[^23]
+
+**Inferenza.** Ogni estensione futura deve mantenere espliciti i propri criteri di completezza. Estrarre soltanto celle visibili o rinominare il suffisso produrrebbe un contratto ambiguo; la copertura del sottoinsieme statico non attesta equivalenza con Excel.
 
 ### TXT e Markdown: semplicità del contenitore, non dell’intento
 
@@ -132,7 +134,7 @@ La chiave privata, il database e il servizio amministrativo appartengono alla ba
 
 Unicode UTS #51 versione 17.0, revisione 29, distingue le sequenze emoji ammesse e quelle raccomandate per lo scambio generale, dette RGI. L’elenco ufficiale `emoji-sequences.txt` identifica tre sequenze RGI con tag per Inghilterra, Scozia e Galles. La lista è versionata: una sequenza sintatticamente componibile non diventa automaticamente un’emoji RGI.[^18][^19]
 
-**Modifica implementata e qualificata nella build 039e.** Il codice del candidato estende il segnale di caratteri invisibili all’intervallo Unicode Tags, preservando l’eccezione delle tre sequenze complete RGI. L’eccezione riguarda il segnale di anomalia: non autorizza il documento, non disattiva le altre regole e non estende fiducia ai caratteri adiacenti. Le 21 prove funzionali Unicode della suite installata sono passate su Python 3.13 e 3.11. La modifica non appartiene al precedente wheel d595.
+**Modifica qualificata dalla build 039e e conservata nella f426.** Il codice estende il segnale di caratteri invisibili all’intervallo Unicode Tags, preservando l’eccezione delle tre sequenze complete RGI. L’eccezione riguarda il segnale di anomalia: non autorizza il documento, non disattiva le altre regole e non estende fiducia ai caratteri adiacenti. Le 21 prove funzionali Unicode della suite installata sono passate su Python 3.13 e 3.11. La modifica non appartiene al precedente wheel d595.
 
 **Inferenza progettuale.** È opportuno mantenere due rappresentazioni: gli originali, ai quali si riferisce l’hash RAW, e le varianti limitate usate nell’analisi. Rimuovere caratteri invisibili soltanto dalla seconda può aiutare il confronto; riscrivere l’originale cancellerebbe parte dell’evidenza. Anche l’interfaccia dovrebbe mostrare gli indicatori mediante escape leggibili, evitando che la rappresentazione del finding nasconda nuovamente il problema.
 
@@ -146,16 +148,16 @@ La documentazione MS-OE376 descrive le grafie di relazione `aFChunk` e `afChunk`
 
 **Riscontro sulla baseline documentata.** L’estrattore controlla limiti ZIP, nomi, compressione, XML sicuro, media e incorporamenti; nel percorso precedente esaminava `.xml` e `.rels`, saltando altre parti non già respinte. La proposta funzionale individua questa differenza fra parti presenti e parti effettivamente analizzate. È un riscontro sul percorso del codice, non l’esito di un nuovo exploit riprodotto.[^24]
 
-**Modifica implementata e qualificata nella build 039e.** Il codice del candidato introduce un rifiuto esplicito per parti non ispezionate, import `altChunk` e relazioni esterne non comprese nel profilo. Gli hyperlink ordinari rimangono metadati senza visita della destinazione. Le vere directory ZIP vuote non sono considerate contenuto. La distinzione fra formato malformato e funzionalità non gestita deve restare visibile nel report.
+**Modifica qualificata dalla build 039e e conservata nella f426.** Il codice introduce un rifiuto esplicito per parti non ispezionate, import `altChunk` e relazioni esterne non comprese nel profilo. Gli hyperlink ordinari rimangono metadati senza visita della destinazione. Le vere directory ZIP vuote non sono considerate contenuto. La distinzione fra formato malformato e funzionalità non gestita deve restare visibile nel report.
 
 | Condizione | Decisione prevista dalla proposta | Stato di questo rapporto |
 |---|---|---|
-| Parti contenenti dati fuori dal profilo XML/relazioni | Analisi incompleta; niente accettazione per semplice omissione | Implementato nella 039e |
-| Anchor o relazione di importazione alternativa | Rifiuto finché l’importazione non è implementata | Implementato nella 039e |
-| Risorsa esterna non supportata, anche con URI relativo | Rifiuto senza recuperare la risorsa | Implementato nella 039e |
-| Normale hyperlink | Ispezione del metadato, senza attestare la destinazione | Implementato nella 039e |
+| Parti contenenti dati fuori dal profilo XML/relazioni | Analisi incompleta; niente accettazione per semplice omissione | Presente dalla 039e; verificato anche nella f426 |
+| Anchor o relazione di importazione alternativa | Rifiuto finché l’importazione non è implementata | Presente dalla 039e; verificato anche nella f426 |
+| Risorsa esterna non supportata, anche con URI relativo | Rifiuto senza recuperare la risorsa | Presente dalla 039e; verificato anche nella f426 |
+| Normale hyperlink | Ispezione del metadato, senza attestare la destinazione | Presente dalla 039e; verificato anche nella f426 |
 
-**Compatibilità.** Il profilo può rifiutare DOCX innocui con anteprime, font o parti aggiuntive non gestite. Un documento formalmente valido per Office non è necessariamente interamente analizzabile da Cheker. Questa restrizione non introduce OCR, valutazione dei campi dinamici, validazione completa OPC o equivalenza visuale. La consegna richiede la verifica del candidato aggiornato; i risultati della baseline non coprono automaticamente il nuovo comportamento.
+**Compatibilità.** Il profilo può rifiutare DOCX innocui con anteprime, font o parti aggiuntive non gestite. Un documento formalmente valido per Office non è necessariamente interamente analizzabile da Cheker. Questa restrizione non introduce OCR, valutazione dei campi dinamici, validazione completa OPC o equivalenza visuale. I 30 casi DOCX delle suite installate passano su entrambi gli interpreti della f426; la restrizione resta quella dichiarata, senza estensione a documenti arbitrari.
 
 ## 8. Isolamento, decisioni e copie HTML
 
@@ -169,13 +171,14 @@ La documentazione MS-OE376 descrive le grafie di relazione `aFChunk` e `afChunk`
 | Protocollo scanner | 4 MiB per l’output raccolto |
 | PDF | 100 pagine; niente OCR |
 | DOCX | 2.048 membri; 8.000.000 byte per membro; 24.000.000 espansi complessivi; rapporto massimo 100 |
+| XLSX statico | 100 fogli; 20.000 celle materialmente presenti e 20.000 stringhe condivise; budget ZIP/XML e di estrazione comuni |
 | Concorrenza | Due slot condivisi fra scansioni e stadi delle copie HTML |
 
 I limiti sono parte del contratto, non soglie al di sotto delle quali qualsiasi file diventa sicuro. Il confinamento limita ciò che il processo estrattore può fare al sistema; non impedisce a un modello esterno di interpretare erroneamente il testo che riceve. Anche una sandbox correttamente attiva non sostituisce il controllo delle azioni dell’agente.
 
 La decisione ha campi distinti. `VALID` indica analisi completa senza problemi rilevati dai controlli applicati; `INFECTED` indica segnali di istruzioni o manipolazioni sospette e non una diagnosi antivirus. `CORRUPTED` e `UNSCANNABLE` distinguono malformazione e impossibilità di completare il profilo. `ALLOWED`, `FLAGGED`, `QUARANTINED` e `BLOCKED` descrivono separatamente lo stato operativo. Un formato non supportato non deve essere contato come malware rilevato.[^23]
 
-Il lettore MCP ammette soltanto percorsi sotto radici esplicite, applica esclusioni per dati applicativi e collegamenti e consegna testo entro il proprio limite di 256 KiB dopo i riscontri richiesti. PDF e DOCX sono disponibili per scansione, non per consegna testuale da quel lettore. Il monitor cartelle è un servizio laterale: registra e riconcilia, ma non intercetta ogni lettura esterna.
+Il lettore MCP ammette soltanto percorsi sotto radici esplicite, applica esclusioni per dati applicativi e collegamenti e consegna testo entro il proprio limite di 256 KiB dopo i riscontri richiesti. PDF, DOCX e XLSX sono disponibili per scansione, non per consegna testuale da quel lettore. Il monitor cartelle è un servizio laterale: registra e riconcilia, ma non intercetta ogni lettura esterna.
 
 La copia `html-text-v1` è una funzione diversa dall’analisi ordinaria. Su richiesta esplicita esegue una scansione completa dell’originale, una trasformazione confinata e una nuova scansione degli esatti byte UTF-8 prodotti. Il limite della copia è 256 KiB. Solo il POST corrente può consegnarla dopo esito completo `VALID`/`ALLOWED`, assenza di finding, riscontro di hash, dimensione e policy e registrazione riuscita; i GET espongono metadati e riferimenti ai due report.[^23]
 
@@ -185,11 +188,11 @@ La copia `html-text-v1` è una funzione diversa dall’analisi ordinaria. Su ric
 
 Le priorità seguenti derivano dai confini descritti; non costituiscono risultati sperimentali o impegni di funzionalità già rilasciate.
 
-1. **Chiudere la completezza dichiarata.** Le modifiche DOCX devono distinguere parti analizzate, parti escluse con motivazione e documento malformato. Un caso fuori profilo deve restare bloccato anche se il suo testo ordinario è innocuo. Prima del rilascio servono evidenze del worker installato, non soltanto della funzione chiamata nel processo dei test.
+1. **Chiudere la completezza dichiarata.** Le estensioni dei profili DOCX e XLSX devono distinguere parti analizzate, parti escluse con motivazione e documento malformato. Un caso fuori profilo deve restare bloccato anche se il suo testo ordinario è innocuo. Prima del rilascio servono evidenze del worker installato, non soltanto della funzione chiamata nel processo dei test.
 2. **Preservare l’identità attraverso le trasformazioni.** Originale, rappresentazioni d’analisi e copia consegnata devono avere ruoli separati. Ogni consegna deve identificare hash e report dei byte effettivi. Un cambiamento delle regole, dell’estrattore o della policy deve invalidare il riuso non coerente dei risultati.
 3. **Rendere visibile l’incompletezza operativa.** Il monitor deve esporre copertura parziale, errori e prosecuzione delle passate. Il registro deve distinguere elaborazioni, hash unici, rifiuti per limite e segnali sospetti. L’interfaccia non deve trasformare uno snapshot non verificabile in un’approvazione apparente.
 4. **Integrare privilegi e destinazioni.** Chi adotta Cheker deve vincolare gli strumenti dell’agente ai dati e alle azioni necessari. L’uso di tool approvati non deve conferire implicitamente facoltà di pubblicare o trasferire qualsiasi informazione letta.
-5. **Estendere i formati soltanto con un contratto verificabile.** OCR, DOC, XLS e XLSX richiedono parser, dipendenze e criteri di completezza propri. La loro priorità dipende dai documenti realmente necessari, non dall’aggiunta di suffissi a una lista.
+5. **Estendere i formati soltanto con un contratto verificabile.** OCR, DOC, XLS e ulteriori parti del formato XLSX richiedono parser, dipendenze e criteri di completezza propri. La loro priorità dipende dai documenti realmente necessari, non dall’aggiunta di suffissi a una lista.
 
 Per misurare utilità operativa sono necessari denominatori espliciti. Registrare la quota di documenti del campione che appartiene al profilo, i rifiuti per OCR o parti non gestite, la latenza per formato e dimensione, i timeout e il tempo necessario all’operatore per decidere sui finding. Per i falsi positivi utilizzare documenti benigni etichettati con criteri dichiarati; per qualunque stima di falsi negativi serve un insieme di riferimento autorizzato e definito. Nessuna percentuale è ricavabile dal solo conteggio dei report `VALID`.
 
@@ -199,7 +202,7 @@ La suite e le prove già autorizzate restano l’evidenza disponibile: conservar
 
 Una descrizione sostenibile è: **Cheker verifica versioni approvate di definizioni MCP, analizza un insieme dichiarato di documenti in worker Linux confinati e offre percorsi di lettura che richiedono risultati coerenti con gli stessi byte.** Occorre accompagnarla con i formati e i limiti effettivi, il ruolo del chiamante e l’assenza di una garanzia universale.
 
-Non sono sostenute dalle evidenze espressioni come “rileva ogni prompt injection”, “qualsiasi PDF/DOCX è sicuro dopo la scansione”, “una firma impedisce le toxic flow” o “SANITIZED conserva il significato originale”. Ogni estensione successiva richiede una nuova attribuzione a sorgente, wheel, installazione e risultati pertinenti. Nella 039e entrambe le suite installate Python 3.13 e 3.11 hanno concluso 1.087 prove positive e una esclusione specifica Windows, comprese 21 prove Unicode Tags e 30 DOCX. La prova di upgrade ha superato 47 controlli. La prova di durata della 039e è ancora in corso; questi conteggi non misurano una copertura universale degli attacchi. I dettagli e i limiti del collaudo sono in [Validazione](VALIDAZIONE.md).
+Non sono sostenute dalle evidenze espressioni come “rileva ogni prompt injection”, “qualsiasi PDF/DOCX è sicuro dopo la scansione”, “una firma impedisce le toxic flow” o “SANITIZED conserva il significato originale”. Ogni estensione successiva richiede una nuova attribuzione a sorgente, wheel, installazione e risultati pertinenti. Nella f426 entrambe le suite installate Python 3.13 e 3.11 hanno concluso 1.146 prove positive e una esclusione specifica Windows, comprese 59 prove XLSX, 21 Unicode Tags e 30 DOCX. La prova di upgrade ha superato 48 controlli. La prova di durata XLSX della f426 è avviata e non ha ancora un esito finale acquisito; resta distinta dalle prove sulle wheel precedenti. Questi conteggi non misurano una copertura universale degli attacchi. I dettagli e i limiti del collaudo sono in [Validazione](VALIDAZIONE.md).
 
 Per esercizio e manutenzione rimangono autorevoli i documenti del repository: `docs/MANUALE_TECNICO.md`, `docs/LINUX_SANDBOX.md`, `docs/MCP_INTEGRATION.md`, `docs/SANITIZZAZIONE.md`, `docs/ESTRATTORI.md`, `docs/SVILUPPO.md` e `docs/VALIDAZIONE.md`. Backup e ripristino devono preservare chiavi, checkpoint e stato, non soltanto esportazioni parziali. In particolare, l’API di export audit restituisce al massimo gli ultimi **100.000 eventi** e non equivale al backup completo.
 
@@ -251,6 +254,6 @@ Le note identificano fonti primarie: ricerca originale, disclosure dei ricercato
 
 [^22]: Microsoft Learn, [*PackageRelationship.TargetMode Property*](https://learn.microsoft.com/en-us/dotnet/api/system.io.packaging.packagerelationship.targetmode?view=windowsdesktop-9.0), documentazione ufficiale corrente; data non esposta. Distinzione tra destinazioni interne ed esterne, anche relative.
 
-[^23]: Evidenza interna: repository Cheker, `backend/integrity_guard/canonical.py`, `core.py`, `extraction.py`, `scanner.py`, `scan_protocol.py`, `scan_worker.py`, `linux_sandbox.py`, `reports.py`, `mcp_server.py`, `filewatch.py`, `sanitizer.py` ed `extractor_registry.py`; manuali specialistici elencati nel §10. Lettura documentale e del codice, senza nuove esecuzioni. Per hash degli artefatti distribuiti ed esiti di prova consultare `docs/VALIDAZIONE.md` e i manifest della release citata.
+[^23]: Evidenza interna: repository Cheker, `backend/integrity_guard/canonical.py`, `core.py`, `extraction.py`, `scanner.py`, `scan_protocol.py`, `scan_worker.py`, `linux_sandbox.py`, `reports.py`, `mcp_server.py`, `filewatch.py`, `sanitizer.py`, `extractor_registry.py`, `trusted_extractors.py` e `xlsx_extractor.py`; manuali specialistici elencati nel §10. Lettura documentale e del codice, senza nuove esecuzioni. Per hash degli artefatti distribuiti ed esiti di prova consultare `docs/VALIDAZIONE.md` e i manifest della release citata.
 
 [^24]: Nota interna di progettazione, *Proposta DOCX: rifiuto delle parti non ispezionate*, 15 settembre 2026, conservata nelle evidenze `research-protections-20260914/docx-proposal.md`. La nota registra sorgenti e hash esaminati, la lacuna funzionale e il contratto proposto. L’implementazione successiva resta distinta dai risultati della baseline.

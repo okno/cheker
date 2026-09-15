@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Copertura dei requisiti · Cheker</title><meta name="description" content="Copertura dei requisiti di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html" aria-current="page">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="REQUISITI_COPERTURA.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="matrice-di-copertura-dei-requisiti">Matrice di copertura dei requisiti</h1>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="PRIMI_PASSI.html">Primi passi</a><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html" aria-current="page">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="REQUISITI_COPERTURA.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="matrice-di-copertura-dei-requisiti">Matrice di copertura dei requisiti</h1>
 <p>Riferimento: specifica di progetto ricevuta, conservata nella documentazione locale, più le richieste
 successive di usare Linux, mantenere applicazione e sviluppo in <code>D:\Cheker</code> e
-mostrare file elaborati e totali. Aggiornamento XLSX del sorgente: 15 settembre 2026.
-Il profilo XLSX statico qui indicato è destinato a un nuovo candidato e non è
-incluso nella release consegnata con wheel <code>039e0fd8…</code>.</p>
+mostrare file elaborati e totali. Aggiornamento di rilascio: 15 settembre 2026.
+Il profilo XLSX statico appartiene alla wheel qualificata <code>f426c5aa…</code>,
+installata nell’app Linux; non appartiene alla precedente <code>039e0fd8…</code>.</p>
 <p>L'allegato disponibile termina nella sezione 15, dopo <code>MET</code>. Non vengono
 ricostruite né dichiarate coperte sezioni mancanti. <strong>Implementato</strong> indica una
 funzione presente con evidenze verificabili; <strong>parziale</strong> indica un perimetro
@@ -19,7 +19,12 @@ cartella di sviluppo. Per le esecuzioni effettive delle suite e dei controlli
 di rilascio fa fede <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>, aggiornato separatamente.
 Le prove browser estese citate per <code>891d7fc8…</code> riguardano il candidato precedente;
 la verifica mirata di <code>d59523d2…</code> riguarda quel successivo candidato storico corretto. I loro
-esiti restano separati e non vengono trasferiti automaticamente fra wheel.</p>
+esiti restano separati e non vengono trasferiti automaticamente fra wheel.
+La qualifica f426 comprende 1.146 test backend superati e uno SKIP Windows
+per ciascuno dei due interpreti, oltre a 28 metodi QA e 43 sottocasi.
+I quattro file UI sono invariati rispetto alla prova del dettaglio su d595
+(53 controlli browser e 10 host); il nuovo riscontro Windows XLSX/API ha
+11 condizioni positive proprie, senza prova del selettore file del sistema.</p>
 <h2 id="richieste-successive-dellutente">Richieste successive dell'utente</h2>
 <table>
 <thead>
@@ -42,6 +47,12 @@ esiti restano separati e non vengono trasferiti automaticamente fra wheel.</p>
 <td>Launcher, installazione da wheel, shell per CLI e sviluppo; verifica reale di avvio del worker. Scanner Linux con Landlock e seccomp prima della lettura del documento.</td>
 <td><code>deploy/linux/install-linux.sh</code>, <code>diagnostics.py</code>, <code>linux_sandbox.py</code>, <code>scan_worker.py</code>; <code>test_diagnostics.py</code>, <code>test_linux_sandbox.py</code>, <code>test_scanner_security_review.py</code>.</td>
 <td>Linux 64 bit, Python 3.11+, Landlock ABI almeno 3 e libseccomp. Verifica locale su x86_64/WSL2; aarch64 richiede ancora validazione di rilascio su quell'architettura. Assenza del confine richiesto nega la scansione.</td>
+</tr>
+<tr>
+<td><strong>GUI Windows e installazione guidata — anteprima con motore WSL 2</strong></td>
+<td>Finestra WinForms/WebView2, accesso locale automatico, upload e report; setup singolo con destinazione selezionabile e pulsante «Installa e avvia».</td>
+<td><code>windows/Cheker.cs</code>, <code>desktop_bridge.py</code>, <code>Setup.cs</code>; ZIP 4 con wheel f426: prova reale MainWindow/XLSX/API 11/11; setup revisione 2: 28/28 controlli del motore e schermata iniziale verificata. <a href="WINDOWS.html">WINDOWS.md</a>, <code>.test-data/windows-xlsx-20260915/REPORT.md</code>, <code>.test-data/windows-setup-20260915/preview-2/README.md</code>.</td>
+<td>WSL 2 predefinito, Python 3.11+ con venv, WebView2 e .NET Framework 4.8 richiesti, non installati automaticamente. Upload QA tramite DataTransfer, senza prova del selettore OS; click del setup e relativo avvio non collaudati. Non è uno scanner nativo Windows.</td>
 </tr>
 <tr>
 <td><strong>Elenco dei file elaborati — implementato</strong></td>
@@ -83,7 +94,7 @@ stato della trasformazione, non un nuovo verdetto né un’autorizzazione al
 download. La QA estesa storica sul wheel <code>891d7fc8…</code> ha superato 74 controlli
 browser e 10 host, registrando 11 operazioni e 20 report effettivi:
 <code>.test-data/sanitization-ui-20260914/REPORT.md</code>.</p>
-<p>La QA mirata corrente sul wheel <code>d59523d2…</code> ha superato 27 controlli browser e
+<p>La QA mirata storica sul wheel <code>d59523d2…</code> ha superato 27 controlli browser e
 10 host con due operazioni e tre report:
 <code>.test-data/parser-compat-ui-20260914/REPORT.md</code>. Verifica la copia da HTML con
 commento valido di 16.000 caratteri e il rifiuto <code>STRUCTURE_LIMIT</code> del commento
@@ -213,7 +224,7 @@ inesistente. Questa esecuzione mirata non ripete i 74 controlli storici.</p>
 <tr>
 <td><strong>§10 — Stati operativi e SANITIZED — implementato con profilo HTML</strong></td>
 <td>Copia HTML→UTF-8 esplicita da file o percorso Linux, originale conservato, scansioni prima e dopo con hash e report collegati. <code>SANITIZED</code> e consegna <code>ALLOWED</code>/<code>DENIED</code> sono separati; la consegna richiede analisi completa VALID/ALLOWED senza finding, policy corrente e registrazione riuscita. La UI verifica dimensione e SHA-256 degli esatti byte prima del download.</td>
-<td><code>scanner.py</code>, <code>reports.py</code>, <code>sanitizer.py</code>, <code>html_text.py</code>, <code>sanitize_worker.py</code>, <code>sanitize_protocol.py</code>, <code>frontend/src/Sanitizations.tsx</code>; <code>test_sanitizer.py</code>, <code>test_html_text.py</code>, <code>test_sanitize_protocol.py</code>, <code>test_sanitize_worker.py</code>; QA estesa storica <code>891d7fc8…</code> in <code>.test-data/sanitization-ui-20260914/REPORT.md</code> (74 controlli browser e 10 host); QA mirata corrente <code>d59523d2…</code> in <code>.test-data/parser-compat-ui-20260914/REPORT.md</code> (27 controlli browser e 10 host).</td>
+<td><code>scanner.py</code>, <code>reports.py</code>, <code>sanitizer.py</code>, <code>html_text.py</code>, <code>sanitize_worker.py</code>, <code>sanitize_protocol.py</code>, <code>frontend/src/Sanitizations.tsx</code>; <code>test_sanitizer.py</code>, <code>test_html_text.py</code>, <code>test_sanitize_protocol.py</code>, <code>test_sanitize_worker.py</code>; QA estesa storica <code>891d7fc8…</code> in <code>.test-data/sanitization-ui-20260914/REPORT.md</code> (74 controlli browser e 10 host); QA mirata storica <code>d59523d2…</code> in <code>.test-data/parser-compat-ui-20260914/REPORT.md</code> (27 controlli browser e 10 host).</td>
 <td>Quarantena logica: nessun file spostato o cancellato. Copia limitata al profilo HTML, massimo 256 KiB, con perdita di markup/metadati; nessuna equivalenza o garanzia universale. Solo la risposta POST corrente può contenere i byte; GET e storico non consentono di riscaricare la copia. Nessuna conversione automatica nei lettori né rimozione semantica generale delle istruzioni. <a href="SANITIZZAZIONE.html">SANITIZZAZIONE.md</a>.</td>
 </tr>
 <tr>
@@ -223,16 +234,16 @@ inesistente. Questa esecuzione mirata non ripete i 74 controlli storici.</p>
 <td>PDF cifrati, contenuti attivi, oggetti incorporati e immagini non ispezionabili vengono bloccati. OCR assente. I parser non eseguono i comandi contenuti nei file.</td>
 </tr>
 <tr>
-<td><strong>§11 — Plugin futuri — registro e profilo XLSX nel nuovo sorgente</strong></td>
+<td><strong>§11 — Plugin futuri — registro e profilo XLSX qualificato</strong></td>
 <td>Registro congelato di estrattori inclusi esplicitamente nel wheel, formati/versioni/dipendenze, bootstrap ripetuto in ogni worker prima dell’input. Controllo comune del risultato e del budget; fingerprint del registro nel contesto del monitor.</td>
 <td><code>extractor_registry.py</code>, <code>trusted_extractors.py</code>, <code>extraction.py</code>, <code>scan_worker.py</code>, <code>filewatch.py</code>; <code>test_extractor_registry.py</code>, <code>test_extractor_integration.py</code>, incluso worker reale con estensione sintetica e nuova scansione al cambio di fingerprint.</td>
-<td>La release 039e conserva il registro vuoto. Il nuovo sorgente registra esplicitamente XLSX statico, versione 1.0.0 con defusedxml, da qualificare in un nuovo pacchetto; non lo eredita dalla validazione 039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Nessuna installazione automatica, discovery di entry point o import da file utente. <a href="ESTRATTORI.html">ESTRATTORI.md</a>.</td>
+<td>La precedente release 039e aveva il registro vuoto. La wheel f426c5aa… registra esplicitamente XLSX statico, versione 1.0.0 con defusedxml; la qualifica è propria di questa wheel. PPTX, EML, MSG, RTF e ODT restano non supportati. Nessuna installazione automatica, discovery di entry point o import da file utente. <a href="ESTRATTORI.html">ESTRATTORI.md</a>.</td>
 </tr>
 <tr>
-<td><strong>XLSX — estensione funzionale nel nuovo sorgente, assente nella release 039e</strong></td>
+<td><strong>XLSX — profilo statico qualificato nella wheel f426c5aa…</strong></td>
 <td>Celle statiche Transitional, stringhe inline/condivise, proprietà, commenti e viste nascoste entro il profilo dichiarato. Il worker usa scanner, report e budget comuni.</td>
-<td><code>xlsx_extractor.py</code>, <code>trusted_extractors.py</code>; <code>test_xlsx_extractor.py</code>, registro e integrazione; <a href="MANUALE_TECNICO.html#profilo-xlsx-statico-del-nuovo-sorgente">manuale tecnico</a>.</td>
-<td>Qualsiasi formula e nome definito, immagini/OCR, macro/binari, contenuto esterno diverso dagli hyperlink, VML/grafici/pivot/threaded comments/Strict e parti ignote sono bloccati. 100 fogli, 20.000 celle presenti, 20.000 shared strings; DOC/XLS/XLSM/XLSB restano non supportati. Il supporto sorgente non è ancora una qualifica di release.</td>
+<td><code>xlsx_extractor.py</code>, <code>trusted_extractors.py</code>; <code>test_xlsx_extractor.py</code>, registro e integrazione; <a href="MANUALE_TECNICO.html#profilo-xlsx-statico">manuale tecnico</a>.</td>
+<td>Qualsiasi formula e nome definito, immagini/OCR, macro/binari, contenuto esterno diverso dagli hyperlink, VML/grafici/pivot/threaded comments/Strict e parti ignote sono bloccati. 100 fogli, 20.000 celle presenti, 20.000 shared strings; DOC/XLS/XLSM/XLSB restano non supportati. Prove dirette f426: 59 casi XLSX per interprete nelle suite installate, clean install e 22 controlli, upgrade 48/48, GUI Windows/API 11/11. Le condizioni e le rispettive evidenze sono in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</td>
 </tr>
 <tr>
 <td><strong>§12 — Pipeline e regole versionate — implementato</strong></td>
@@ -296,7 +307,7 @@ inesistente. Questa esecuzione mirata non ripete i 74 controlli storici.</p>
 </tr>
 <tr>
 <td>Interfaccia e accessibilità</td>
-<td>React/TypeScript con stati vuoti, caricamento, errori, focus e controlli tastiera; build e prove browser in <code>ui-smoke.cjs</code>, <code>ui-watch-smoke.cjs</code>, <code>frontend/tests/mobile-layout.cjs</code>. QA estesa storica <code>891d7fc8…</code>: download esatti, esiti distinti, storico, contatori e viewport 360/768/1440 in <code>.test-data/sanitization-ui-20260914/REPORT.md</code>. QA mirata corrente <code>d59523d2…</code>: i due casi del parser corretto, download e report, contatori e storico a 360/1440 in <code>.test-data/parser-compat-ui-20260914/REPORT.md</code>.</td>
+<td>React/TypeScript con stati vuoti, caricamento, errori, focus e controlli tastiera; build e prove browser in <code>ui-smoke.cjs</code>, <code>ui-watch-smoke.cjs</code>, <code>frontend/tests/mobile-layout.cjs</code>. QA estesa storica <code>891d7fc8…</code>: download esatti, esiti distinti, storico, contatori e viewport 360/768/1440 in <code>.test-data/sanitization-ui-20260914/REPORT.md</code>. QA mirata storica <code>d59523d2…</code>: i due casi del parser corretto, download e report, contatori e storico a 360/1440 in <code>.test-data/parser-compat-ui-20260914/REPORT.md</code>.</td>
 <td>Queste prove non equivalgono a certificazione WCAG o compatibilità con ogni browser e tecnologia assistiva.</td>
 </tr>
 <tr>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Primi passi · Cheker</title><meta name="description" content="Primi passi di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="PRIMI_PASSI.html" aria-current="page">Primi passi</a><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="PRIMI_PASSI.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="primi-passi-con-cheker">Primi passi con Cheker</h1>
+<p>Cheker analizza i documenti selezionati e conserva un report per ogni elaborazione. Per iniziare bastano un file di esempio e la console.</p>
+<h2 id="windows">Windows</h2>
+<p>Prima di procedere devono essere già disponibili WSL2 con una distribuzione predefinita, Python 3.11 o successivo con <code>venv</code> nella distribuzione, .NET Framework 4.8 e WebView2. Il setup non installa questi prerequisiti: consulta la <a href="WINDOWS.html">guida Windows</a> per prepararli.</p>
+<ol>
+<li>Chiudi le finestre Cheker delle versioni precedenti.</li>
+<li>Scarica <a href="https://github.com/okno/cheker/releases/download/v1.0.0-preview.2/cheker-setup-xlsx-preview-2.exe">l’installer Windows</a> dalla <a href="https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2">release preview.2</a> e aprilo.</li>
+<li>Scegli una cartella scrivibile, usando <strong>Sfoglia…</strong> se vuoi cambiare quella proposta. Premi <strong>Installa e avvia</strong>: viene creata una cartella dedicata alla versione; i dati delle altre installazioni non vengono spostati.</li>
+<li>Attendi la preparazione iniziale: servono Internet e alcuni minuti per le dipendenze Python. Se compare un errore, segui il messaggio e la guida Windows.</li>
+<li>Nella console apri <strong>File Scanner</strong>, scegli <strong>Carica file</strong>, poi <strong>Scegli file</strong>. Seleziona uno o più documenti nel selettore: caricamento e analisi partono automaticamente. Puoi anche trascinarli nell’area indicata. Il limite è 10 MiB per file.</li>
+<li>Attendi il completamento e leggi i report nel registro. <strong>Aggiorna registro</strong> ricarica l’elenco; non esegue una nuova scansione.</li>
+</ol>
+<p>Per gli avvii successivi apri <strong>Cheker.exe</strong> nella cartella della versione.</p>
+<h2 id="capire-il-risultato">Capire il risultato</h2>
+<p>Le cinque categorie sono:</p>
+<ul>
+<li><strong>Valido ai controlli</strong>: analisi completata senza anomalie rilevate.</li>
+<li><strong>Sospetto / infetto</strong>: istruzioni sospette rilevate; non è una diagnosi antivirus.</li>
+<li><strong>Corrotto</strong>: struttura del documento malformata.</li>
+<li><strong>Da verificare</strong>: risultato che richiede una revisione.</li>
+<li><strong>Non analizzabile</strong>: controllo non completato o formato fuori dal profilo supportato.</li>
+</ul>
+<p>La somma delle categorie corrisponde a <strong>File analizzati</strong>. Sono elaborazioni salvate: ricaricare lo stesso contenuto aggiunge un report. I file unici contano invece i contenuti distinti.</p>
+<p>La console registra l’esito. Per bloccare l’uso da parte di un agente, configura il lettore protetto seguendo il <a href="MANUALE_UTENTE.html#9-usare-la-cli-e-collegare-un-agente">manuale utente</a>.</p>
+<p>Con <strong>Non analizzabile</strong>, leggi il motivo nel report, procura una copia in un formato supportato e analizzala nuovamente. DOC e XLS legacy non sono coperti; formule XLSX e contenuti che richiedono OCR restano bloccati. Un esito <strong>Valido ai controlli</strong> non garantisce l’assenza di ogni minaccia. Formati e limiti sono descritti nel <a href="MANUALE_UTENTE.html">manuale utente</a>.</p>
+<h2 id="linux">Linux</h2>
+<p>Verifica i <a href="MANUALE_UTENTE.html#requisiti">prerequisiti Linux</a>, inclusi Python con <code>venv</code>, Landlock e libseccomp. Scarica l’archivio Linux dalla stessa release, estrailo e apri il terminale nella cartella che contiene <code>mcp-integrity-guard</code>:</p>
+<pre><code class="language-bash">cd mcp-integrity-guard
+bash install-linux.sh
+bash start.sh
+</code></pre>
+<p>Attendi il completamento dell’installazione. La console si apre nel browser; usa <strong>File Scanner</strong> come descritto sopra.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>

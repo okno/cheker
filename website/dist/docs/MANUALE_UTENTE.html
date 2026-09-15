@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Manuale utente · Cheker</title><meta name="description" content="Manuale utente di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html" aria-current="page">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MANUALE_UTENTE.md" download>Scarica Markdown</a><a href="MANUALE_UTENTE.pdf" download>Scarica PDF</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="manuale-utente-mcp-integrity-guard">Manuale utente — MCP Integrity Guard</h1>
-<p><strong>Nota di versione — XLSX:</strong> il profilo statico descritto qui è presente nel sorgente aggiornato il 15 settembre 2026 e destinato a un nuovo pacchetto. La release con wheel <code>039e0fd8…</code> già consegnata non lo include. Usarlo soltanto dopo aver installato e verificato una release che lo contenga; i risultati di collaudo precedenti non qualificano automaticamente il nuovo estrattore.</p>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="PRIMI_PASSI.html">Primi passi</a><a href="MANUALE_UTENTE.html" aria-current="page">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MANUALE_UTENTE.md" download>Scarica Markdown</a><a href="MANUALE_UTENTE.pdf" download>Scarica PDF</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="manuale-utente-mcp-integrity-guard">Manuale utente — MCP Integrity Guard</h1>
+<p><strong>Nota di versione — XLSX:</strong> il profilo statico descritto qui appartiene alla wheel qualificata <code>f426c5aa…</code>, installata il 15 settembre 2026. La precedente wheel <code>039e0fd8…</code> non lo include. Formati, limiti ed esiti sono attribuiti alla wheel effettivamente installata; il numero <code>1.0.0</code> da solo non la identifica. Hash completo e prove sono in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
 <p>Questo manuale descrive l'applicazione Linux e i controlli disponibili nella console italiana. MCP Integrity Guard registra le configurazioni MCP, lega le approvazioni al loro contenuto e analizza documenti prima dell'uso da parte di un agente. Le analisi e i report rimangono sul dispositivo che esegue l'applicazione.</p>
 <p>Il rilevamento delle istruzioni sospette è euristico: può richiedere una revisione di un documento innocuo oppure non riconoscere una manipolazione. <strong>Valido ai controlli</strong> significa che l'analisi si è conclusa senza evidenze rilevate dai controlli implementati. Non è una certificazione di sicurezza, né un verdetto antivirus.</p>
 <p>Per rendere effettivo il blocco prima dell'uso, l'agente o il programma chiamante deve utilizzare il gate, <code>guarded-read</code> oppure il lettore MCP protetto. La sola apertura della console e il monitoraggio delle cartelle non impediscono ad altri programmi di leggere file o avviare server.</p>
@@ -38,7 +38,7 @@
 </tr>
 <tr>
 <td><strong>XLSX</strong> (<code>.xlsx</code>)</td>
-<td>Profilo statico nel nuovo sorgente; <strong>assente nella release 039e</strong></td>
+<td>Profilo statico della wheel <strong>f426c5aa…</strong></td>
 <td>Celle e metadati del sottoinsieme Transitional; formule, immagini e strutture non coperte bloccano l’analisi</td>
 </tr>
 <tr>
@@ -72,20 +72,22 @@
 <h3 id="requisiti">Requisiti</h3>
 <p>Servono Linux a 64 bit, architettura x86_64 o aarch64, Python 3.11 o successivo con supporto <code>venv</code>, Landlock ABI almeno 3 e la libreria <code>libseccomp.so.2</code>. Landlock ABI 3 richiede un kernel Linux 6.2 o successivo con la funzionalità abilitata: il solo numero di versione del kernel non basta. I risultati effettivamente verificati sulle piattaforme sono riportati in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p>
 <p>L'installazione delle dipendenze richiede una connessione di rete. L'esecuzione ordinaria non richiede rete esterna o Node.js. Lo scanner usa processi isolati: se il confinamento necessario non è disponibile, l'analisi viene negata. La diagnostica di installazione deve terminare con <code>status: READY</code>, <code>scan_complete: true</code> e <code>sandbox_active: true</code>.</p>
+<h3 id="finestra-windows-e-setup">Finestra Windows e setup</h3>
+<p>L’anteprima Windows usa lo stesso motore Linux tramite WSL 2. Con i prerequisiti della <a href="WINDOWS.html">guida Windows</a> già installati, aprire <code>cheker-setup-xlsx-preview-2.exe</code>, scegliere la cartella e premere <strong>Installa e avvia</strong>. Il setup propone <code>D:\Cheker\app\windows</code> se esiste l’unità D, altrimenti una cartella sotto <code>%LOCALAPPDATA%\Cheker\app\windows</code>; crea al suo interno la cartella della versione. Il primo avvio prepara le dipendenze Python. La guida distingue setup e ZIP, dati persistenti e prove effettivamente eseguite. La <a href="https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2">release preview.2</a> include i pacchetti Windows e Linux descritti in questa guida.</p>
 <h3 id="installazione-da-distribuzione-linux">Installazione da distribuzione Linux</h3>
 <ol>
 <li>Procurarsi l'archivio Linux della versione desiderata attraverso il canale di distribuzione del progetto e verificarne la provenienza.</li>
 <li>Estrarlo in una cartella dedicata dell'utente. L'archivio comprende applicazione, UI, script, esempi e documentazione; non contiene token, chiavi, dati personali o un ambiente Python già installato.</li>
 <li>Aprire un terminale nella cartella estratta che contiene <code>install-linux.sh</code> ed eseguire:</li>
 </ol>
-<p><code>bash
-   bash install-linux.sh</code></p>
-<ol>
+<pre><code class="language-bash">bash install-linux.sh
+</code></pre>
+<ol start="4">
 <li>Attendere il completamento. L'installer verifica i checksum, crea <code>runtime-linux</code>, installa le dipendenze e l'applicazione, prepara <code>data-linux</code> ed esegue la diagnostica. Un checksum verifica la corrispondenza dei file al manifesto; non sostituisce la verifica dell'identità del distributore.</li>
 <li>Dalla stessa cartella avviare:</li>
 </ol>
-<p><code>bash
-   bash start.sh</code></p>
+<pre><code class="language-bash">bash start.sh
+</code></pre>
 <p>Se l'installazione si interrompe, leggere il messaggio finale e risolvere la causa prima dell'avvio. Per prerequisiti di sistema, aggiornamenti e installazioni gestite vedere il <a href="MANUALE_TECNICO.html">manuale tecnico</a>. Non occorre eseguire l'applicazione come amministratore.</p>
 <h3 id="installazione-nella-cartella-dcheker">Installazione nella cartella D:\Cheker</h3>
 <p>Nell'installazione predisposta su WSL, <code>D:\Cheker</code> corrisponde a <code>/mnt/d/Cheker</code>. Applicazione e sviluppo sono separati:</p>
@@ -264,8 +266,8 @@ bash Avvia-Cheker.sh
 <td><code>.docx</code>, <code>.pdf</code>, quando il contenuto è ispezionabile</td>
 </tr>
 <tr>
-<td>Fogli statici, nuovo sorgente</td>
-<td><code>.xlsx</code> nel profilo descritto sotto; assente nella release 039e</td>
+<td>Fogli statici</td>
+<td><code>.xlsx</code> nel profilo della wheel f426c5aa… descritto sotto</td>
 </tr>
 </tbody>
 </table>
@@ -295,14 +297,14 @@ bash Avvia-Cheker.sh
 </table>
 <p>HTML e documenti strutturati possono contenere commenti, nodi nascosti, testo alternativo, note, campi e tipografia anomala. L'estrattore cerca questi contenuti dove il formato lo permette e riporta la loro posizione. La separazione non equivale a una riproduzione esatta di ciò che mostrerebbe ogni browser o lettore PDF.</p>
 <p>Il frontmatter iniziale Markdown delimitato da <code>---</code> per YAML o <code>+++</code> per TOML è analizzato anche come metadati grezzi; l'intero sorgente resta coperto come testo visibile. Un blocco chiuso oltre 64 KiB o 4096 righe interrompe l'analisi. Un delimitatore iniziale senza chiusura resta testo Markdown ordinario, entro i limiti generali.</p>
-<p>OCR non è implementato. PDF/DOCX con immagini che richiedono riconoscimento, PDF cifrati, oggetti attivi o incorporati non ispezionabili e formati non supportati possono essere bloccati senza una lettura completa. PPTX, EML, MSG, RTF e ODT non sono supportati. DOC e XLS legacy, XLSM e XLSB restano non supportati. Il nuovo estrattore XLSX statico richiede un aggiornamento distinto dalla release 039e; la sola presenza del registro non aggiunge automaticamente altri formati. Rinominare un'estensione non converte il documento.</p>
+<p>OCR non è implementato. PDF/DOCX con immagini che richiedono riconoscimento, PDF cifrati, oggetti attivi o incorporati non ispezionabili e formati non supportati possono essere bloccati senza una lettura completa. PPTX, EML, MSG, RTF e ODT non sono supportati. DOC e XLS legacy, XLSM e XLSB restano non supportati. L’estrattore XLSX statico è incluso nella wheel f426c5aa…; la sola presenza del registro non aggiunge automaticamente altri formati. Rinominare un'estensione non converte il documento.</p>
 <p>Un DOCX può contenere appendici in altri formati o riferimenti a contenuti esterni. Se Cheker non può ispezionarli completamente, il file risulta <strong>Non analizzabile / Bloccato</strong>; non significa necessariamente che sia infetto. Il report indica <code>DOCX_UNINSPECTED_PART</code>, <code>DOCX_ALTCHUNK_UNSUPPORTED</code> o <code>DOCX_EXTERNAL_CONTENT</code>. Ottenere dalla sorgente una versione autonoma in un formato analizzabile e sottoporla a una nuova scansione. I normali collegamenti vengono esaminati come metadati, senza aprire le destinazioni.</p>
 <p>I caratteri Unicode invisibili anomali possono produrre <strong>Da verificare</strong> anche in un documento ordinario. Il report mostra la posizione e rappresenta i caratteri con codici leggibili, per esempio <code>\U000e0061</code>. Le tre bandiere regionali RGI complete previste da Unicode sono riconosciute come uso ordinario; altri casi richiedono revisione. Non eliminare automaticamente gli indizi soltanto per ottenere un esito valido: controllare provenienza e significato del contenuto.</p>
-<h3 id="fogli-xlsx-statici-profilo-del-nuovo-sorgente">Fogli XLSX statici: profilo del nuovo sorgente</h3>
-<p>Il nuovo profilo legge workbook <code>.xlsx</code> Transitional con celle statiche di testo, numeri, booleani, date ISO ed errori, stringhe condivise o inline, proprietà e commenti XML. Un foglio di appunti con valori già inseriti può rientrare nel profilo; basta invece una formula innocua come <code>SUM</code> o <code>1+2</code> perché l’intero file risulti <strong>Non analizzabile / Bloccato</strong> (<code>XLSX_FORMULA_UNSUPPORTED</code>). Non vengono calcolate formule né verificati i risultati memorizzati da Excel. Anche formule di validazione e nomi definiti sono fuori profilo.</p>
+<h3 id="fogli-xlsx-statici-profilo-supportato">Fogli XLSX statici: profilo supportato</h3>
+<p>Il profilo legge workbook <code>.xlsx</code> Transitional con celle statiche di testo, numeri, booleani, date ISO ed errori, stringhe condivise o inline, proprietà e commenti XML. Un foglio di appunti con valori già inseriti può rientrare nel profilo; basta invece una formula innocua come <code>SUM</code> o <code>1+2</code> perché l’intero file risulti <strong>Non analizzabile / Bloccato</strong> (<code>XLSX_FORMULA_UNSUPPORTED</code>). Non vengono calcolate formule né verificati i risultati memorizzati da Excel. Anche formule di validazione e nomi definiti sono fuori profilo.</p>
 <p>Fogli, righe e colonne nascosti, testo esplicitamente bianco o molto piccolo e formati numerici personalizzati ricevono una classificazione prudente nel livello nascosto. Commenti e metadati restano nell’analisi. Questa distinzione non riproduce la visualizzazione di Excel. I normali hyperlink sono letti come metadati e non vengono aperti.</p>
 <p>Immagini, anche miniature, richiedono OCR assente; macro, binari e oggetti incorporati vengono rifiutati. Grafici, pivot, VML, commenti threaded, estensioni e altre strutture non ispezionate possono bloccare anche un foglio altrimenti semplice. I commenti XML sono coperti, ma un file che li accompagna con VML resta fuori profilo. I namespace Strict non sono supportati.</p>
-<p>Il limite resta 10 MiB di input; sono ammessi al massimo 100 fogli, 20.000 celle materialmente presenti e 20.000 stringhe condivise, oltre ai budget comuni di tempo, estrazione e archivio. Un blocco per copertura o limiti non significa che il file sia infetto. Conservare l’originale; un’eventuale esportazione statica ottenuta da uno strumento fidato va analizzata come documento distinto. Cheker non converte XLS/XLSX e non elimina formule per renderli ammissibili. I dettagli e i codici sono nel <a href="MANUALE_TECNICO.html#profilo-xlsx-statico-del-nuovo-sorgente">manuale tecnico</a>.</p>
+<p>Il limite resta 10 MiB di input; sono ammessi al massimo 100 fogli, 20.000 celle materialmente presenti e 20.000 stringhe condivise, oltre ai budget comuni di tempo, estrazione e archivio. Un blocco per copertura o limiti non significa che il file sia infetto. Conservare l’originale; un’eventuale esportazione statica ottenuta da uno strumento fidato va analizzata come documento distinto. Cheker non converte XLS/XLSX e non elimina formule per renderli ammissibili. I dettagli e i codici sono nel <a href="MANUALE_TECNICO.html#profilo-xlsx-statico">manuale tecnico</a>.</p>
 <h3 id="interpretare-lesito">Interpretare l'esito</h3>
 <p>Ogni report separa <strong>esito</strong>, <strong>decisione</strong>, <strong>severità</strong> e punteggio di rischio. Il punteggio da 0 a 100 è un indicatore determinato dalle regole; non rappresenta una probabilità statistica d'infezione.</p>
 <table>
@@ -432,7 +434,7 @@ bash guard.sh verify-audit
 <p>Per leggere gli stessi byte che hanno superato l'analisi:</p>
 <pre><code class="language-bash">bash guard.sh guarded-read /srv/documenti/nota.txt
 </code></pre>
-<p><code>guarded-read</code> emette il contenuto su stdout solo con analisi completa, esito <code>VALID</code>, decisione <code>ALLOWED</code> e hash corrispondente. In caso di rifiuto stdout è vuoto e stderr riporta un riepilogo senza testo sorgente. Per PDF/DOCX e, nelle release che includono il nuovo estrattore, XLSX, un eventuale output consentito è il file binario originale, non testo estratto: non inviarlo direttamente a un terminale testuale. Il chiamante deve controllare il codice di uscita e usare esattamente i byte ricevuti.</p>
+<p><code>guarded-read</code> emette il contenuto su stdout solo con analisi completa, esito <code>VALID</code>, decisione <code>ALLOWED</code> e hash corrispondente. In caso di rifiuto stdout è vuoto e stderr riporta un riepilogo senza testo sorgente. Per PDF, DOCX e XLSX nella wheel f426c5aa…, un eventuale output consentito è il file binario originale, non testo estratto: non inviarlo direttamente a un terminale testuale. Il chiamante deve controllare il codice di uscita e usare esattamente i byte ricevuti.</p>
 <table>
 <thead>
 <tr>
@@ -455,7 +457,7 @@ bash guard.sh verify-audit
 </tr>
 </tbody>
 </table>
-<p>Il lettore MCP protetto offre <code>scan_file</code> e <code>read_file</code> su trasporto stdio. Richiede l'app avviata e radici esplicite impostate nel client; non eredita le cartelle selezionate nella UI. <code>read_file</code> consegna solo testo UTF-8 entro 256 KiB negli specifici formati ammessi. PDF, DOCX, <code>.env</code> e <code>.log</code> sono disponibili con <code>scan_file</code>, ma non con <code>read_file</code>. Anche XLSX, dopo installazione di una release che includa il nuovo estrattore statico, resta solo scansionabile tramite MCP: <code>read_file</code> non consegna il foglio né il suo testo estratto. Seguire <a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a> per la configurazione completa, senza inserire il token nei file del client.</p>
+<p>Il lettore MCP protetto offre <code>scan_file</code> e <code>read_file</code> su trasporto stdio. Richiede l'app avviata e radici esplicite impostate nel client; non eredita le cartelle selezionate nella UI. <code>read_file</code> consegna solo testo UTF-8 entro 256 KiB negli specifici formati ammessi. PDF, DOCX, <code>.env</code> e <code>.log</code> sono disponibili con <code>scan_file</code>, ma non con <code>read_file</code>. Anche XLSX nella wheel f426c5aa… resta solo scansionabile tramite MCP: <code>read_file</code> non consegna il foglio né il suo testo estratto. Seguire <a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a> per la configurazione completa, senza inserire il token nei file del client.</p>
 <h2 id="10-risolvere-problemi-conservare-i-dati-e-chiedere-supporto">10. Risolvere problemi, conservare i dati e chiedere supporto</h2>
 <h3 id="problemi-comuni">Problemi comuni</h3>
 <table>

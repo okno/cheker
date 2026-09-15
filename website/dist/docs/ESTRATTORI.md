@@ -2,10 +2,9 @@
 
 Il §11 dei requisiti chiede di predisporre nuovi formati senza considerarli già
 supportati. `extractor_registry.py` offre un registro per estrattori inclusi
-esplicitamente nel codice fidato del wheel. La release consegnata con wheel `039e0fd8…` ha un bootstrap vuoto. Il sorgente
-aggiornato il 15 settembre 2026 registra invece il solo profilo XLSX statico,
-destinato a un nuovo candidato: questa aggiunta non viene attribuita alla release
-039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Gli estrattori incorporati
+esplicitamente nel codice fidato del wheel. La precedente wheel `039e0fd8…` aveva un bootstrap vuoto. La wheel qualificata
+`f426c5aa…` registra invece il solo profilo XLSX statico. L’aggiunta è verificata
+separatamente e non viene attribuita alla precedente 039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Gli estrattori incorporati
 continuano a usare il percorso già previsto in `extraction.py`.
 
 Non esistono installazione di plugin dall'interfaccia, caricamento da documenti,
@@ -65,7 +64,7 @@ automaticamente tutti gli import transitivi.
 ## Bootstrap riproducibile nel worker
 
 `trusted_extractors.register_all(registry)` è l'unico elenco statico previsto per
-la produzione. Nel nuovo sorgente contiene un import letterale di
+la produzione. Nella wheel f426c5aa… contiene un import letterale di
 `xlsx_extractor.extract_xlsx` e la registrazione esplicita:
 
 ```python
@@ -82,7 +81,7 @@ Il solo XLSX Transitional statico è previsto: celle, shared strings e metadati
 entro limiti dichiarati. Formule, nomi definiti, media/OCR, macro, oggetti
 incorporati, dati esterni e strutture non ispezionate restano bloccati. Anche
 XLSM, XLSB e XLS legacy sono fuori profilo. Vedere il
-[profilo tecnico XLSX](MANUALE_TECNICO.md#profilo-xlsx-statico-del-nuovo-sorgente).
+[profilo tecnico XLSX](MANUALE_TECNICO.md#profilo-xlsx-statico).
 Registrare `.xlsx` non abilita i formati futuri né rende ammissibile ogni file
 con quella estensione.
 
@@ -157,10 +156,13 @@ esecuzione del contratto `Budget`, collisioni, metadati, sorgenti e dipendenze,
 congelamento, variazioni del fingerprint e bootstrap in processi Python nuovi.
 Una regressione dedicata verifica che cambiare soltanto un helper confezionato
 invalida il fingerprint, mantenendo invariati gestore e versione.
-Le prove del nuovo XLSX sono in `backend/tests/test_xlsx_extractor.py` e includono
+Le prove XLSX sono in `backend/tests/test_xlsx_extractor.py` e includono
 worker reali per documento statico, formula innocua e contenuto fuori profilo.
 Il registro viene verificato anche in processi nuovi con la registrazione
 statica XLSX presente; le istanze isolate dei test non installano plugin utente.
 Le prove dei formati e della loro integrazione nel worker devono accompagnare
-ogni modifica del bootstrap. L’esito della release 039e non qualifica questa
-aggiunta: i test del nuovo candidato vanno attribuiti separatamente.
+ogni modifica del bootstrap. Sulla wheel f426c5aa… i 59 casi XLSX passano
+sia su Python 3.13 sia su Python 3.11 e sono già compresi nei 1.146 test backend
+superati su ciascun interprete. Installazione pulita, upgrade e GUI Windows
+hanno prove distinte: [VALIDAZIONE.md](VALIDAZIONE.md). Questi risultati
+non attestano ogni documento XLSX né futuri estrattori.

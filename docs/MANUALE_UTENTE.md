@@ -46,7 +46,7 @@ L'installazione delle dipendenze richiede una connessione di rete. L'esecuzione 
 
 ### Finestra Windows e setup
 
-L’anteprima Windows usa lo stesso motore Linux tramite WSL 2. Con i prerequisiti della [guida Windows](WINDOWS.md) già installati, aprire `cheker-setup-xlsx-preview-2.exe`, scegliere la cartella e premere **Installa e avvia**. Il setup propone `D:\Cheker\app\windows` se esiste l’unità D, altrimenti una cartella sotto `%LOCALAPPDATA%\Cheker\app\windows`; crea al suo interno la cartella della versione. Il primo avvio prepara le dipendenze Python. La guida distingue setup e ZIP, dati persistenti e prove effettivamente eseguite. La pubblicazione preview.2 è prevista; non è dichiarata completata da questo manuale.
+L’anteprima Windows usa lo stesso motore Linux tramite WSL 2. Con i prerequisiti della [guida Windows](WINDOWS.md) già installati, aprire `cheker-setup-xlsx-preview-2.exe`, scegliere la cartella e premere **Installa e avvia**. Il setup propone `D:\Cheker\app\windows` se esiste l’unità D, altrimenti una cartella sotto `%LOCALAPPDATA%\Cheker\app\windows`; crea al suo interno la cartella della versione. Il primo avvio prepara le dipendenze Python. La guida distingue setup e ZIP, dati persistenti e prove effettivamente eseguite. La [release preview.2](https://github.com/okno/cheker/releases/tag/v1.0.0-preview.2) include i pacchetti Windows e Linux descritti in questa guida.
 
 ### Installazione da distribuzione Linux
 
@@ -54,16 +54,16 @@ L’anteprima Windows usa lo stesso motore Linux tramite WSL 2. Con i prerequisi
 2. Estrarlo in una cartella dedicata dell'utente. L'archivio comprende applicazione, UI, script, esempi e documentazione; non contiene token, chiavi, dati personali o un ambiente Python già installato.
 3. Aprire un terminale nella cartella estratta che contiene `install-linux.sh` ed eseguire:
 
-   ```bash
-   bash install-linux.sh
-   ```
+```bash
+bash install-linux.sh
+```
 
 4. Attendere il completamento. L'installer verifica i checksum, crea `runtime-linux`, installa le dipendenze e l'applicazione, prepara `data-linux` ed esegue la diagnostica. Un checksum verifica la corrispondenza dei file al manifesto; non sostituisce la verifica dell'identità del distributore.
 5. Dalla stessa cartella avviare:
 
-   ```bash
-   bash start.sh
-   ```
+```bash
+bash start.sh
+```
 
 Se l'installazione si interrompe, leggere il messaggio finale e risolvere la causa prima dell'avvio. Per prerequisiti di sistema, aggiornamenti e installazioni gestite vedere il [manuale tecnico](MANUALE_TECNICO.md). Non occorre eseguire l'applicazione come amministratore.
 
