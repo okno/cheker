@@ -18,7 +18,7 @@ from .extractor_registry import lookup_extractor
 
 def failure_kind(code: str) -> str:
     """Distinguish malformed bytes from unsupported content and bounded refusals."""
-    if code in {"EXTRACTION_FAILED", "INVALID_DOCX", "INVALID_PDF", "TEXT_ENCODING", "BINARY_CONTENT"}:
+    if code in {"EXTRACTION_FAILED", "INVALID_DOCX", "INVALID_XLSX", "INVALID_PDF", "TEXT_ENCODING", "BINARY_CONTENT"}:
         return "MALFORMED"
     if code in {"XML_ENTITY_FORBIDDEN", "UNSAFE_YAML_TAG"}:
         return "UNSAFE_CONTENT"

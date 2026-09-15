@@ -447,12 +447,14 @@ def forbidden(*args, **kwargs):
 trusted_extractors.register_all = bootstrap
 importlib.metadata.entry_points = forbidden
 first, second = get_registry(), get_registry()
-unknown = [lookup_extractor(ext) for ext in ("xlsx", "pptx", "eml", "msg", "rtf", "odt")]
+unknown = [lookup_extractor(ext) for ext in ("pptx", "eml", "msg", "rtf", "odt")]
 print(json.dumps({"same": first is second, "calls": len(count), "extractors": first.descriptors()["extractors"],
                   "unknown": unknown, "fingerprint": registry_fingerprint()}))
 ''')
     assert result["same"] is True and result["calls"] == 1
-    assert result["extractors"] == [] and result["unknown"] == [None] * 6
+    assert [item["format"] for item in result["extractors"]] == ["xlsx"]
+    assert result["extractors"][0]["handler"]["module"] == "integrity_guard.xlsx_extractor"
+    assert result["unknown"] == [None] * 5
     assert len(result["fingerprint"]) == 64
 
 
@@ -474,7 +476,7 @@ print(json.dumps({"failure": failure, "extractors": get_registry().descriptors()
 ''')
     assert result["failure"]["code"] == "BOOTSTRAP_FAILED"
     assert "Untrusted loader details" not in result["failure"]["message"]
-    assert result["extractors"] == []
+    assert [item["format"] for item in result["extractors"]] == ["xlsx"]
 
 
 def test_fresh_process_manifest_matches_current_static_package():
@@ -483,4 +485,7 @@ import json
 from integrity_guard.extractor_registry import get_registry
 print(json.dumps(get_registry().descriptors()))
 ''')
-    assert result == ExtractorRegistry().freeze().descriptors()
+    from integrity_guard.trusted_extractors import register_all
+    registry = ExtractorRegistry()
+    register_all(registry)
+    assert result == registry.freeze().descriptors()

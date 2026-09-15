@@ -4,7 +4,7 @@ Il pacchetto Windows x64 apre una finestra dedicata con la dashboard. Il motore 
 
 ## Stato della distribuzione
 
-Anteprima in collaudo. Il primo EXE è compilato; le prove specifiche della finestra Windows sono in corso. I risultati Linux, anche quando conclusi, non costituiscono un collaudo della GUI Windows. Consultare [Validazione](VALIDAZIONE.md) per le prove attribuite a ciascun artefatto.
+Anteprima compilata e collaudata su questo dispositivo Windows x64. Un harness ha aperto la vera finestra MainWindow dall’EXE in WebView2, verificato accesso automatico senza token nell’URL, caricato un TXT ordinario tramite il controllo React e controllato esito valido, contatori e chiusura del motore. Il caricamento di prova usa DataTransfer/eventi DOM: non verifica il selettore file nativo Windows. È stato inoltre aperto l’EXE normale, con finestra rispondente. Le prove Linux restano distinte da queste prove della GUI. Consultare [Validazione](VALIDAZIONE.md) per le prove attribuite a ciascun artefatto.
 
 ## Primo avvio
 

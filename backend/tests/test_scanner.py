@@ -434,7 +434,7 @@ def test_multilingual_encoded_attack_corpus(scanner, encoding, payload):
 @pytest.mark.parametrize("filename,data,expected", [
     ("broken.json", b'{"missing":', "MALFORMED"),
     ("broken.xml", b'<root><unclosed></root>', "MALFORMED"),
-    ("binary.xlsx", b'not inspected', "UNSUPPORTED"),
+    ("binary.xlsx", b'not inspected', "MALFORMED"),
     ("unsafe.yaml", b'x: !!python/object/apply:os.system [echo no]', "UNSAFE_CONTENT"),
     ("entity.xml", b'<!DOCTYPE x [<!ENTITY x SYSTEM "file:///tmp/secret">]><x>&x;</x>', "UNSAFE_CONTENT"),
 ])

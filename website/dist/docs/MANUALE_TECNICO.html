@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Manuale tecnico · Cheker</title><meta name="description" content="Manuale tecnico di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html" aria-current="page">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MANUALE_TECNICO.md" download>Scarica Markdown</a><a href="MANUALE_TECNICO.pdf" download>Scarica PDF</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="manuale-tecnico-e-operativo">Manuale tecnico e operativo</h1>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html" aria-current="page">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="MANUALE_TECNICO.md" download>Scarica Markdown</a><a href="MANUALE_TECNICO.pdf" download>Scarica PDF</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="manuale-tecnico-e-operativo">Manuale tecnico e operativo</h1>
+<p><strong>Attribuzione XLSX:</strong> il profilo statico aggiunto al sorgente il 15 settembre 2026 è destinato a un nuovo candidato e non appartiene alla release consegnata con wheel <code>039e0fd8…</code>. Le descrizioni XLSX in questo manuale riguardano quel sorgente; prove, installazione e disponibilità di una nuova release devono essere documentate separatamente.</p>
 <p>Questo manuale descrive MCP Integrity Guard 1.0.0 per amministratori Linux e manutentori. Le interfacce e i limiti sono quelli implementati nel repository; i risultati di collaudo delle singole build sono in <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>. Per modificare o rilasciare il software leggere anche <a href="SVILUPPO.html">SVILUPPO.md</a>.</p>
 <h2 id="1-scopo-e-confini">1. Scopo e confini</h2>
 <p>Il programma registra definizioni MCP, rileva variazioni, raccoglie approvazioni firmate e decide se una precisa versione può essere usata. Analizza inoltre documenti in processi Linux confinati e offre letture vincolate ai byte analizzati. Non avvia i comandi trovati nelle configurazioni e non contatta i relativi endpoint.</p>
@@ -155,6 +156,10 @@
 <td>Massimo 2.048 membri; 8.000.000 byte per membro, 24.000.000 totali espansi, rapporto massimo 100</td>
 </tr>
 <tr>
+<td>XLSX statico, nuovo sorgente</td>
+<td>100 fogli; 20.000 celle presenti; 20.000 shared strings; limiti ZIP/XML e rifiuti descritti sotto</td>
+</tr>
+<tr>
 <td>Frontmatter Markdown chiuso</td>
 <td>64 KiB e 4.096 righe</td>
 </tr>
@@ -169,10 +174,88 @@
 </tbody>
 </table>
 <p>I budget non sono una promessa di latenza massima per un’intera operazione composta: copia HTML e passate del monitor possono richiedere più stadi. Le dimensioni espresse in MiB usano multipli di 1.048.576 byte; gli altri valori della tabella sono decimali come nel codice.</p>
-<p>Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, <code>.env</code>, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile.</p>
+<p>Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, <code>.env</code>, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile. Il sorgente successivo alla release 039e aggiunge XLSX tramite il registro statico fidato, entro il profilo seguente. DOC, XLS, XLSM, XLSB, PPTX, EML, MSG, RTF e ODT restano non supportati.</p>
 <p>Il frontmatter iniziale YAML/TOML dei Markdown viene analizzato come testo di metadati, senza deserializzarlo né usarlo come configurazione. L’intero documento resta anche nel livello visibile. Le regole combinano indicatori multilingue, anomalie strutturali/Unicode e decodifiche limitate. I limiti configurati delle decodifiche comprendono profondità 3, rapporto di espansione 6, 512 candidati e 120 finding.</p>
 <p>Il catalogo <code>1.1.2</code> estende il controllo dei caratteri invisibili al blocco Unicode Tags, U+E0000–U+E007F. Una presenza anomala genera <code>INVISIBLE_CHARACTERS</code> e richiede revisione; non è una diagnosi di malware. Le tre sequenze complete RGI delle bandiere di Inghilterra, Scozia e Galles, definite da Unicode Emoji 17.0, sono escluse da questo solo segnale. Tag aggiunti, sequenze incomplete e altri caratteri invisibili restano rilevati. La normalizzazione elimina i tag per il confronto delle regole; le evidenze li rendono leggibili come escape Unicode. Gli originali restano invariati. <a href="https://www.unicode.org/reports/tr51/tr51-29.html#valid-emoji-tag-sequences">Unicode UTS #51, revisione 29</a>.</p>
 <p>Il profilo DOCX rifiuta parti diverse da XML e relazioni XML, salvo directory vuote (<code>DOCX_UNINSPECTED_PART</code>); importazioni <code>altChunk</code> e relazioni <code>aFChunk</code>/<code>afChunk</code> (<code>DOCX_ALTCHUNK_UNSUPPORTED</code>); relazioni esterne diverse dagli hyperlink previsti (<code>DOCX_EXTERNAL_CONTENT</code>). Questi casi producono analisi incompleta, <code>UNSCANNABLE</code> e <code>BLOCKED</code>. Gli hyperlink restano metadati e non vengono recuperati. Campi obbligatori delle relazioni mancanti o modalità non valide producono <code>INVALID_DOCX</code>, distinto dal formato non supportato. I limiti ZIP e i rifiuti specifici per immagini/oggetti incorporati mantengono precedenza. Il controllo non è un validatore completo di conformità OPC/OOXML né un renderer Word. <a href="https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.altchunk?view=openxml-3.0.1">Documentazione Microsoft su altChunk</a>.</p>
+<h3 id="profilo-xlsx-statico-del-nuovo-sorgente">Profilo XLSX statico del nuovo sorgente</h3>
+<p><a href="https://github.com/okno/cheker/blob/main/backend/integrity_guard/trusted_extractors.py">trusted_extractors.py</a> registra esplicitamente <code>xlsx</code>, estensione <code>.xlsx</code>, handler <code>integrity_guard.xlsx_extractor.extract_xlsx</code>, versione <code>1.0.0</code>, con dipendenza <code>defusedxml</code> (versione del lock: <code>0.7.1</code>). Il bootstrap viene ricostruito dopo l’attivazione del sandbox e prima dell’input in ogni worker. Non richiede Office, rete o un nuovo percorso di esecuzione: usa <code>Budget</code>, <code>Extraction</code>, report, policy e registro delle scansioni ordinari. Il fingerprint include anche il nuovo modulo e invalida la corrispondenza della cache dopo l’aggiornamento. <a href="ESTRATTORI.html">Contratto del registro</a>.</p>
+<p>Il sottoinsieme OPC/SpreadsheetML <strong>Transitional</strong> comprende workbook e worksheet, celle statiche numeriche/booleani/date ISO/errori/testo o vuote, stringhe inline/condivise e run rich text, proprietà core/app/custom, stili riconosciuti, tema XML statico e commenti XML. Radici, tipi di contenuto e relazioni devono essere coerenti; le parti note devono essere collegate. Le coordinate sono verificate senza allocare una matrice delle dimensioni dichiarate.</p>
+<p>Le celle ordinarie producono <code>VISIBLE_CONTENT</code>, con posizione <code>xlsx:&lt;parte&gt;:cell:&lt;A1&gt;</code>. Fogli hidden/veryHidden, righe o colonne nascoste e font esplicitamente bianco o ≤1 pt sono <code>HIDDEN_CONTENT</code>; sono considerati anche stili di riga/colonna e basi xf. Un run nascosto rende prudentemente nascosta l’intera vista della cella; la stessa scelta vale per i formati numerici personalizzati. È una classificazione conservativa, non rendering Excel. I run delle stringhe vengono uniti in ordine preservando gli spazi. Gli escape <code>_xHHHH_</code> sono decodificati una volta, mantenendo anche la forma letterale. Shared strings inutilizzate, proprietà, attributi e testo XML residuo sono <code>METADATA</code>; commenti di cella/XML e processing instruction sono <code>HIDDEN_CONTENT</code>. Intestazioni e piè di pagina restano metadati testuali. Gli hyperlink External ordinari sono ispezionati come metadati senza recuperare destinazioni; i link interni non provocano letture.</p>
+<table>
+<thead>
+<tr>
+<th>Condizione fuori profilo</th>
+<th>Codice e risultato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qualsiasi formula, comprese validazioni e nomi definiti</td>
+<td><code>XLSX_FORMULA_UNSUPPORTED</code>; nessun ricalcolo o attestazione del cached value</td>
+</tr>
+<tr>
+<td>Immagini/media, incluse miniature</td>
+<td><code>OCR_REQUIRED</code>; OCR assente</td>
+</tr>
+<tr>
+<td>Macro, VBA, binari, OLE o ActiveX</td>
+<td><code>XLSX_EMBEDDED_CONTENT</code>; nessuna esecuzione Office</td>
+</tr>
+<tr>
+<td>Contenuto esterno diverso dall’hyperlink ordinario</td>
+<td><code>XLSX_EXTERNAL_CONTENT</code></td>
+</tr>
+<tr>
+<td>VML, grafici, pivot, threaded comments, estensioni/AlternateContent, parti ignote o namespace Strict</td>
+<td><code>XLSX_UNINSPECTED_PART</code>; anche commenti XML accompagnati da VML sono bloccati</td>
+</tr>
+<tr>
+<td>Non ZIP, XML malformato o riferimenti/indici incongruenti</td>
+<td><code>INVALID_XLSX</code>; classificazione <code>CORRUPTED</code></td>
+</tr>
+</tbody>
+</table>
+<p>Copertura incompleta e limiti producono <code>analysis_complete=false</code>, <code>BLOCKED</code> e normalmente <code>UNSCANNABLE</code>; non dichiarano un’infezione. I messaggi sono fissi, senza URL o testo sorgente. Il profilo non valida l’intero schema OOXML e non attesta conservazione semantica o sicurezza universale.</p>
+<table>
+<thead>
+<tr>
+<th>Risorsa XLSX</th>
+<th style="text-align: right;">Limite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Membri ZIP / compressione</td>
+<td style="text-align: right;">2.048; soltanto STORED o DEFLATED</td>
+</tr>
+<tr>
+<td>Byte dichiarati per parte / espansi totali / rapporto per parte</td>
+<td style="text-align: right;">8.000.000 / 24.000.000 / 100</td>
+</tr>
+<tr>
+<td>Nodi XML complessivi, inclusi commenti e PI / profondità</td>
+<td style="text-align: right;">200.000 / 64</td>
+</tr>
+<tr>
+<td>Fogli / celle materialmente presenti / shared strings</td>
+<td style="text-align: right;">100 / 20.000 / 20.000</td>
+</tr>
+<tr>
+<td>Relazioni</td>
+<td style="text-align: right;">4.096</td>
+</tr>
+<tr>
+<td>Coordinate massime</td>
+<td style="text-align: right;">16.384 colonne; 1.048.576 righe</td>
+</tr>
+<tr>
+<td>Testo e segmenti</td>
+<td style="text-align: right;">Budget comune: 8.000.000 caratteri / 20.000 segmenti</td>
+</tr>
+</tbody>
+</table>
+<p>Input, timeout, memoria e confinamento del worker restano quelli comuni. Le viste aggiuntive e ogni uso di una shared string consumano budget; un limite comune può scattare prima di quelli strutturali. XML viene letto con controlli di budget e senza DTD, entità o risorse esterne. Se la copertura non termina, nessuna porzione del file viene autorizzata come risultato completo.</p>
 <h3 id="esito-e-autorizzazione-sono-campi-distinti">Esito e autorizzazione sono campi distinti</h3>
 <table>
 <thead>
@@ -307,7 +390,7 @@ bash guard.sh gate COMPONENT_ID --hash CANONICAL_HASH --version 1
 bash guard.sh verify-audit
 </code></pre>
 <p><code>COMPONENT_ID</code>, <code>CANONICAL_HASH</code> e versione devono provenire dalla definizione realmente esaminata. Per un’altra porta anteporre al sottocomando <code>--api-url http://127.0.0.1:8877</code>. La CLI non ha sottocomandi <code>approve</code> o <code>revoke</code>: queste operazioni sono nella GUI/API.</p>
-<p>Exit code: <strong>0</strong> successo/consentito, <strong>3</strong> negato o audit non valido, <strong>2</strong> errore operativo. <code>guarded-read</code> restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF/DOCX autorizzati l’output è il file binario originale, non testo estratto.</p>
+<p>Exit code: <strong>0</strong> successo/consentito, <strong>3</strong> negato o audit non valido, <strong>2</strong> errore operativo. <code>guarded-read</code> restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF/DOCX e, nelle release con il nuovo estrattore, XLSX autorizzati l’output è il file binario originale, non testo estratto.</p>
 <pre><code class="language-bash">umask 077
 CHEKER_SNAPSHOT=&quot;$(mktemp)&quot;
 if bash guard.sh guarded-read &quot;$HOME/Documents/notes.txt&quot; &gt; &quot;$CHEKER_SNAPSHOT&quot;; then
@@ -332,7 +415,7 @@ fi
   }
 }
 </code></pre>
-<p>Non inserire il token nel JSON. <code>scan_file</code> accetta fino a 10 MiB senza restituire il contenuto; <code>read_file</code> consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, <code>.env</code> o <code>.log</code>, pur analizzabili con <code>scan_file</code>. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in <a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a>.</p>
+<p>Non inserire il token nel JSON. <code>scan_file</code> accetta fino a 10 MiB senza restituire il contenuto; <code>read_file</code> consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, <code>.env</code> o <code>.log</code>, pur analizzabili con <code>scan_file</code>. Il nuovo XLSX statico, quando incluso nella release installata, è disponibile soltanto per <code>scan_file</code>: non estende i formati consegnabili da <code>read_file</code>. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in <a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a>.</p>
 <h2 id="8-api-amministrativa">8. API amministrativa</h2>
 <p>Prefisso <code>/api</code>, JSON per le richieste strutturate e multipart per upload. Le richieste <code>/api/*</code>, eccetto <code>/api/health</code>, richiedono <code>Authorization: Bearer …</code>. I body tipizzati rifiutano proprietà aggiuntive. Host e origini sono limitati; non è un’API pubblica di rete e non espone autenticazione multiutente.</p>
 <p>Swagger, ReDoc e <code>/openapi.json</code> sono disabilitati via HTTP. Lo schema OpenAPI 3.1 può essere generato localmente con <code>app.openapi()</code>; la costruzione ordinaria di <code>create_app</code> apre lo store, quindi non usarla sulla directory di produzione per ottenere documentazione. In <a href="SVILUPPO.html">SVILUPPO.md</a> è riportato un metodo senza store. L’autenticazione è middleware e non compare automaticamente come schema Bearer OpenAPI; le risposte dinamiche richiedono anche il <a href="CONTRACT.html">CONTRACT.md</a> e i controlli del client.</p>
@@ -537,4 +620,4 @@ print({&quot;components&quot;: status[&quot;components&quot;], &quot;audit_valid
 </tr>
 </tbody>
 </table>
-<p>Lo stato del servizio e la verifica audit sono osservabili via API. CPU, RSS, descriptor e thread sono misure del sistema operativo o degli strumenti QA, non metriche Prometheus esposte dal prodotto. I launcher non abilitano access log HTTP dettagliati; conservare i log di servizio secondo la politica locale, evitando token, documenti e dump dei database nei rapporti pubblici. Per misure e limiti delle prove di durata consultare <a href="PERFORMANCE.html">PERFORMANCE.md</a> e <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>
+<p>Lo stato del servizio e la verifica audit sono osservabili via API. CPU, RSS, descriptor e thread sono misure del sistema operativo o degli strumenti QA, non metriche Prometheus esposte dal prodotto. I launcher non abilitano access log HTTP dettagliati; conservare i log di servizio secondo la politica locale, evitando token, documenti e dump dei database nei rapporti pubblici. Per misure e limiti delle prove di durata consultare <a href="PERFORMANCE.html">PERFORMANCE.md</a> e <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>

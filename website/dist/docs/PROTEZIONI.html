@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ricerca e protezioni · Cheker</title><meta name="description" content="Ricerca e protezioni di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
+<body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html" aria-current="page">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="PROTEZIONI.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="protezioni-documentali-e-integrita-mcp-evidenze-confini-e-priorita-per-cheker">Protezioni documentali e integrità MCP: evidenze, confini e priorità per Cheker</h1>
+<p><strong>Rapporto tecnico — 15 settembre 2026.</strong> Destinatari: manutentori, integratori di agenti e responsabili tecnici che devono decidere quali documenti e strumenti ammettere in un flusso di lavoro Linux.</p>
+<p>Il riferimento implementativo è MCP Integrity Guard 1.0.0, wheel SHA-256 <code>039e0fd80f2e3a914d262a7b7b6e69d97073dc97666aafe1cdb7cfe3ef0052de</code>, qualificata e installata il 15 settembre 2026 (ora locale). I confronti con la baseline precedente d595 sono indicati dove rilevanti; eventuali sviluppi successivi non sono attribuiti a questa build. Le fonti esterne sono state consultate il 15 settembre 2026, ora locale europea.</p>
+<p>Aggiornamento successivo del sorgente: è stato implementato un profilo XLSX statico Transitional con registro esplicito. Esamina celle, stringhe, proprietà e viste nascoste; rifiuta formule, immagini, incorporamenti, contenuti esterni e parti non coperte. Le 156 verifiche mirate sono passate; la qualifica del nuovo pacchetto è distinta dalle prove della 039e. Il contratto completo è in <a href="ESTRATTORI.html">Estrattori</a>. La matrice di questo rapporto continua a descrivere la baseline 039e, che non contiene questo estrattore.</p>
+<h2 id="1-conclusione-tecnica-e-metodo">1. Conclusione tecnica e metodo</h2>
+<p>Cheker può verificare la continuità fra una definizione MCP approvata e quella presentata al momento dell’uso; può inoltre analizzare documenti entro un profilo dichiarato e consegnare soltanto i byte associati a un esito consentito. Queste funzioni affrontano problemi distinti. La firma di una configurazione non dimostra che le sue istruzioni siano innocue. Un documento privo di segnali conosciuti non autorizza tutte le azioni che un agente potrebbe intraprendere dopo averlo letto.</p>
+<p>La protezione utile nasce dall’unione di quattro controlli: provenienza e versione, completezza dell’estrazione, decisione verificata sugli stessi byte, permessi dell’applicazione che consuma il risultato. Cheker implementa parti dei primi tre; il quarto richiede anche decisioni dell’integratore. Non è presente un controllo universale di ogni lettura filesystem, chiamata MCP o trasferimento di dati effettuato da programmi esterni.</p>
+<p>Nel testo le evidenze sono distinte così:</p>
+<table>
+<thead>
+<tr>
+<th>Classe</th>
+<th>Significato</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Osservazione</strong></td>
+<td>Attività descritta attraverso telemetria o riscontro diretto della fonte primaria</td>
+</tr>
+<tr>
+<td><strong>Esperimento</strong></td>
+<td>Dimostrazione, studio controllato o benchmark con condizioni proprie</td>
+</tr>
+<tr>
+<td><strong>Implementazione</strong></td>
+<td>Comportamento riscontrabile nel codice e nella documentazione di Cheker</td>
+</tr>
+<tr>
+<td><strong>Inferenza</strong></td>
+<td>Conseguenza progettuale proposta qui, non risultato misurato sul prodotto</td>
+</tr>
+<tr>
+<td><strong>In corso</strong></td>
+<td>Modifica implementata ma non ancora qualificata e distribuita come nuovo candidato in questo rapporto</td>
+</tr>
+</tbody>
+</table>
+<p>Sono stati letti articoli, documentazione normativa e sorgenti pertinenti. Non sono stati scaricati corpora o documenti malevoli, generati nuovi payload, riprodotti exploit o eseguite nuove prove del prodotto per questa ricerca. Le percentuali degli studi rimangono attribuite agli autori e alle rispettive distribuzioni; non diventano stime dell’efficacia di Cheker.</p>
+<h2 id="2-che-cosa-dimostrano-realmente-gli-studi-e-i-casi-pubblici">2. Che cosa dimostrano realmente gli studi e i casi pubblici</h2>
+<h3 id="dati-esterni-che-diventano-istruzioni">Dati esterni che diventano istruzioni</h3>
+<p><strong>Greshake e altri, 2023 — esperimento fondativo.</strong> Il lavoro mostra come un’applicazione con LLM possa trattare materiale recuperato dall’esterno come istruzioni operative, con conseguenze sulla riservatezza e sull’integrità. Il §5.2 delimita esplicitamente le prove: applicazioni sintetiche e file HTML locali usati con la sidebar Bing Chat; gli autori evitarono inserimenti pubblici effettivi. Alcuni prodotti citati non erano disponibili per una verifica diretta. È quindi un’evidenza del meccanismo e di esposizioni sperimentali, non il censimento di una campagna osservata contro tutti quei prodotti.<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></p>
+<p><strong>The Hidden Threat in Plain Text, 2025 — studio dei loader RAG.</strong> Gli autori esaminano nove categorie e diciannove tecniche su DOCX, HTML e PDF, cinque loader e 357 scenari, riportando il 74,4% di successo nella valutazione dell’ingestione. Studiano anche sei sistemi RAG. Le prove utilizzano documenti e interrogazioni controllati; in parte impiegano un giudice LLM. La percentuale non rappresenta la prevalenza di attacchi reali, né un tasso di errore di Cheker. Il contributo pertinente è che il loader stesso può cambiare quali informazioni arrivano al modello.<sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup></p>
+<p><strong>PhantomLint, 2025 — confronto fra estrazione e visibilità.</strong> Il prototipo cerca istruzioni sospette e confronta il testo estratto con OCR della regione visuale corrispondente. Nella valutazione dichiarata di 3.402 documenti, un sottoinsieme di 3.257 articoli ICML produce tre falsi positivi, pari allo 0,092%; non è un tasso universale. I 26 casi sintetici di generalità vengono rilevati. Il lavoro riporta anche istruzioni nascoste in documenti pubblici, senza dimostrare che ogni presenza abbia causato una compromissione. OCR, rendering e distribuzione dei documenti condizionano i risultati. Cheker non implementa questa pipeline visuale.<sup id="fnref:3"><a class="footnote-ref" href="#fn:3">3</a></sup></p>
+<p><strong>CrackedPDFs, 2026 — benchmark controllato.</strong> Il lavoro costruisce 29.322 PDF da 4.983 documenti base, distinguendo iniezioni e controlli benigni abbinati. Nella valutazione bilanciata su 1.946 documenti riporta 95,9% di accuratezza di classificazione e 100% nell’ordinamento delle 973 coppie: sono metriche diverse. Gli autori segnalano scorciatoie nei classificatori e limiti sulle famiglie escluse dall’addestramento. Non dimostrano copertura di PDF arbitrari, scansioni OCR o tecniche future. Nessuna parte del benchmark è stata eseguita su Cheker per questo rapporto.<sup id="fnref:4"><a class="footnote-ref" href="#fn:4">4</a></sup></p>
+<h3 id="una-vulnerabilita-in-produzione-non-equivale-a-una-campagna-osservata">Una vulnerabilità in produzione non equivale a una campagna osservata</h3>
+<p><strong>EchoLeak — scoperta sperimentale in un servizio reale.</strong> La disclosure originale di Aim Labs descrive una catena in Microsoft 365 Copilot nella quale contenuto esterno recuperato poteva concorrere all’esfiltrazione di informazioni dal contesto. La fonte afferma che, al momento della disclosure, Aim non conosceva clienti colpiti: è un limite della sua conoscenza, non una prova assoluta di assenza di abusi.<sup id="fnref:5"><a class="footnote-ref" href="#fn:5">5</a></sup> Microsoft ha successivamente descritto CVE-2025-32711 come corretta, precisando condizioni e accesso a dati già disponibili alla vittima.<sup id="fnref:6"><a class="footnote-ref" href="#fn:6">6</a></sup> L’articolo nei <em>Proceedings of the AAAI Symposium Series</em> è un’analisi successiva del caso, distinta dalla scoperta originale.<sup id="fnref:7"><a class="footnote-ref" href="#fn:7">7</a></sup></p>
+<p><strong>Inferenza per Cheker.</strong> Verificare un allegato o il testo recuperato riduce una superficie d’ingresso, ma non controlla automaticamente il canale con cui l’agente potrebbe trasmettere altri dati. Il permesso di leggere una fonte e quello di inviare informazioni devono essere valutati separatamente dall’applicazione utilizzatrice.</p>
+<h3 id="mcp-descrizioni-e-combinazioni-di-strumenti">MCP: descrizioni e combinazioni di strumenti</h3>
+<p><strong>Invariant, tool poisoning — esperimento divulgato nell’aprile 2025.</strong> Le prove mostrano che istruzioni nelle descrizioni di strumenti possono influenzare un assistente e l’impiego di altri strumenti. La fonte tratta anche modifiche successive all’approvazione e interferenze fra server. Le conclusioni riguardano le configurazioni sperimentate all’epoca, non ogni versione corrente dei client MCP. Il collegamento con Cheker è diretto: conservare la definizione completa, renderla riesaminabile e verificare le variazioni prima dell’uso affronta il problema della fiducia concessa a una descrizione che poi cambia.<sup id="fnref:8"><a class="footnote-ref" href="#fn:8">8</a></sup></p>
+<p><strong>Invariant, GitHub MCP — esperimento del maggio 2025.</strong> In repository controllati, un contenuto non fidato induce una sequenza di strumenti legittimi che attraversa il confine fra informazioni pubbliche e private. La dimostrazione è una <em>toxic flow</em>: il rischio dipende dalla combinazione e dal trasferimento dei dati, anche senza modificare il codice dei singoli strumenti. Il caso non è presentato qui come incidente criminale osservato. Un hash stabile dei tool non è una policy di flusso informativo.<sup id="fnref:9"><a class="footnote-ref" href="#fn:9">9</a></sup></p>
+<h3 id="unicode-distinguere-occultamento-e-istruzioni">Unicode: distinguere occultamento e istruzioni</h3>
+<p><strong>Microsoft, settembre 2026 — osservazione di phishing.</strong> La ricerca descrive campagne con Unicode Tags, un aumento il 9 febbraio 2026 e attività elevata per circa tre mesi. Nei campioni esaminati i caratteri servivano a eludere filtri testuali: Microsoft non trovò istruzioni nascoste dirette a sistemi AI. Il collegamento storico con la prompt injection non cambia la natura dell’attività osservata. La fonte segnala inoltre falsi positivi causati dalle tre legittime bandiere emoji con tag. È una ragione concreta per distinguere anomalia, contesto e intento.<sup id="fnref:10"><a class="footnote-ref" href="#fn:10">10</a></sup></p>
+<h2 id="3-dal-file-allazione-confini-che-non-vanno-confusi">3. Dal file all’azione: confini che non vanno confusi</h2>
+<p>Il percorso rilevante comprende almeno cinque trasformazioni. Un controllo efficace deve dichiarare su quale opera e che cosa resta fuori.</p>
+<pre><code class="language-mermaid">flowchart LR
+  A[Byte della sorgente] --&gt; B[Parser ed estrattore]
+  B --&gt; C[Testo, livelli e metadati]
+  C --&gt; D[Decisione sui byte analizzati]
+  D --&gt; E[Agente e strumenti autorizzati]
+  A --&gt; F[Hash e provenienza]
+  F --&gt; D
+</code></pre>
+<p><strong>Implementazione.</strong> L’estrattore di Cheker separa segmenti visibili, nascosti e metadati; lo scanner applica indicatori e normalizzazioni limitate. Il servizio verifica il report restituito dal worker, inclusi dimensione, hash, completezza e coerenza. Il lettore protetto vincola la consegna allo snapshot letto, invece di usare una scansione storica come autorizzazione permanente.<sup id="fnref:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<p><strong>Inferenza.</strong> Le informazioni scartate prima della classificazione non possono essere recuperate da una regola applicata soltanto al testo rimanente. Serve perciò una nozione esplicita di “documento interamente gestibile dal profilo”, oltre alla nozione di “nessun indicatore trovato”. La completezza deve riferirsi alle parti effettivamente considerate e ai rifiuti dichiarati; non alla sola assenza di eccezioni del parser.</p>
+<p>OWASP colloca la prompt injection fra i rischi applicativi e raccomanda separazione del materiale non fidato, privilegio minimo e controlli sulle azioni e sugli output. Queste indicazioni non sono una certificazione, né rendono il RAG una barriera sufficiente.<sup id="fnref:11"><a class="footnote-ref" href="#fn:11">11</a></sup> La guida OWASP agli upload distingue estensione, contenuto, dimensioni, autorizzazione e isolamento: controllare soltanto MIME o nome del file non basta. Antivirus, sandbox e ricostruzione dei contenuti sono livelli possibili, con finalità diverse.<sup id="fnref:12"><a class="footnote-ref" href="#fn:12">12</a></sup></p>
+<p>Per l’integratore ne discende una regola operativa: un risultato <code>ALLOWED</code> vale per il contenuto e il contesto verificati. L’agente deve ancora disporre soltanto degli accessi necessari al lavoro richiesto. L’approvazione di un documento non autorizza nuove destinazioni di rete, letture di archivi estranei o pubblicazioni automatiche.</p>
+<h2 id="4-matrice-dei-formati-prioritari">4. Matrice dei formati prioritari</h2>
+<p>La colonna di stato descrive il profilo della build 039e, incluse le estensioni DOCX e Unicode Tags. “Supportato” non significa che ogni documento formalmente valido venga accettato.</p>
+<table>
+<thead>
+<tr>
+<th>Formato</th>
+<th>Superfici da considerare</th>
+<th>Profilo e limite effettivo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PDF</strong></td>
+<td>Testo, ordine di estrazione, metadati, annotazioni, moduli, immagini e contenuti attivi</td>
+<td>Supporto ristretto; niente OCR. Immagini, cifratura e contenuti non gestibili possono determinare analisi incompleta e blocco</td>
+</tr>
+<tr>
+<td><strong>DOC</strong></td>
+<td>Contenitore binario composto, flussi e strutture Word</td>
+<td><strong>Non supportato</strong>; non viene reinterpretato come testo o DOCX</td>
+</tr>
+<tr>
+<td><strong>DOCX</strong></td>
+<td>Parti ZIP, XML, stili, note, commenti, metadati, import e relazioni</td>
+<td>Supporto ristretto, senza immagini/oggetti incorporati. Rifiuto esplicito delle parti non ispezionate, degli import alternativi e dei contenuti esterni non supportati</td>
+</tr>
+<tr>
+<td><strong>XLS</strong></td>
+<td>Struttura binaria, record e sottoflussi del workbook</td>
+<td><strong>Non supportato</strong>; nessuna esecuzione o valutazione delle formule</td>
+</tr>
+<tr>
+<td><strong>XLSX</strong></td>
+<td>Fogli separati, stringhe condivise, formule, stati nascosti e relazioni</td>
+<td><strong>Non supportato</strong>; il registro per estrattori futuri non ne abilita uno</td>
+</tr>
+<tr>
+<td><strong>TXT</strong></td>
+<td>Istruzioni in prosa, caratteri invisibili, direzionalità e codifiche</td>
+<td>Supportato con decodifica rigorosa e analisi testuale; nessuna comprensione universale dell’intento</td>
+</tr>
+<tr>
+<td><strong>MD</strong></td>
+<td>Testo, link, codice, HTML incorporato e frontmatter</td>
+<td>Supportato come testo e metadati iniziali; non esegue codice, non visita link e non riproduce un renderer Markdown</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pdf-il-testo-estratto-non-attesta-la-pagina">PDF: il testo estratto non attesta la pagina</h3>
+<p>La documentazione pypdf distingue estrazione testuale e OCR: il testo può essere posizionato o ordinato in modi non coincidenti con la lettura umana; un livello testuale associato a un’immagine può essere inesatto. Il parser non diventa un OCR per il fatto di restituire caratteri.<sup id="fnref:13"><a class="footnote-ref" href="#fn:13">13</a></sup></p>
+<p><strong>Implementazione.</strong> Cheker usa parsing PDF rigoroso, limita il numero di pagine e ispeziona anche metadati, annotazioni e alcuni campi dei moduli. Cerca indicatori di testo nascosto nelle istruzioni grafiche gestite. Respinge condizioni quali cifratura, contenuti attivi o incorporati individuati e immagini che richiedono una pipeline OCR non disponibile. Una pagina priva di testo estraibile non viene dichiarata validata sulla sola base del parsing riuscito.<sup id="fnref2:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<p><strong>Limite.</strong> Non esistono rendering completo, ricostruzione visuale equivalente al lettore umano o confronto OCR. Il rilevamento di colore chiaro, testo minuscolo o modalità testuali particolari è un insieme di indicatori, non una prova geometrica generale. Un PDF ordinario contenente immagini può essere respinto anche se innocuo: questa perdita di compatibilità deve essere visibile all’operatore.</p>
+<h3 id="doc-xls-e-xlsx-lestensione-non-e-una-scorciatoia">DOC, XLS e XLSX: l’estensione non è una scorciatoia</h3>
+<p>Le specifiche Microsoft descrivono DOC attraverso un contenitore Compound File con flussi e storages; XLS impiega flussi di record e sottoflussi per elementi del workbook. Non sono formati UTF-8 equivalenti a TXT o CSV.<sup id="fnref:14"><a class="footnote-ref" href="#fn:14">14</a></sup><sup id="fnref:15"><a class="footnote-ref" href="#fn:15">15</a></sup> SpreadsheetML distribuisce informazioni fra parti, fogli, stringhe condivise e altri elementi; la specifica SDK distingue stati del foglio visibile, nascosto e molto nascosto.<sup id="fnref:16"><a class="footnote-ref" href="#fn:16">16</a></sup><sup id="fnref:17"><a class="footnote-ref" href="#fn:17">17</a></sup></p>
+<p><strong>Inferenza.</strong> Un futuro supporto deve dichiarare quali parti esamina, come tratta formule e valori memorizzati, quali risorse esclude e quando rinuncia alla completezza. Estrarre soltanto celle visibili o rinominare il suffisso produrrebbe un contratto ambiguo. Il registro attuale consente soltanto estrattori confezionati nel codice fidato; il bootstrap è vuoto. Non è installazione di plugin da documenti o percorsi dell’utente.<sup id="fnref3:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<h3 id="txt-e-markdown-semplicita-del-contenitore-non-dellintento">TXT e Markdown: semplicità del contenitore, non dell’intento</h3>
+<p><strong>Implementazione.</strong> Il testo viene decodificato secondo il profilo ammesso; errori di codifica e contenuti incompatibili impediscono un esito completo. Il frontmatter Markdown YAML/TOML viene considerato testo di metadati, con limiti propri, senza essere deserializzato come istruzione applicativa. Codice e script restano dati. I link non vengono aperti.<sup id="fnref4:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<p><strong>Inferenza.</strong> Anche una frase perfettamente visibile può chiedere al modello di ignorare il compito o divulgare informazioni. La presenza di parole imperative in un manuale legittimo può invece causare un falso positivo. Separare testo citato, istruzioni dell’utente e autorizzazioni degli strumenti rimane responsabilità dell’applicazione che costruisce il contesto dell’agente.</p>
+<h2 id="5-integrita-mcp-cio-che-hash-firme-e-gate-attestano">5. Integrità MCP: ciò che hash, firme e gate attestano</h2>
+<p>La canonicalizzazione di Cheker serve a confrontare strutture senza perdere la possibilità di rilevare una modifica dei byte originali. JSON, JSON5, YAML, TOML e <code>.env</code> hanno adattatori con controlli di ambiguità, duplicati e limiti. Il profilo è specifico del prodotto; non dichiara conformità a RFC 8785/JCS.<sup id="fnref5:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<table>
+<thead>
+<tr>
+<th>Evidenza</th>
+<th>Che cosa rappresenta</th>
+<th>Che cosa non dimostra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>raw_hash</code></td>
+<td>SHA-256 dell’intera sorgente letta</td>
+<td>Innocuità del contenuto o autore originale</td>
+</tr>
+<tr>
+<td><code>canonical_hash</code></td>
+<td>Definizione normalizzata con contesto pertinente</td>
+<td>Equivalenza di ogni interpretazione possibile</td>
+</tr>
+<tr>
+<td><code>semantic_fingerprint</code></td>
+<td>Impronta strutturale con separazione di dominio</td>
+<td>Comprensione semantica o intenzione benevola</td>
+</tr>
+<tr>
+<td>Firma Ed25519</td>
+<td>Approvazione registrata su identità, versione, hash e policy</td>
+<td>Affidabilità di un host amministrativo compromesso</td>
+</tr>
+<tr>
+<td>Audit e checkpoint</td>
+<td>Collegamenti e firme delle evidenze persistite</td>
+<td>Rilevazione autonoma di ogni rollback coordinato dello stato</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implementazione.</strong> Le identità dei componenti restano riconoscibili attraverso cambiamenti del contenuto. I metadati globali e di connessione vengono inclusi nelle definizioni figlie: cambiare il server può quindi invalidare l’approvazione dei suoi strumenti. I valori sensibili partecipano agli hash, anche quando la presentazione li maschera. Il confronto distingue formato, semantica strutturale e sicurezza; anche una variazione del solo formato richiede una nuova versione approvata. Ritornare ai vecchi byte non ripristina automaticamente una fiducia revocata o superata.<sup id="fnref6:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<p>Prima dell’approvazione e dell’uso, il gate rilegge la sorgente e controlla versione, firma, policy ed evidenze correnti. Una sorgente mancante, uno snapshot non valido o una richiesta obsoleta non producono consenso. La proiezione dell’inventario può verificare lo snapshot persistito senza rileggere ogni sorgente durante il polling; <code>snapshot_valid</code> non sostituisce il gate.</p>
+<p><strong>Confine.</strong> La discovery non esegue il comando configurato e non interroga automaticamente il comportamento del server remoto. L’integratore deve portare nel controllo la definizione effettivamente utilizzata. L’approvazione del testo di una descrizione non attesta l’eseguibile, l’immagine container o ogni risposta futura del servizio. Due strumenti approvati possono ancora essere combinati in un flusso non autorizzato: serve una policy applicativa sugli accessi e sulle destinazioni.</p>
+<p>La chiave privata, il database e il servizio amministrativo appartengono alla base di fiducia locale. Il nome dell’approvatore non equivale a un’identità aziendale autenticata da un sistema esterno. Per esigenze più forti occorrono controlli organizzativi e riferimenti di audit conservati fuori dall’host; non vanno attribuiti retroattivamente alla firma locale.</p>
+<h2 id="6-unicode-tags-conservare-la-prova-normalizzare-lanalisi">6. Unicode Tags: conservare la prova, normalizzare l’analisi</h2>
+<p>Unicode UTS #51 versione 17.0, revisione 29, distingue le sequenze emoji ammesse e quelle raccomandate per lo scambio generale, dette RGI. L’elenco ufficiale <code>emoji-sequences.txt</code> identifica tre sequenze RGI con tag per Inghilterra, Scozia e Galles. La lista è versionata: una sequenza sintatticamente componibile non diventa automaticamente un’emoji RGI.<sup id="fnref:18"><a class="footnote-ref" href="#fn:18">18</a></sup><sup id="fnref:19"><a class="footnote-ref" href="#fn:19">19</a></sup></p>
+<p><strong>Modifica implementata e qualificata nella build 039e.</strong> Il codice del candidato estende il segnale di caratteri invisibili all’intervallo Unicode Tags, preservando l’eccezione delle tre sequenze complete RGI. L’eccezione riguarda il segnale di anomalia: non autorizza il documento, non disattiva le altre regole e non estende fiducia ai caratteri adiacenti. Le 21 prove funzionali Unicode della suite installata sono passate su Python 3.13 e 3.11. La modifica non appartiene al precedente wheel d595.</p>
+<p><strong>Inferenza progettuale.</strong> È opportuno mantenere due rappresentazioni: gli originali, ai quali si riferisce l’hash RAW, e le varianti limitate usate nell’analisi. Rimuovere caratteri invisibili soltanto dalla seconda può aiutare il confronto; riscrivere l’originale cancellerebbe parte dell’evidenza. Anche l’interfaccia dovrebbe mostrare gli indicatori mediante escape leggibili, evitando che la rappresentazione del finding nasconda nuovamente il problema.</p>
+<p>La classificazione deve restare proporzionata: una bandiera legittima non prova un attacco; un tag anomalo non prova da solo una specifica istruzione; l’assenza di tag non esclude istruzioni ostili visibili. Le regressioni funzionali pertinenti riguardano caratteri ordinari, le tre sequenze consentite, preservazione dei byte e classificazione distinta. Questo rapporto non aggiunge generatori o nuove famiglie di payload.</p>
+<h2 id="7-docx-parti-importate-relazioni-e-completezza">7. DOCX: parti importate, relazioni e completezza</h2>
+<p><code>altChunk</code> è un punto del documento che richiede l’importazione di altro contenuto. La descrizione OpenXML prevede una relazione verso una parte interna; il termine “external content” nel nome dell’elemento non significa necessariamente una richiesta di rete. Microsoft consente a un consumatore che non gestisce l’importazione di ometterla e continuare: è una scelta di visualizzazione, non una garanzia di scansione completa.<sup id="fnref:20"><a class="footnote-ref" href="#fn:20">20</a></sup></p>
+<p>La documentazione MS-OE376 descrive le grafie di relazione <code>aFChunk</code> e <code>afChunk</code> e formati importabili che comprendono HTML e testo semplice. Non tutte le parti di un contenitore DOCX sono quindi necessariamente XML.<sup id="fnref:21"><a class="footnote-ref" href="#fn:21">21</a></sup> Separatamente, <code>TargetMode</code> distingue relazioni interne ed esterne; una destinazione esterna può avere URI relativo oppure assoluto. La ricerca del solo prefisso HTTP non rappresenta tale distinzione.<sup id="fnref:22"><a class="footnote-ref" href="#fn:22">22</a></sup></p>
+<p><strong>Riscontro sulla baseline documentata.</strong> L’estrattore controlla limiti ZIP, nomi, compressione, XML sicuro, media e incorporamenti; nel percorso precedente esaminava <code>.xml</code> e <code>.rels</code>, saltando altre parti non già respinte. La proposta funzionale individua questa differenza fra parti presenti e parti effettivamente analizzate. È un riscontro sul percorso del codice, non l’esito di un nuovo exploit riprodotto.<sup id="fnref:24"><a class="footnote-ref" href="#fn:24">24</a></sup></p>
+<p><strong>Modifica implementata e qualificata nella build 039e.</strong> Il codice del candidato introduce un rifiuto esplicito per parti non ispezionate, import <code>altChunk</code> e relazioni esterne non comprese nel profilo. Gli hyperlink ordinari rimangono metadati senza visita della destinazione. Le vere directory ZIP vuote non sono considerate contenuto. La distinzione fra formato malformato e funzionalità non gestita deve restare visibile nel report.</p>
+<table>
+<thead>
+<tr>
+<th>Condizione</th>
+<th>Decisione prevista dalla proposta</th>
+<th>Stato di questo rapporto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parti contenenti dati fuori dal profilo XML/relazioni</td>
+<td>Analisi incompleta; niente accettazione per semplice omissione</td>
+<td>Implementato nella 039e</td>
+</tr>
+<tr>
+<td>Anchor o relazione di importazione alternativa</td>
+<td>Rifiuto finché l’importazione non è implementata</td>
+<td>Implementato nella 039e</td>
+</tr>
+<tr>
+<td>Risorsa esterna non supportata, anche con URI relativo</td>
+<td>Rifiuto senza recuperare la risorsa</td>
+<td>Implementato nella 039e</td>
+</tr>
+<tr>
+<td>Normale hyperlink</td>
+<td>Ispezione del metadato, senza attestare la destinazione</td>
+<td>Implementato nella 039e</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Compatibilità.</strong> Il profilo può rifiutare DOCX innocui con anteprime, font o parti aggiuntive non gestite. Un documento formalmente valido per Office non è necessariamente interamente analizzabile da Cheker. Questa restrizione non introduce OCR, valutazione dei campi dinamici, validazione completa OPC o equivalenza visuale. La consegna richiede la verifica del candidato aggiornato; i risultati della baseline non coprono automaticamente il nuovo comportamento.</p>
+<h2 id="8-isolamento-decisioni-e-copie-html">8. Isolamento, decisioni e copie HTML</h2>
+<p><strong>Implementazione.</strong> Lo scanner lavora in un processo Python isolato, con ambiente ridotto e input su pipe. Su Linux, Landlock e seccomp vengono applicati prima della lettura del documento. Il profilo richiede Landlock ABI almeno 3 e libseccomp con API almeno 3; l’assenza del confinamento necessario interrompe il percorso consentito. Runtime, librerie e codice confezionato fanno parte della base fidata.<sup id="fnref7:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<table>
+<thead>
+<tr>
+<th>Risorsa</th>
+<th>Limite del servizio documentale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>File di ingresso</td>
+<td>10 MiB</td>
+</tr>
+<tr>
+<td>Estrazione</td>
+<td>Fino a 8.000.000 caratteri e 20.000 segmenti, con budget anche proporzionale all’input</td>
+</tr>
+<tr>
+<td>Worker scanner</td>
+<td>512 MiB di spazio indirizzi; 10 secondi CPU; timeout del parent 12 secondi</td>
+</tr>
+<tr>
+<td>Protocollo scanner</td>
+<td>4 MiB per l’output raccolto</td>
+</tr>
+<tr>
+<td>PDF</td>
+<td>100 pagine; niente OCR</td>
+</tr>
+<tr>
+<td>DOCX</td>
+<td>2.048 membri; 8.000.000 byte per membro; 24.000.000 espansi complessivi; rapporto massimo 100</td>
+</tr>
+<tr>
+<td>Concorrenza</td>
+<td>Due slot condivisi fra scansioni e stadi delle copie HTML</td>
+</tr>
+</tbody>
+</table>
+<p>I limiti sono parte del contratto, non soglie al di sotto delle quali qualsiasi file diventa sicuro. Il confinamento limita ciò che il processo estrattore può fare al sistema; non impedisce a un modello esterno di interpretare erroneamente il testo che riceve. Anche una sandbox correttamente attiva non sostituisce il controllo delle azioni dell’agente.</p>
+<p>La decisione ha campi distinti. <code>VALID</code> indica analisi completa senza problemi rilevati dai controlli applicati; <code>INFECTED</code> indica segnali di istruzioni o manipolazioni sospette e non una diagnosi antivirus. <code>CORRUPTED</code> e <code>UNSCANNABLE</code> distinguono malformazione e impossibilità di completare il profilo. <code>ALLOWED</code>, <code>FLAGGED</code>, <code>QUARANTINED</code> e <code>BLOCKED</code> descrivono separatamente lo stato operativo. Un formato non supportato non deve essere contato come malware rilevato.<sup id="fnref8:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<p>Il lettore MCP ammette soltanto percorsi sotto radici esplicite, applica esclusioni per dati applicativi e collegamenti e consegna testo entro il proprio limite di 256 KiB dopo i riscontri richiesti. PDF e DOCX sono disponibili per scansione, non per consegna testuale da quel lettore. Il monitor cartelle è un servizio laterale: registra e riconcilia, ma non intercetta ogni lettura esterna.</p>
+<p>La copia <code>html-text-v1</code> è una funzione diversa dall’analisi ordinaria. Su richiesta esplicita esegue una scansione completa dell’originale, una trasformazione confinata e una nuova scansione degli esatti byte UTF-8 prodotti. Il limite della copia è 256 KiB. Solo il POST corrente può consegnarla dopo esito completo <code>VALID</code>/<code>ALLOWED</code>, assenza di finding, riscontro di hash, dimensione e policy e registrazione riuscita; i GET espongono metadati e riferimenti ai due report.<sup id="fnref9:23"><a class="footnote-ref" href="#fn:23">23</a></sup></p>
+<p><code>SANITIZED</code> descrive la trasformazione, non una nuova autorizzazione. Markup, attributi e metadati possono andare persi; CSS e strutture fuori dal sottoinsieme vengono rifiutati. L’originale resta invariato. Non sono implementati bonifica generale, rendering, OCR o equivalenza semantica. Un testo sospetto conservato nella copia deve ancora superare la seconda analisi.</p>
+<h2 id="9-priorita-difensive-e-criteri-di-accettazione">9. Priorità difensive e criteri di accettazione</h2>
+<p>Le priorità seguenti derivano dai confini descritti; non costituiscono risultati sperimentali o impegni di funzionalità già rilasciate.</p>
+<ol>
+<li><strong>Chiudere la completezza dichiarata.</strong> Le modifiche DOCX devono distinguere parti analizzate, parti escluse con motivazione e documento malformato. Un caso fuori profilo deve restare bloccato anche se il suo testo ordinario è innocuo. Prima del rilascio servono evidenze del worker installato, non soltanto della funzione chiamata nel processo dei test.</li>
+<li><strong>Preservare l’identità attraverso le trasformazioni.</strong> Originale, rappresentazioni d’analisi e copia consegnata devono avere ruoli separati. Ogni consegna deve identificare hash e report dei byte effettivi. Un cambiamento delle regole, dell’estrattore o della policy deve invalidare il riuso non coerente dei risultati.</li>
+<li><strong>Rendere visibile l’incompletezza operativa.</strong> Il monitor deve esporre copertura parziale, errori e prosecuzione delle passate. Il registro deve distinguere elaborazioni, hash unici, rifiuti per limite e segnali sospetti. L’interfaccia non deve trasformare uno snapshot non verificabile in un’approvazione apparente.</li>
+<li><strong>Integrare privilegi e destinazioni.</strong> Chi adotta Cheker deve vincolare gli strumenti dell’agente ai dati e alle azioni necessari. L’uso di tool approvati non deve conferire implicitamente facoltà di pubblicare o trasferire qualsiasi informazione letta.</li>
+<li><strong>Estendere i formati soltanto con un contratto verificabile.</strong> OCR, DOC, XLS e XLSX richiedono parser, dipendenze e criteri di completezza propri. La loro priorità dipende dai documenti realmente necessari, non dall’aggiunta di suffissi a una lista.</li>
+</ol>
+<p>Per misurare utilità operativa sono necessari denominatori espliciti. Registrare la quota di documenti del campione che appartiene al profilo, i rifiuti per OCR o parti non gestite, la latenza per formato e dimensione, i timeout e il tempo necessario all’operatore per decidere sui finding. Per i falsi positivi utilizzare documenti benigni etichettati con criteri dichiarati; per qualunque stima di falsi negativi serve un insieme di riferimento autorizzato e definito. Nessuna percentuale è ricavabile dal solo conteggio dei report <code>VALID</code>.</p>
+<p>La suite e le prove già autorizzate restano l’evidenza disponibile: conservare versioni, hash, condizioni, fallimenti iniziali e risultati finali separati. Un collaudo prolungato senza errori di processo misura affidabilità nelle operazioni esercitate; non misura da solo la copertura di istruzioni sconosciute.</p>
+<h2 id="10-condizioni-per-una-descrizione-pubblica-corretta">10. Condizioni per una descrizione pubblica corretta</h2>
+<p>Una descrizione sostenibile è: <strong>Cheker verifica versioni approvate di definizioni MCP, analizza un insieme dichiarato di documenti in worker Linux confinati e offre percorsi di lettura che richiedono risultati coerenti con gli stessi byte.</strong> Occorre accompagnarla con i formati e i limiti effettivi, il ruolo del chiamante e l’assenza di una garanzia universale.</p>
+<p>Non sono sostenute dalle evidenze espressioni come “rileva ogni prompt injection”, “qualsiasi PDF/DOCX è sicuro dopo la scansione”, “una firma impedisce le toxic flow” o “SANITIZED conserva il significato originale”. Ogni estensione successiva richiede una nuova attribuzione a sorgente, wheel, installazione e risultati pertinenti. Nella 039e entrambe le suite installate Python 3.13 e 3.11 hanno concluso 1.087 prove positive e una esclusione specifica Windows, comprese 21 prove Unicode Tags e 30 DOCX. La prova di upgrade ha superato 47 controlli. La prova di durata della 039e è ancora in corso; questi conteggi non misurano una copertura universale degli attacchi. I dettagli e i limiti del collaudo sono in <a href="VALIDAZIONE.html">Validazione</a>.</p>
+<p>Per esercizio e manutenzione rimangono autorevoli i documenti del repository: <code>docs/MANUALE_TECNICO.md</code>, <code>docs/LINUX_SANDBOX.md</code>, <code>docs/MCP_INTEGRATION.md</code>, <code>docs/SANITIZZAZIONE.md</code>, <code>docs/ESTRATTORI.md</code>, <code>docs/SVILUPPO.md</code> e <code>docs/VALIDAZIONE.md</code>. Backup e ripristino devono preservare chiavi, checkpoint e stato, non soltanto esportazioni parziali. In particolare, l’API di export audit restituisce al massimo gli ultimi <strong>100.000 eventi</strong> e non equivale al backup completo.</p>
+<h2 id="note-e-inventario-delle-fonti">Note e inventario delle fonti</h2>
+<p>Le note identificano fonti primarie: ricerca originale, disclosure dei ricercatori, documentazione del fornitore, standard o linee guida ufficiali. Le date indicano pubblicazione/versione quando verificabile; “senza data esposta” non significa documento recente. Non sono state usate metriche di fornitori come confronto prestazionale di Cheker.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Kai Greshake e altri, <em>Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection</em>, <a href="https://arxiv.org/html/2302.12173v2">arXiv 2302.12173, v2</a>, 5 maggio 2023; prima versione 23 febbraio 2023. Ricerca originale; particolarmente pertinente §5.2 sui limiti delle prove.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>Alberto Castagnaro e altri, <em>The Hidden Threat in Plain Text: Attacking RAG Data Loaders</em>, <a href="https://arxiv.org/html/2507.05093v1">arXiv 2507.05093, v1</a>, 7 luglio 2025. Preprint originale; la scheda consultata lo descrive come sottoposto a valutazione. Rilevanti metodologia e valutazione end-to-end.&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:3">
+<p>Toby Murray, <em>PhantomLint: Principled Detection of Hidden LLM Prompts in Structured Documents</em>, <a href="https://arxiv.org/html/2508.17884v2">arXiv 2508.17884, v2</a>, 23 ottobre 2025; prima versione 25 agosto 2025. Ricerca originale; risultati e limiti dipendono dalla pipeline visuale.&#160;<a class="footnote-backref" href="#fnref:3" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:4">
+<p>Pukaphol Thienpreecha e Karthik Subramanian, <em>CrackedPDFs: A Controlled Benchmark for Hidden Prompt Injection in PDFs</em>, <a href="https://arxiv.org/html/2607.19396v2">arXiv 2607.19396, v2</a>, 2 agosto 2026; scheda originale: 3 luglio 2026. Ricerca originale; rilevanti metriche sulle coppie e limiti di generalizzazione.&#160;<a class="footnote-backref" href="#fnref:4" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:5">
+<p>Itay Ravia, Aim Labs, <a href="https://www.catonetworks.com/blog/breaking-down-echoleak/"><em>Breaking down ‘EchoLeak’</em></a>, disclosure originale ora ospitata da Cato Networks. La pagina migrata espone 31 maggio 2025; non si ricostruisce qui la cronologia della migrazione. Fonte della scoperta e della dichiarazione limitata sull’assenza di clienti noti colpiti.&#160;<a class="footnote-backref" href="#fnref:5" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+<li id="fn:6">
+<p>Microsoft Detection and Response Team, <a href="https://www.microsoft.com/en-us/security/security-insider/emerging-trends/ai-application-security-considerations-for-organizations"><em>AI Application Security Series 1: Security considerations when adopting AI tools</em></a>, 17 dicembre 2025. Conferma ufficiale leggibile della correzione EchoLeak. Il record <a href="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-32711">MSRC CVE-2025-32711</a> è identificato ma richiede JavaScript nel browser usato: non è assunto come testo verificato per ulteriori dettagli.&#160;<a class="footnote-backref" href="#fnref:6" title="Jump back to footnote 6 in the text">&#8617;</a></p>
+</li>
+<li id="fn:7">
+<p>Pavan Reddy e Aditya Sanjay Gujral, <a href="https://ojs.aaai.org/index.php/AAAI-SS/article/view/36899"><em>EchoLeak: The First Real-World Zero-Click Prompt Injection Exploit in a Production LLM System</em></a>, <em>Proceedings of the AAAI Symposium Series</em> 7(1), pp. 303–311, 23 novembre 2025, DOI 10.1609/aaaiss.v7i1.36899. Analisi accademica successiva; non disclosure originale né articolo della conferenza principale AAAI.&#160;<a class="footnote-backref" href="#fnref:7" title="Jump back to footnote 7 in the text">&#8617;</a></p>
+</li>
+<li id="fn:8">
+<p>Luca Beurer-Kellner e Marc Fischer, Invariant Labs, <a href="https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks"><em>MCP Security Notification: Tool Poisoning Attacks</em></a>, 1 aprile 2025, con aggiornamenti di aprile. Ricerca sperimentale originale dei divulgatori.&#160;<a class="footnote-backref" href="#fnref:8" title="Jump back to footnote 8 in the text">&#8617;</a></p>
+</li>
+<li id="fn:9">
+<p>Invariant Labs, <a href="https://invariantlabs.ai/blog/mcp-github-vulnerability"><em>GitHub MCP Exploited: Accessing private repositories via MCP</em></a>, 26 maggio 2025. Dimostrazione originale di flusso informativo attraverso strumenti legittimi.&#160;<a class="footnote-backref" href="#fnref:9" title="Jump back to footnote 9 in the text">&#8617;</a></p>
+</li>
+<li id="fn:10">
+<p>Noam Kochavi e Sarah Wolstencroft, Microsoft Security Research, <a href="https://www.microsoft.com/en-us/security/blog/2026/09/03/ascii-smuggling-crosses-over-from-ai-prompt-injection-to-phishing-evasion/"><em>ASCII smuggling crosses over from AI prompt injection to phishing evasion</em></a>, 3 settembre 2026. Telemetria e analisi della campagna osservata.&#160;<a class="footnote-backref" href="#fnref:10" title="Jump back to footnote 10 in the text">&#8617;</a></p>
+</li>
+<li id="fn:11">
+<p>OWASP GenAI Security Project, <a href="https://genai.owasp.org/llmrisk/llm01-prompt-injection/"><em>LLM01:2025 Prompt Injection</em></a>, edizione 2025. Linea guida ufficiale; pagina consultata senza data puntuale di revisione esposta.&#160;<a class="footnote-backref" href="#fnref:11" title="Jump back to footnote 11 in the text">&#8617;</a></p>
+</li>
+<li id="fn:12">
+<p>OWASP Cheat Sheet Series, <a href="https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html"><em>File Upload Cheat Sheet</em></a>, pagina corrente senza data di revisione esposta. Linea guida ufficiale per applicazioni che ricevono file.&#160;<a class="footnote-backref" href="#fnref:12" title="Jump back to footnote 12 in the text">&#8617;</a></p>
+</li>
+<li id="fn:13">
+<p>Progetto pypdf, <a href="https://pypdf.readthedocs.io/en/stable/user/extract-text.html"><em>Extract Text from a PDF</em></a>, documentazione ufficiale corrente, intestazione 6.18.1 durante la consultazione. Questo numero identifica la documentazione letta, non la dipendenza installata in Cheker.&#160;<a class="footnote-backref" href="#fnref:13" title="Jump back to footnote 13 in the text">&#8617;</a></p>
+</li>
+<li id="fn:14">
+<p>Microsoft Open Specifications, <a href="https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-doc/4eaddc8f-4abd-43bb-8fd4-aef9c6121737"><em>MS-DOC, §2.1 File Structure</em></a>, 14 febbraio 2019. Specifica del contenitore DOC binario.&#160;<a class="footnote-backref" href="#fnref:14" title="Jump back to footnote 14 in the text">&#8617;</a></p>
+</li>
+<li id="fn:15">
+<p>Microsoft Open Specifications, <a href="https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-xls/f67ac5ed-b0a7-4b2c-9b7a-28933eeaac7e"><em>MS-XLS, §2.1.2 Stream</em></a>, 14 febbraio 2019. Specifica dei flussi XLS.&#160;<a class="footnote-backref" href="#fnref:15" title="Jump back to footnote 15 in the text">&#8617;</a></p>
+</li>
+<li id="fn:16">
+<p>Microsoft Learn, <a href="https://learn.microsoft.com/en-us/office/open-xml/spreadsheet/structure-of-a-spreadsheetml-document"><em>Structure of a SpreadsheetML document</em></a>, documentazione ufficiale corrente; data non esposta nel testo consultato.&#160;<a class="footnote-backref" href="#fnref:16" title="Jump back to footnote 16 in the text">&#8617;</a></p>
+</li>
+<li id="fn:17">
+<p>Microsoft Learn, <a href="https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.spreadsheet.sheetstatevalues?view=openxml-3.0.1"><em>SheetStateValues Enum</em></a>, documentazione Open XML SDK, vista 3.0.1; data non esposta. Fonte degli stati di visibilità.&#160;<a class="footnote-backref" href="#fnref:17" title="Jump back to footnote 17 in the text">&#8617;</a></p>
+</li>
+<li id="fn:18">
+<p>Mark Davis e Ned Holbrook, Unicode Consortium, <a href="https://www.unicode.org/reports/tr51/tr51-29.html"><em>UTS #51 Unicode Emoji, revisione 29</em></a>, Unicode 17.0, 4 settembre 2025. Standard ufficiale versionato.&#160;<a class="footnote-backref" href="#fnref:18" title="Jump back to footnote 18 in the text">&#8617;</a></p>
+</li>
+<li id="fn:19">
+<p>Unicode Consortium, <a href="https://www.unicode.org/Public/17.0.0/emoji/emoji-sequences.txt"><em>emoji-sequences.txt, Unicode 17.0.0</em></a>, dati ufficiali della versione 17.0. Le tre voci <code>RGI_Emoji_Tag_Sequence</code> sono state consultate; nessun corpus di attacco è stato acquisito.&#160;<a class="footnote-backref" href="#fnref:19" title="Jump back to footnote 19 in the text">&#8617;</a></p>
+</li>
+<li id="fn:20">
+<p>Microsoft Learn, <a href="https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.altchunk?view=openxml-3.0.1"><em>AltChunk Class</em></a>, Open XML SDK, vista 3.0.1, note normative ISO/IEC 29500-1. Pagina senza data esposta; letti i vincoli di importazione e destinazione interna.&#160;<a class="footnote-backref" href="#fnref:20" title="Jump back to footnote 20 in the text">&#8617;</a></p>
+</li>
+<li id="fn:21">
+<p>Microsoft Open Specifications, <a href="https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oe376/4822a0c9-64d9-4099-bf2b-80b1514c7674"><em>MS-OE376, §2.1.558, Part 4 §2.17.3.1 altChunk</em></a>, 16 agosto 2022. Specifica delle particolarità di implementazione Word.&#160;<a class="footnote-backref" href="#fnref:21" title="Jump back to footnote 21 in the text">&#8617;</a></p>
+</li>
+<li id="fn:22">
+<p>Microsoft Learn, <a href="https://learn.microsoft.com/en-us/dotnet/api/system.io.packaging.packagerelationship.targetmode?view=windowsdesktop-9.0"><em>PackageRelationship.TargetMode Property</em></a>, documentazione ufficiale corrente; data non esposta. Distinzione tra destinazioni interne ed esterne, anche relative.&#160;<a class="footnote-backref" href="#fnref:22" title="Jump back to footnote 22 in the text">&#8617;</a></p>
+</li>
+<li id="fn:23">
+<p>Evidenza interna: repository Cheker, <code>backend/integrity_guard/canonical.py</code>, <code>core.py</code>, <code>extraction.py</code>, <code>scanner.py</code>, <code>scan_protocol.py</code>, <code>scan_worker.py</code>, <code>linux_sandbox.py</code>, <code>reports.py</code>, <code>mcp_server.py</code>, <code>filewatch.py</code>, <code>sanitizer.py</code> ed <code>extractor_registry.py</code>; manuali specialistici elencati nel §10. Lettura documentale e del codice, senza nuove esecuzioni. Per hash degli artefatti distribuiti ed esiti di prova consultare <code>docs/VALIDAZIONE.md</code> e i manifest della release citata.&#160;<a class="footnote-backref" href="#fnref:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref5:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref6:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref7:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref8:23" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref9:23" title="Jump back to footnote 23 in the text">&#8617;</a></p>
+</li>
+<li id="fn:24">
+<p>Nota interna di progettazione, <em>Proposta DOCX: rifiuto delle parti non ispezionate</em>, 15 settembre 2026, conservata nelle evidenze <code>research-protections-20260914/docx-proposal.md</code>. La nota registra sorgenti e hash esaminati, la lacuna funzionale e il contratto proposto. L’implementazione successiva resta distinta dai risultati della baseline.&#160;<a class="footnote-backref" href="#fnref:24" title="Jump back to footnote 24 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>

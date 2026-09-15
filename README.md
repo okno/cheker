@@ -2,7 +2,7 @@
 
 Cheker è un’applicazione locale per **Linux** che verifica l’integrità delle configurazioni MCP, registra le modifiche e analizza i file prima del loro utilizzo attraverso i lettori integrati. La console mostra i file processati, i risultati, le sommatorie, le approvazioni e l’audit.
 
-È in collaudo anche il pacchetto **Windows x64 con GUI**, che avvia lo stesso motore Linux locale tramite WSL 2. La [guida Windows](docs/WINDOWS.md) descrive prerequisiti e primo avvio.
+È disponibile in anteprima anche il pacchetto **Windows x64 con GUI**, che avvia lo stesso motore Linux locale tramite WSL 2. La [guida Windows](docs/WINDOWS.md) descrive prerequisiti e primo avvio.
 
 Una modifica ai byte della configurazione invalida l’approvazione precedente. Il gate verifica nuovamente sorgente, versione, firma e policy prima di consentire l’uso. Le approvazioni sono legate al contenuto, non al solo nome del componente.
 
@@ -19,6 +19,7 @@ Una modifica ai byte della configurazione invalida l’approvazione precedente. 
 | Formati e confini | [Copertura dei requisiti](docs/REQUISITI_COPERTURA.md), [sandbox Linux](docs/LINUX_SANDBOX.md), [estrattori](docs/ESTRATTORI.md) |
 | Copia HTML | [Sanitizzazione esplicita](docs/SANITIZZAZIONE.md) |
 | Evidenze e prestazioni | [Validazione](docs/VALIDAZIONE.md) e [prestazioni](docs/PERFORMANCE.md) |
+| Ricerca e protezioni | [Casi documentati e protezioni implementate](docs/PROTEZIONI.md) |
 
 ## Installazione su Linux
 
@@ -67,8 +68,11 @@ Il monitor da solo non impedisce a un altro programma di leggere un file o usare
 | PDF | Testo, livelli e metadati ispezionabili; immagini che richiedono OCR e contenuti non ispezionabili restano bloccati |
 | DOCX | Testo e parti OOXML previste, compresi livelli nascosti/metadati; limiti e contenuti non ispezionabili impediscono l’autorizzazione |
 | TXT, MD | Analisi del testo; commenti e frontmatter Markdown riconosciuti entro i limiti |
-| DOC, XLS, XLSX | **Non supportati: bloccati come non analizzabili**, non classificati validi |
+| XLSX | Profilo statico Transitional nel nuovo sorgente: celle, stringhe condivise, metadati e viste nascoste; formule, immagini e parti fuori profilo restano bloccate |
+| DOC, XLS, XLSM, XLSB | **Non supportati: bloccati come non analizzabili**, non classificati validi |
 | Altri formati supportati | JSON/JSON5, YAML, TOML, CSV, HTML, XML, LOG, PY, JS, TS, SH, PS1 e `.env`, trattati come dati |
+
+Il supporto XLSX del sorgente richiede il nuovo pacchetto dedicato: non è incluso nella build `039e0fd8` già distribuita. Lo stato delle build e le verifiche effettivamente concluse sono riportati in [Validazione](docs/VALIDAZIONE.md).
 
 Il registro distingue `VALID`, `INFECTED`, `CORRUPTED`, `REVIEW_REQUIRED` e `UNSCANNABLE`. I contatori si riferiscono alle elaborazioni; i contenuti unici sono hash SHA-256 distinti. Analizzare nuovamente lo stesso contenuto aggiunge un report. Filtri e pagine non cambiano i totali globali. Il conteggio dei bloccati attraversa i verdetti e non è una categoria da sommare alle altre.
 

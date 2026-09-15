@@ -1,5 +1,7 @@
 # Manuale tecnico e operativo
 
+**Attribuzione XLSX:** il profilo statico aggiunto al sorgente il 15 settembre 2026 è destinato a un nuovo candidato e non appartiene alla release consegnata con wheel `039e0fd8…`. Le descrizioni XLSX in questo manuale riguardano quel sorgente; prove, installazione e disponibilità di una nuova release devono essere documentate separatamente.
+
 Questo manuale descrive MCP Integrity Guard 1.0.0 per amministratori Linux e manutentori. Le interfacce e i limiti sono quelli implementati nel repository; i risultati di collaudo delle singole build sono in [VALIDAZIONE.md](VALIDAZIONE.md). Per modificare o rilasciare il software leggere anche [SVILUPPO.md](SVILUPPO.md).
 
 ## 1. Scopo e confini
@@ -97,19 +99,51 @@ Il worker viene avviato con Python `-I`, ambiente ridotto e pipe. Prima dell’i
 | Concorrenza | Due slot condivisi per scansioni e stadi delle copie HTML; richiesta iniziale senza slot: HTTP 429 |
 | PDF | Massimo 100 pagine; nessun OCR |
 | DOCX | Massimo 2.048 membri; 8.000.000 byte per membro, 24.000.000 totali espansi, rapporto massimo 100 |
+| XLSX statico, nuovo sorgente | 100 fogli; 20.000 celle presenti; 20.000 shared strings; limiti ZIP/XML e rifiuti descritti sotto |
 | Frontmatter Markdown chiuso | 64 KiB e 4.096 righe |
 | Copia HTML | Input 10 MiB, output UTF-8 256 KiB, protocollo trasformazione 1 MiB |
 | Richiesta HTTP | Corpo complessivo massimo 11 MiB; il limite del singolo file rimane 10 MiB |
 
 I budget non sono una promessa di latenza massima per un’intera operazione composta: copia HTML e passate del monitor possono richiedere più stadi. Le dimensioni espresse in MiB usano multipli di 1.048.576 byte; gli altri valori della tabella sono decimali come nel codice.
 
-Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, `.env`, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile.
+Sono previsti TXT, Markdown, JSON/JSON5, YAML, TOML, CSV, HTML/HTM, XML, LOG, Python, JavaScript, TypeScript, shell, PowerShell, `.env`, PDF e DOCX. Codice e script vengono letti come dati. PDF cifrati, immagini che richiedono OCR, contenuti attivi e oggetti incorporati non interamente ispezionabili vengono rifiutati secondo il formato. I DOCX con media visivi o oggetti binari incorporati non ottengono una scansione completa. Un’estensione supportata non garantisce che ogni file del formato sia gestibile. Il sorgente successivo alla release 039e aggiunge XLSX tramite il registro statico fidato, entro il profilo seguente. DOC, XLS, XLSM, XLSB, PPTX, EML, MSG, RTF e ODT restano non supportati.
 
 Il frontmatter iniziale YAML/TOML dei Markdown viene analizzato come testo di metadati, senza deserializzarlo né usarlo come configurazione. L’intero documento resta anche nel livello visibile. Le regole combinano indicatori multilingue, anomalie strutturali/Unicode e decodifiche limitate. I limiti configurati delle decodifiche comprendono profondità 3, rapporto di espansione 6, 512 candidati e 120 finding.
 
 Il catalogo `1.1.2` estende il controllo dei caratteri invisibili al blocco Unicode Tags, U+E0000–U+E007F. Una presenza anomala genera `INVISIBLE_CHARACTERS` e richiede revisione; non è una diagnosi di malware. Le tre sequenze complete RGI delle bandiere di Inghilterra, Scozia e Galles, definite da Unicode Emoji 17.0, sono escluse da questo solo segnale. Tag aggiunti, sequenze incomplete e altri caratteri invisibili restano rilevati. La normalizzazione elimina i tag per il confronto delle regole; le evidenze li rendono leggibili come escape Unicode. Gli originali restano invariati. [Unicode UTS #51, revisione 29](https://www.unicode.org/reports/tr51/tr51-29.html#valid-emoji-tag-sequences).
 
 Il profilo DOCX rifiuta parti diverse da XML e relazioni XML, salvo directory vuote (`DOCX_UNINSPECTED_PART`); importazioni `altChunk` e relazioni `aFChunk`/`afChunk` (`DOCX_ALTCHUNK_UNSUPPORTED`); relazioni esterne diverse dagli hyperlink previsti (`DOCX_EXTERNAL_CONTENT`). Questi casi producono analisi incompleta, `UNSCANNABLE` e `BLOCKED`. Gli hyperlink restano metadati e non vengono recuperati. Campi obbligatori delle relazioni mancanti o modalità non valide producono `INVALID_DOCX`, distinto dal formato non supportato. I limiti ZIP e i rifiuti specifici per immagini/oggetti incorporati mantengono precedenza. Il controllo non è un validatore completo di conformità OPC/OOXML né un renderer Word. [Documentazione Microsoft su altChunk](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.altchunk?view=openxml-3.0.1).
+
+### Profilo XLSX statico del nuovo sorgente
+
+[trusted_extractors.py](../backend/integrity_guard/trusted_extractors.py) registra esplicitamente `xlsx`, estensione `.xlsx`, handler `integrity_guard.xlsx_extractor.extract_xlsx`, versione `1.0.0`, con dipendenza `defusedxml` (versione del lock: `0.7.1`). Il bootstrap viene ricostruito dopo l’attivazione del sandbox e prima dell’input in ogni worker. Non richiede Office, rete o un nuovo percorso di esecuzione: usa `Budget`, `Extraction`, report, policy e registro delle scansioni ordinari. Il fingerprint include anche il nuovo modulo e invalida la corrispondenza della cache dopo l’aggiornamento. [Contratto del registro](ESTRATTORI.md).
+
+Il sottoinsieme OPC/SpreadsheetML **Transitional** comprende workbook e worksheet, celle statiche numeriche/booleani/date ISO/errori/testo o vuote, stringhe inline/condivise e run rich text, proprietà core/app/custom, stili riconosciuti, tema XML statico e commenti XML. Radici, tipi di contenuto e relazioni devono essere coerenti; le parti note devono essere collegate. Le coordinate sono verificate senza allocare una matrice delle dimensioni dichiarate.
+
+Le celle ordinarie producono `VISIBLE_CONTENT`, con posizione `xlsx:<parte>:cell:<A1>`. Fogli hidden/veryHidden, righe o colonne nascoste e font esplicitamente bianco o ≤1 pt sono `HIDDEN_CONTENT`; sono considerati anche stili di riga/colonna e basi xf. Un run nascosto rende prudentemente nascosta l’intera vista della cella; la stessa scelta vale per i formati numerici personalizzati. È una classificazione conservativa, non rendering Excel. I run delle stringhe vengono uniti in ordine preservando gli spazi. Gli escape `_xHHHH_` sono decodificati una volta, mantenendo anche la forma letterale. Shared strings inutilizzate, proprietà, attributi e testo XML residuo sono `METADATA`; commenti di cella/XML e processing instruction sono `HIDDEN_CONTENT`. Intestazioni e piè di pagina restano metadati testuali. Gli hyperlink External ordinari sono ispezionati come metadati senza recuperare destinazioni; i link interni non provocano letture.
+
+| Condizione fuori profilo | Codice e risultato |
+|---|---|
+| Qualsiasi formula, comprese validazioni e nomi definiti | `XLSX_FORMULA_UNSUPPORTED`; nessun ricalcolo o attestazione del cached value |
+| Immagini/media, incluse miniature | `OCR_REQUIRED`; OCR assente |
+| Macro, VBA, binari, OLE o ActiveX | `XLSX_EMBEDDED_CONTENT`; nessuna esecuzione Office |
+| Contenuto esterno diverso dall’hyperlink ordinario | `XLSX_EXTERNAL_CONTENT` |
+| VML, grafici, pivot, threaded comments, estensioni/AlternateContent, parti ignote o namespace Strict | `XLSX_UNINSPECTED_PART`; anche commenti XML accompagnati da VML sono bloccati |
+| Non ZIP, XML malformato o riferimenti/indici incongruenti | `INVALID_XLSX`; classificazione `CORRUPTED` |
+
+Copertura incompleta e limiti producono `analysis_complete=false`, `BLOCKED` e normalmente `UNSCANNABLE`; non dichiarano un’infezione. I messaggi sono fissi, senza URL o testo sorgente. Il profilo non valida l’intero schema OOXML e non attesta conservazione semantica o sicurezza universale.
+
+| Risorsa XLSX | Limite |
+|---|---:|
+| Membri ZIP / compressione | 2.048; soltanto STORED o DEFLATED |
+| Byte dichiarati per parte / espansi totali / rapporto per parte | 8.000.000 / 24.000.000 / 100 |
+| Nodi XML complessivi, inclusi commenti e PI / profondità | 200.000 / 64 |
+| Fogli / celle materialmente presenti / shared strings | 100 / 20.000 / 20.000 |
+| Relazioni | 4.096 |
+| Coordinate massime | 16.384 colonne; 1.048.576 righe |
+| Testo e segmenti | Budget comune: 8.000.000 caratteri / 20.000 segmenti |
+
+Input, timeout, memoria e confinamento del worker restano quelli comuni. Le viste aggiuntive e ogni uso di una shared string consumano budget; un limite comune può scattare prima di quelli strutturali. XML viene letto con controlli di budget e senza DTD, entità o risorse esterne. Se la copertura non termina, nessuna porzione del file viene autorizzata come risultato completo.
 
 ### Esito e autorizzazione sono campi distinti
 
@@ -233,7 +267,7 @@ bash guard.sh verify-audit
 
 `COMPONENT_ID`, `CANONICAL_HASH` e versione devono provenire dalla definizione realmente esaminata. Per un’altra porta anteporre al sottocomando `--api-url http://127.0.0.1:8877`. La CLI non ha sottocomandi `approve` o `revoke`: queste operazioni sono nella GUI/API.
 
-Exit code: **0** successo/consentito, **3** negato o audit non valido, **2** errore operativo. `guarded-read` restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF/DOCX autorizzati l’output è il file binario originale, non testo estratto.
+Exit code: **0** successo/consentito, **3** negato o audit non valido, **2** errore operativo. `guarded-read` restituisce su stdout gli esatti byte della singola copia analizzata soltanto se autorizzati; in caso contrario stdout resta vuoto e stderr contiene un riepilogo. Non consumare l’output ignorando l’exit code. Per PDF/DOCX e, nelle release con il nuovo estrattore, XLSX autorizzati l’output è il file binario originale, non testo estratto.
 
 ```bash
 umask 077
@@ -264,7 +298,7 @@ Il lettore MCP stdio espone soltanto `scan_file` e `read_file`, versione di prot
 }
 ```
 
-Non inserire il token nel JSON. `scan_file` accetta fino a 10 MiB senza restituire il contenuto; `read_file` consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, `.env` o `.log`, pur analizzabili con `scan_file`. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in [MCP_INTEGRATION.md](MCP_INTEGRATION.md).
+Non inserire il token nel JSON. `scan_file` accetta fino a 10 MiB senza restituire il contenuto; `read_file` consegna solo formati testuali UTF-8 previsti, fino a 256 KiB, dopo scansione e nuovo confronto del file. Non consegna PDF/DOCX, `.env` o `.log`, pur analizzabili con `scan_file`. Il nuovo XLSX statico, quando incluso nella release installata, è disponibile soltanto per `scan_file`: non estende i formati consegnabili da `read_file`. Il confine delle radici, i link, i file riservati, il ciclo initialize e i limiti del protocollo sono descritti in [MCP_INTEGRATION.md](MCP_INTEGRATION.md).
 
 ## 8. API amministrativa
 

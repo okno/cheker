@@ -2,10 +2,11 @@
 
 Il §11 dei requisiti chiede di predisporre nuovi formati senza considerarli già
 supportati. `extractor_registry.py` offre un registro per estrattori inclusi
-esplicitamente nel codice fidato del wheel. La distribuzione corrente ha un
-bootstrap vuoto: XLSX, PPTX, EML, MSG, RTF e ODT restano non supportati. Gli
-estrattori incorporati continuano a usare il percorso già previsto in
-`extraction.py`.
+esplicitamente nel codice fidato del wheel. La release consegnata con wheel `039e0fd8…` ha un bootstrap vuoto. Il sorgente
+aggiornato il 15 settembre 2026 registra invece il solo profilo XLSX statico,
+destinato a un nuovo candidato: questa aggiunta non viene attribuita alla release
+039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Gli estrattori incorporati
+continuano a usare il percorso già previsto in `extraction.py`.
 
 Non esistono installazione di plugin dall'interfaccia, caricamento da documenti,
 ricerca in cartelle utente, entry point automatici o variabili d'ambiente per
@@ -64,10 +65,26 @@ automaticamente tutti gli import transitivi.
 ## Bootstrap riproducibile nel worker
 
 `trusted_extractors.register_all(registry)` è l'unico elenco statico previsto per
-la produzione. Oggi non registra alcun gestore. Per aggiungerne uno, si include
-il modulo nel wheel e si aggiungono in questo file un import letterale e una
-chiamata esplicita a `register_extractor`. Questa è una modifica del pacchetto,
-non una configurazione fornita da un documento.
+la produzione. Nel nuovo sorgente contiene un import letterale di
+`xlsx_extractor.extract_xlsx` e la registrazione esplicita:
+
+```python
+registry.register_extractor("xlsx", (".xlsx",), "1.0.0", extract_xlsx, ("defusedxml",))
+```
+
+`defusedxml` è già una dipendenza del runtime, fissata a `0.7.1` nel lock. Non
+viene aggiunta una libreria Office né caricata una configurazione dal documento.
+Per aggiungere altri gestori occorre includerli nel wheel e registrarli con lo
+stesso percorso esplicito. È una modifica del pacchetto, non una configurazione
+fornita dall’utente o da un documento.
+
+Il solo XLSX Transitional statico è previsto: celle, shared strings e metadati
+entro limiti dichiarati. Formule, nomi definiti, media/OCR, macro, oggetti
+incorporati, dati esterni e strutture non ispezionate restano bloccati. Anche
+XLSM, XLSB e XLS legacy sono fuori profilo. Vedere il
+[profilo tecnico XLSX](MANUALE_TECNICO.md#profilo-xlsx-statico-del-nuovo-sorgente).
+Registrare `.xlsx` non abilita i formati futuri né rende ammissibile ogni file
+con quella estensione.
 
 `get_registry()` esegue il bootstrap una volta per processo, verifica i
 descrittori, congela l'istanza e la pubblica solo dopo il successo. Un errore non
@@ -140,5 +157,10 @@ esecuzione del contratto `Budget`, collisioni, metadati, sorgenti e dipendenze,
 congelamento, variazioni del fingerprint e bootstrap in processi Python nuovi.
 Una regressione dedicata verifica che cambiare soltanto un helper confezionato
 invalida il fingerprint, mantenendo invariati gestore e versione.
-Le prove dei formati effettivamente abilitati e della loro integrazione nel
-worker devono accompagnare ogni futura modifica del bootstrap.
+Le prove del nuovo XLSX sono in `backend/tests/test_xlsx_extractor.py` e includono
+worker reali per documento statico, formula innocua e contenuto fuori profilo.
+Il registro viene verificato anche in processi nuovi con la registrazione
+statica XLSX presente; le istanze isolate dei test non installano plugin utente.
+Le prove dei formati e della loro integrazione nel worker devono accompagnare
+ogni modifica del bootstrap. L’esito della release 039e non qualifica questa
+aggiunta: i test del nuovo candidato vanno attribuiti separatamente.

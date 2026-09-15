@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Copertura dei requisiti · Cheker</title><meta name="description" content="Copertura dei requisiti di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html" aria-current="page">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="REQUISITI_COPERTURA.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="matrice-di-copertura-dei-requisiti">Matrice di copertura dei requisiti</h1>
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali"><a href="MANUALE_UTENTE.html">Manuale utente</a><a href="MANUALE_TECNICO.html">Manuale tecnico</a><a href="SVILUPPO.html">Sviluppo e rilascio</a><a href="ARCHITETTURA.html">Architettura</a><a href="MCP_INTEGRATION.html">Integrazione MCP</a><a href="LINUX_SANDBOX.html">Sandbox Linux</a><a href="SANITIZZAZIONE.html">Copia testuale HTML</a><a href="ESTRATTORI.html">Estrattori</a><a href="REQUISITI_COPERTURA.html" aria-current="page">Copertura dei requisiti</a><a href="VALIDAZIONE.html">Validazione</a><a href="PERFORMANCE.html">Prestazioni</a><a href="WINDOWS.html">App Windows</a><a href="PROTEZIONI.html">Ricerca e protezioni</a><a href="CONTRACT.html">Contratto delle interfacce</a></nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="REQUISITI_COPERTURA.md" download>Scarica Markdown</a><button type="button" onclick="window.print()">Stampa / salva PDF</button></div><h1 id="matrice-di-copertura-dei-requisiti">Matrice di copertura dei requisiti</h1>
 <p>Riferimento: specifica di progetto ricevuta, conservata nella documentazione locale, più le richieste
 successive di usare Linux, mantenere applicazione e sviluppo in <code>D:\Cheker</code> e
-mostrare file elaborati e totali. Stato documentato: 14 settembre 2026.</p>
+mostrare file elaborati e totali. Aggiornamento XLSX del sorgente: 15 settembre 2026.
+Il profilo XLSX statico qui indicato è destinato a un nuovo candidato e non è
+incluso nella release consegnata con wheel <code>039e0fd8…</code>.</p>
 <p>L'allegato disponibile termina nella sezione 15, dopo <code>MET</code>. Non vengono
 ricostruite né dichiarate coperte sezioni mancanti. <strong>Implementato</strong> indica una
 funzione presente con evidenze verificabili; <strong>parziale</strong> indica un perimetro
@@ -16,7 +18,7 @@ applicativo installa i moduli dal wheel; i sorgenti e i test appartengono alla
 cartella di sviluppo. Per le esecuzioni effettive delle suite e dei controlli
 di rilascio fa fede <a href="VALIDAZIONE.html">VALIDAZIONE.md</a>, aggiornato separatamente.
 Le prove browser estese citate per <code>891d7fc8…</code> riguardano il candidato precedente;
-la verifica mirata di <code>d59523d2…</code> riguarda il candidato corrente corretto. I loro
+la verifica mirata di <code>d59523d2…</code> riguarda quel successivo candidato storico corretto. I loro
 esiti restano separati e non vengono trasferiti automaticamente fra wheel.</p>
 <h2 id="richieste-successive-dellutente">Richieste successive dell'utente</h2>
 <table>
@@ -221,10 +223,16 @@ inesistente. Questa esecuzione mirata non ripete i 74 controlli storici.</p>
 <td>PDF cifrati, contenuti attivi, oggetti incorporati e immagini non ispezionabili vengono bloccati. OCR assente. I parser non eseguono i comandi contenuti nei file.</td>
 </tr>
 <tr>
-<td><strong>§11 — Plugin futuri — predisposizione implementata</strong></td>
+<td><strong>§11 — Plugin futuri — registro e profilo XLSX nel nuovo sorgente</strong></td>
 <td>Registro congelato di estrattori inclusi esplicitamente nel wheel, formati/versioni/dipendenze, bootstrap ripetuto in ogni worker prima dell’input. Controllo comune del risultato e del budget; fingerprint del registro nel contesto del monitor.</td>
 <td><code>extractor_registry.py</code>, <code>trusted_extractors.py</code>, <code>extraction.py</code>, <code>scan_worker.py</code>, <code>filewatch.py</code>; <code>test_extractor_registry.py</code>, <code>test_extractor_integration.py</code>, incluso worker reale con estensione sintetica e nuova scansione al cambio di fingerprint.</td>
-<td>Il registro aggiuntivo predefinito è vuoto. XLSX, PPTX, EML, MSG, RTF e ODT restano non supportati finché non viene incluso e verificato un estrattore. Nessuna installazione automatica, discovery di entry point o import da file utente. <a href="ESTRATTORI.html">ESTRATTORI.md</a>.</td>
+<td>La release 039e conserva il registro vuoto. Il nuovo sorgente registra esplicitamente XLSX statico, versione 1.0.0 con defusedxml, da qualificare in un nuovo pacchetto; non lo eredita dalla validazione 039e. PPTX, EML, MSG, RTF e ODT restano non supportati. Nessuna installazione automatica, discovery di entry point o import da file utente. <a href="ESTRATTORI.html">ESTRATTORI.md</a>.</td>
+</tr>
+<tr>
+<td><strong>XLSX — estensione funzionale nel nuovo sorgente, assente nella release 039e</strong></td>
+<td>Celle statiche Transitional, stringhe inline/condivise, proprietà, commenti e viste nascoste entro il profilo dichiarato. Il worker usa scanner, report e budget comuni.</td>
+<td><code>xlsx_extractor.py</code>, <code>trusted_extractors.py</code>; <code>test_xlsx_extractor.py</code>, registro e integrazione; <a href="MANUALE_TECNICO.html#profilo-xlsx-statico-del-nuovo-sorgente">manuale tecnico</a>.</td>
+<td>Qualsiasi formula e nome definito, immagini/OCR, macro/binari, contenuto esterno diverso dagli hyperlink, VML/grafici/pivot/threaded comments/Strict e parti ignote sono bloccati. 100 fogli, 20.000 celle presenti, 20.000 shared strings; DOC/XLS/XLSM/XLSB restano non supportati. Il supporto sorgente non è ancora una qualifica di release.</td>
 </tr>
 <tr>
 <td><strong>§12 — Pipeline e regole versionate — implementato</strong></td>
@@ -307,4 +315,4 @@ inesistente. Questa esecuzione mirata non ripete i 74 controlli storici.</p>
 vecchio report non autorizzano da soli un uso corrente. Serve una decisione
 valida del gate o del lettore protetto, riferita al contenuto effettivamente
 utilizzato. I dettagli dei confini sono in <a href="ARCHITETTURA.html">ARCHITETTURA.md</a>,
-<a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a> e <a href="LINUX_SANDBOX.html">LINUX_SANDBOX.md</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>
+<a href="MCP_INTEGRATION.html">MCP_INTEGRATION.md</a> e <a href="LINUX_SANDBOX.html">LINUX_SANDBOX.md</a>.</p></main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>

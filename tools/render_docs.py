@@ -24,6 +24,7 @@ DOCUMENTS = {
     'VALIDAZIONE': 'Validazione',
     'PERFORMANCE': 'Prestazioni',
     'WINDOWS': 'App Windows',
+    'PROTEZIONI': 'Ricerca e protezioni',
 }
 
 def render(source: Path, site: Path) -> list[str]:
@@ -56,7 +57,7 @@ def render(source: Path, site: Path) -> list[str]:
         page=f'''<!doctype html>
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{title} · Cheker</title><meta name="description" content="{title} di Cheker: applicazione locale Linux per integrità MCP e analisi dei documenti."><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="docs.css"><link rel="icon" href="../assets/cheker-logomark.png"></head>
 <body><a class="skip" href="#documento">Vai al documento</a><header class="header wrap"><a class="wordmark" href="../"><img class="brand-logo" src="../assets/cheker-logomark.png" width="44" height="44" alt="">cheker<span class="wordmark-dot">.</span></a><nav aria-label="Principale"><a href="../">Il progetto</a><a href="https://github.com/okno/cheker">GitHub ↗</a></nav></header>
-<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali">{navigation}</nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="{key}.md" download>Scarica Markdown</a>{pdf_link}<button type="button" onclick="window.print()">Stampa / salva PDF</button></div>{content}</main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione della versione distribuita. Consultare la validazione per le prove concluse.</p></footer></body></html>'''
+<div class="docs-layout wrap"><aside class="doc-navigation"><details open><summary>Documentazione</summary><nav aria-label="Manuali">{navigation}</nav></details></aside><main class="document" id="documento"><div class="doc-tools"><a href="{key}.md" download>Scarica Markdown</a>{pdf_link}<button type="button" onclick="window.print()">Stampa / salva PDF</button></div>{content}</main></div><footer class="footer wrap"><a href="../">← Torna a Cheker</a><p>Documentazione di Cheker. Consultare la validazione per disponibilità e prove delle singole build.</p></footer></body></html>'''
         (destination/(key+'.html')).write_text(page,encoding='utf-8')
         (destination/(key+'.md')).write_bytes(path.read_bytes())
         outputs.append(key+'.html')

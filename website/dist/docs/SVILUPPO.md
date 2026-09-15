@@ -1,5 +1,7 @@
 # Guida allo sviluppo e al rilascio
 
+**Stato XLSX del sorgente:** il 15 settembre 2026 è stato aggiunto un estrattore statico destinato al candidato successivo. Non è incluso nel wheel `039e0fd8…` già consegnato. Le prove di quella release restano storiche rispetto a questa aggiunta e non sostituiscono la qualifica del nuovo pacchetto.
+
 Questa guida riguarda il repository di MCP Integrity Guard 1.0.0. Per installazione, operazioni, persistenza, API e recovery leggere [MANUALE_TECNICO.md](MANUALE_TECNICO.md); per contratti dettagliati usare [CONTRACT.md](../CONTRACT.md) e i documenti specialistici collegati in fondo.
 
 ## 1. Struttura del repository
@@ -59,7 +61,7 @@ In sviluppo `PYTHONPATH` include il sorgente per il reload. I launcher distribui
 | Configurazione/hash/diff | `canonical.py`, `core.py`; fixture di parsing, normalizzazione, versioni e approvazioni |
 | Gate/firma/policy/audit | `core.py`, `test_core.py`, `test_audit_cache.py`, `test_core_limits.py` |
 | Inventario visualizzato | Proiezione in `core.py`, monitor, tipi e componenti React; `test_snapshot_projection.py` e API |
-| Formato o estrazione | `extraction.py`, registro estrattori e worker; test del formato e dei budget |
+| Formato o estrazione | `extraction.py`, `xlsx_extractor.py`, registro estrattori e worker; test del formato e dei budget |
 | Regola scanner | `rules.json`, `scanner.py`; casi positivi, negativi e limiti già previsti |
 | Supervisione/isolation | `worker_process.py`, `scan_worker.py`, `linux_sandbox.py`; test su subprocessi reali |
 | Copia HTML | Moduli `html_text`, `sanitize_*`, `sanitizer`; protocollo e doppia scansione |
@@ -98,9 +100,17 @@ Per aggiornare una regola:
 
 La cache del monitor include hash delle regole, codice, parser, policy, registro, Python e Unicode. L’invalidazione richiede nuove scansioni; non modifica automaticamente i report storici. Non cambiare file nel runtime mentre i processi li stanno usando: distribuirne una copia coerente e distinta.
 
-`canonical.register_adapter` registra parser di configurazione tramite codice applicativo fidato. L’estensibilità dei documenti è separata: [ESTRATTORI.md](ESTRATTORI.md) descrive `register_extractor`, bootstrap statico, congelamento e fingerprint dei file confezionati/dependenze. Non sono previsti entry point individuati automaticamente, import da documenti, directory plugin degli utenti o override dei formati incorporati. Il registro aggiuntivo predefinito è vuoto; XLSX, PPTX, EML, MSG, RTF e ODT non risultano abilitati per la sola presenza del registro.
+`canonical.register_adapter` registra parser di configurazione tramite codice applicativo fidato. L’estensibilità dei documenti è separata: [ESTRATTORI.md](ESTRATTORI.md) descrive `register_extractor`, bootstrap statico, congelamento e fingerprint dei file confezionati/dependenze. Non sono previsti entry point individuati automaticamente, import da documenti, directory plugin degli utenti o override dei formati incorporati. Nella release 039e il registro aggiuntivo era vuoto. Il nuovo sorgente registra esplicitamente il solo profilo XLSX statico, handler `xlsx_extractor.extract_xlsx`, versione `1.0.0`, dipendenza dichiarata `defusedxml` già fissata a `0.7.1` nel lock. PPTX, EML, MSG, RTF e ODT restano non abilitati; DOC/XLS legacy, XLSM e XLSB rimangono non supportati.
 
 La funzione handler riceve byte, nome e `Budget`, restituisce `Extraction` e usa i controlli comuni di completamento/accounting. Il bootstrap deve essere riproducibile in un worker nuovo prima dell’input. I limiti del manifest del registro sono 256 file Python/JSON e 4 MiB, con fonti regolari e stabili. Un helper confezionato cambiato deve modificare il fingerprint anche se il nome dell’handler resta uguale.
+
+### Sviluppare sul profilo XLSX
+
+Il profilo corrente legge il sottoinsieme Transitional di celle e metadati statici: non deve essere presentato come interprete Excel. Formule di qualsiasi tipo, nomi definiti, media, oggetti attivi, dati esterni e strutture non ispezionate interrompono l’analisi. I normali hyperlink vengono trattati come metadati e non visitati. Nessun ricalcolo, OCR, conversione dei formati legacy o estrazione del solo cached value può essere implicito. Il [manuale tecnico](MANUALE_TECNICO.md#profilo-xlsx-statico-del-nuovo-sorgente) elenca limiti, livelli e codici.
+
+Le verifiche pertinenti sono `backend/tests/test_xlsx_extractor.py`, `test_extractor_registry.py`, `test_extractor_integration.py` e i casi di classificazione in `test_scanner.py`. Usare quelle fixture ordinarie già presenti; includere le prove tramite worker reale oltre alle chiamate dirette. Un file non ZIP nominato `.xlsx` è ora malformato perché l’estensione è registrata; `.xls` resta un esempio di formato non supportato. Questa differenza non va trattata come un indebolimento del blocco.
+
+Ogni estensione del profilo richiede copertura dei nuovi contenuti, contabilità delle viste e dei riferimenti ripetuti, limiti ZIP/XML e risultato completo coerente. Aggiornare il codice fidato e il fingerprint del pacchetto, costruire un candidato distinto e attribuire gli esiti alla wheel e all’interprete effettivamente provati. I risultati mirati sul sorgente non attestano da soli l’installazione o la compatibilità di rilascio su Python 3.11.
 
 ## 5. Verificare il cambiamento
 

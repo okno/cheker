@@ -83,7 +83,7 @@ def test_builtin_formats_keep_their_existing_extractors(monkeypatch):
 
 
 def test_unknown_format_has_no_default_plugin():
-    for filename in ("notes.xlsx", "notes.eml", "README"):
+    for filename in ("notes.xls", "notes.eml", "README"):
         report = Scanner().scan_bytes(b"Ordinary notes", filename)
         assert report["status"] == "BLOCKED" and report["analysis_complete"] is False
         assert report["findings"][0]["rule_id"] == "UNSUPPORTED_FORMAT"
